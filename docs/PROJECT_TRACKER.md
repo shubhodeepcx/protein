@@ -3,13 +3,13 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-05-24 by Shubhodeep Chatterjee (P1 complete — crambin renders, build/lint/tests green; P2 ready to claim)
+**Last updated:** 2026-05-24 by Shubhodeep Chatterjee (P2 complete — upload + parse working end-to-end; P3 ready to claim)
 
 ---
 
 ## Current phase
 
-**P2 — Upload + parse** (P1 complete)
+**P3 — Dashboard** (P2 complete)
 
 Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](superpowers/specs/2026-05-23-protein-mvp-slice-design.md)
 
@@ -17,7 +17,7 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in flight. P1 fully done; P2 tasks ready to claim._
+_Nothing in flight. P2 fully done; P3 tasks ready to claim._
 
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
@@ -30,14 +30,15 @@ Tasks with no unresolved dependencies. Pick one, move it to In progress, then st
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
-| P2: `DropZone.tsx` with client-side validation (extension, size) | P2 | — | 1h |
-| P2: `services/parser.py` (BioPython, returns `ProteinSummary`) | P2 | — | 2h |
-| P2: `services/storage/local.py` (UUID-keyed) | P2 | — | 30m |
-| P2: `POST /api/proteins/upload` | P2 | parser + storage | 1h |
-| P2: `GET /api/proteins/{id}` + `GET /api/proteins/{id}/file` | P2 | storage | 30m |
-| P2: `/viewer/[id]` page loads from API | P2 | upload endpoints | 1h |
-| P2: backend pytest — 1CRN parser test | P2 | parser | 30m |
-| P2: smoke test for P2 in `docs/smoke-tests.md` | P2 | P2 features | 15m |
+| P3: `services/analytics.py` (MW, composition, hydrophobicity, SS%, property distribution) | P3 | — | 2h |
+| P3: `GET /api/proteins/{id}/analytics` | P3 | analytics service | 30m |
+| P3: Metric cards (MW, residues, atoms, chains) in Overview tab | P3 | — | 1h |
+| P3: Composition bar chart (Recharts) | P3 | analytics endpoint | 1h |
+| P3: SS donut chart | P3 | analytics endpoint | 1h |
+| P3: Hydrophobicity line chart (Kyte-Doolittle, window 9) | P3 | analytics endpoint | 1h |
+| P3: Chain length bar chart | P3 | analytics endpoint | 30m |
+| P3: backend pytest — MW + composition for crambin | P3 | analytics service | 30m |
+| P3: smoke test for P3 in `docs/smoke-tests.md` | P3 | P3 features | 15m |
 
 ---
 
@@ -66,7 +67,13 @@ _No blocked tasks._
 | P0 integration smoke test (backend venv install, both servers up, /health returns ok, CORS preflight allows :3000, frontend serves shell HTML with all expected layout strings) | P0 | 2026-05-23 | `e386c0a` |
 | P1: 1CRN.pdb bundled in `backend/app/static/`; `GET /api/proteins/demo/file` returns chemical/x-pdb; 3 pytest tests pass | P1 | 2026-05-24 | `e411039` |
 | P1: `MolstarViewer.tsx` forwardRef component (Mol* 5.9.0, `loadStructure`, `resetCamera`, `setRepresentation`, `setColoring`); `/viewer/demo` page with toolbar + loading/error overlay; Next.js build + lint + 7/7 tests green | P1 | 2026-05-24 | `bac1f80` |
-| P1: smoke test written in `docs/smoke-tests.md`; tracker updated to P2 | P1 | 2026-05-24 | this commit |
+| P1: smoke test written in `docs/smoke-tests.md`; tracker updated to P2 | P1 | 2026-05-24 | `110bfdd` |
+| P2: BioPython parser → `ProteinSummary` (PDB + mmCIF, 1CRN parses to 46 residues / 1 chain / ~4737 Da MW) | P2 | 2026-05-24 | `9c0d08d` |
+| P2: UUID-keyed local file storage (`backend/storage/proteins/`) with allowed-extension allowlist | P2 | 2026-05-24 | `9c0d08d` |
+| P2: `POST /api/proteins/upload`, `GET /api/proteins/{id}`, `GET /api/proteins/{id}/file` + in-memory summary cache; 10 pytest tests (parser × 4, upload × 6) pass | P2 | 2026-05-24 | `9c0d08d` |
+| P2: `DropZone.tsx` (drag-and-drop + click-to-browse, extension/size validation, inline errors, multipart upload via `apiPost`) + 6 vitest tests | P2 | 2026-05-24 | `1a03651` |
+| P2: `/viewer/[id]` dynamic-route page (fetches summary, renders Mol\*, 404 fallback, metadata toggle); landing page DropZone replaces placeholder; `protein-slice` wired to real API | P2 | 2026-05-24 | `1a03651` |
+| P2: smoke test written in `docs/smoke-tests.md`; tracker updated to P3 | P2 | 2026-05-24 | this commit |
 
 ---
 
@@ -120,16 +127,16 @@ Goal: open `/viewer/demo` and rotate a real 3D crambin.
 
 Goal: drag a PDB onto the home page → see it render.
 
-- [ ] `DropZone.tsx` with client-side validation (extension, size)
-- [ ] `services/parser.py` (BioPython, returns `ProteinSummary`)
-- [ ] `services/storage/local.py` (UUID-keyed)
-- [ ] `models/protein.py` (Pydantic ProteinSummary, ChainInfo)
-- [ ] `POST /api/proteins/upload`
-- [ ] `GET /api/proteins/{id}` (returns ProteinSummary)
-- [ ] `GET /api/proteins/{id}/file` (binary)
-- [ ] Frontend `/viewer/[id]` page loads from API
-- [ ] Backend pytest: 1CRN parser test
-- [ ] P2 smoke test
+- [x] `DropZone.tsx` with client-side validation (extension, size)
+- [x] `services/parser.py` (BioPython, returns `ProteinSummary`)
+- [x] `services/storage/local.py` (UUID-keyed)
+- [x] `models/protein.py` (Pydantic ProteinSummary, ChainInfo)
+- [x] `POST /api/proteins/upload`
+- [x] `GET /api/proteins/{id}` (returns ProteinSummary)
+- [x] `GET /api/proteins/{id}/file` (binary)
+- [x] Frontend `/viewer/[id]` page loads from API
+- [x] Backend pytest: 1CRN parser test
+- [x] P2 smoke test
 
 ### P3 — Dashboard
 

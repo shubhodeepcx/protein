@@ -96,7 +96,50 @@ Run from the repo root (`g:\protein`) unless noted.
 
 **Goal:** drag a `.pdb` file onto the landing page → see it render with chain/residue counts.
 
-_Will be filled in when P2 starts._
+1. Start backend (if not running):
+   ```
+   cd backend
+   .\.venv\Scripts\Activate.ps1
+   uvicorn app.main:app --reload --port 8000
+   ```
+
+2. Start frontend (if not running):
+   ```
+   cd frontend
+   npm run dev
+   ```
+
+3. Visit `http://localhost:3000/` → landing page shows the **DropZone** card with "Drop a .pdb or .cif file here" in the center column (no more placeholder).
+
+4. Drag `backend/app/static/1CRN.pdb` onto the DropZone (or click "Choose file" and pick it).
+   - Expect: card flips to "Uploading 1CRN.pdb…" with a spinner.
+   - After 1–3 seconds, the browser navigates to `/viewer/{uuid}` and crambin renders in the Mol\* canvas.
+
+5. On the viewer page, click "metadata" in the toolbar.
+   - Expect: panel shows `chains: 1 (A)`, `residues: 46`, `atoms: 327`, `MW: ~4737`, `format: pdb`.
+
+6. Negative cases on the landing page:
+   - Drop a `.txt` file → inline red error: "Unsupported extension '.txt'. Allowed: .pdb, .cif, .mmcif".
+   - Drop an empty file (e.g., `New-Item empty.pdb`) → inline error: "File is empty."
+
+7. 404 path: visit `http://localhost:3000/viewer/does-not-exist`.
+   - Expect: red "Protein does-not-exist not found" with "Upload a new protein" link back to `/`.
+
+8. Backend tests:
+   ```
+   cd backend
+   pytest
+   ```
+   - Expect: 14 passed (demo file × 3, health × 1, parser × 4, upload × 6).
+
+9. Frontend tests:
+   ```
+   cd frontend
+   npm test
+   ```
+   - Expect: 13 passed (selection-slice × 7, drop-zone × 6).
+
+**Pass criteria:** real PDB uploaded → parsed → rendered in 3D; metadata panel shows correct chain/residue/atom/MW counts; validation errors fire; all automated tests pass.
 
 ---
 
