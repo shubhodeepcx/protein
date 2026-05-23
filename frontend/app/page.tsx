@@ -17,6 +17,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { HealthPill } from "@/components/health-pill";
+import { DropZone } from "@/components/drop-zone";
 
 export default function HomePage() {
   return (
@@ -29,7 +30,7 @@ export default function HomePage() {
             ProteoLens
           </span>
           <Badge variant="outline" className="ml-1 text-[10px] uppercase">
-            P0
+            P2
           </Badge>
         </div>
 
@@ -99,25 +100,10 @@ export default function HomePage() {
           <div className="flex h-10 items-center gap-2 border-b border-border/60 px-4 text-xs text-muted-foreground">
             <span className="font-medium text-foreground">Viewer</span>
             <Separator orientation="vertical" className="h-4" />
-            <span>No protein loaded</span>
+            <span>No protein loaded &mdash; drop a file to start</span>
           </div>
           <div className="flex flex-1 items-center justify-center p-6">
-            <Card className="w-full max-w-2xl border-dashed">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Atom className="size-4 text-primary" aria-hidden />
-                  Mol* viewer placeholder
-                </CardTitle>
-                <CardDescription>
-                  This card holds the spot where the Mol* canvas mounts in P1.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex aspect-video items-center justify-center rounded-lg border border-dashed border-border/60 bg-muted/30 text-sm text-muted-foreground">
-                  Mol* viewer will render here in P1
-                </div>
-              </CardContent>
-            </Card>
+            <DropZone />
           </div>
         </section>
 
