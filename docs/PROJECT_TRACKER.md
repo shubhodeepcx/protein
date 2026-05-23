@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-05-23 by Shubhodeep Chatterjee (P0 scaffold committed at 61c1355)
+**Last updated:** 2026-05-23 by Shubhodeep Chatterjee (history rewritten to credit Codex/GPT for source docs)
 
 ---
 
@@ -52,14 +52,14 @@ _No blocked tasks._
 | Task | Phase | Date | PR / commit |
 |---|---|---|---|
 | Source docs imported (spec.md, sdlc.md, project_report.md) | pre-P0 | 2026-05-23 | initial extract |
-| MVP slice design | pre-P0 | 2026-05-23 | `0678ae8` |
-| AGENTS.md created | pre-P0 | 2026-05-23 | `0678ae8` |
-| PROJECT_TRACKER.md created | pre-P0 | 2026-05-23 | `0678ae8` |
-| Repo `.gitignore` (root) | P0 | 2026-05-23 | `0678ae8`, refined in `61c1355` |
-| Repo root `README.md` | P0 | 2026-05-23 | `61c1355` |
-| `docs/smoke-tests.md` skeleton with P0 verification script | P0 | 2026-05-23 | `61c1355` |
-| Next.js scaffold (Next 16 + TS strict + Tailwind v4 + shadcn + Zustand v5, 3-col layout shell, HealthPill, lib/api, store slices, Vitest with 7/7 tests) | P0 | 2026-05-23 | `61c1355` |
-| FastAPI scaffold (FastAPI 0.110+ + Python 3.11+ + pyproject, CORS, /health, Pydantic ProteinSummary, stub modules for parser/analytics/rcsb/alphafold/uniprot/storage, pytest test_health passing) | P0 | 2026-05-23 | `61c1355` (Codex subagent) |
+| MVP slice design | pre-P0 | 2026-05-23 | `5f5d66a` |
+| AGENTS.md created | pre-P0 | 2026-05-23 | `5f5d66a` |
+| PROJECT_TRACKER.md created | pre-P0 | 2026-05-23 | `5f5d66a` |
+| Repo `.gitignore` (root) | P0 | 2026-05-23 | `5f5d66a`, refined in `244e73f` |
+| Repo root `README.md` | P0 | 2026-05-23 | `244e73f` |
+| `docs/smoke-tests.md` skeleton with P0 verification script | P0 | 2026-05-23 | `244e73f` |
+| Next.js scaffold (Next 16 + TS strict + Tailwind v4 + shadcn + Zustand v5, 3-col layout shell, HealthPill, lib/api, store slices, Vitest with 7/7 tests) | P0 | 2026-05-23 | `244e73f` |
+| FastAPI scaffold (FastAPI 0.110+ + Python 3.11+ + pyproject, CORS, /health, Pydantic ProteinSummary, stub modules for parser/analytics/rcsb/alphafold/uniprot/storage, pytest test_health passing) | P0 | 2026-05-23 | `244e73f` (Codex subagent) |
 
 ---
 
