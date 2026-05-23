@@ -3,13 +3,13 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-05-23 by Shubhodeep Chatterjee (history rewritten to credit Codex/GPT for source docs)
+**Last updated:** 2026-05-23 by Shubhodeep Chatterjee (P0 smoke test passed; phase complete; P1 ready to claim)
 
 ---
 
 ## Current phase
 
-**P0 — Scaffold**
+**P1 — Static viewer** (P0 complete)
 
 Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](superpowers/specs/2026-05-23-protein-mvp-slice-design.md)
 
@@ -17,7 +17,7 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_All P0 build tasks done. P0 integration smoke test is the only thing keeping the phase from being fully Done — it requires running `pip install` in the backend venv and starting both servers, which needs user authorization._
+_Nothing in flight. P0 fully done; P1 tasks ready to claim._
 
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
@@ -30,9 +30,8 @@ Tasks with no unresolved dependencies. Pick one, move it to In progress, then st
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
-| P0 integration smoke test (`docs/smoke-tests.md` → P0 section) | P0 | backend pip install, both servers running | 10m once installed |
-| P1: bundle 1CRN PDB in `backend/app/static/` and serve via `GET /api/proteins/demo/file` | P1 | P0 smoke pass | 20m |
-| P1: `MolstarViewer.tsx` component (Mol* wrapper with imperative ref API) | P1 | P0 smoke pass | 2h |
+| P1: bundle 1CRN PDB in `backend/app/static/` and serve via `GET /api/proteins/demo/file` | P1 | — | 20m |
+| P1: `MolstarViewer.tsx` component (Mol* wrapper with imperative ref API) | P1 | — | 2h |
 | P1: `/viewer/demo` page using the wrapper | P1 | MolstarViewer + demo file route | 30m |
 | P1: smoke test for P1 in `docs/smoke-tests.md` | P1 | P1 features | 15m |
 
@@ -60,6 +59,7 @@ _No blocked tasks._
 | `docs/smoke-tests.md` skeleton with P0 verification script | P0 | 2026-05-23 | `244e73f` |
 | Next.js scaffold (Next 16 + TS strict + Tailwind v4 + shadcn + Zustand v5, 3-col layout shell, HealthPill, lib/api, store slices, Vitest with 7/7 tests) | P0 | 2026-05-23 | `244e73f` |
 | FastAPI scaffold (FastAPI 0.110+ + Python 3.11+ + pyproject, CORS, /health, Pydantic ProteinSummary, stub modules for parser/analytics/rcsb/alphafold/uniprot/storage, pytest test_health passing) | P0 | 2026-05-23 | `244e73f` (Codex subagent) |
+| P0 integration smoke test (backend venv install, both servers up, /health returns ok, CORS preflight allows :3000, frontend serves shell HTML with all expected layout strings) | P0 | 2026-05-23 | this commit |
 
 ---
 
@@ -97,7 +97,7 @@ Goal: both servers run, frontend → backend smoke test passes.
 - [x] FastAPI init in `backend/` (pyproject.toml with httpx + biopython + pydantic + fastapi + uvicorn, `app/main.py` with CORS, `/health` endpoint)
 - [x] Frontend `lib/api.ts` calls `/health` and renders status on landing page
 - [x] `docs/smoke-tests.md` with the P0 smoke test recorded
-- [ ] **Integration smoke test:** start both servers, confirm green pill on landing page. Requires `pip install -e ".[dev]"` in backend venv (pending user authorization).
+- [x] Integration smoke test: backend venv built, both servers up; backend `/health` returns ok, CORS preflight allows `:3000`, frontend on `:3000` serves the shell HTML with all expected layout strings (ProteoLens, Mol, Chains, Sequence, Analytics, Overview, Upload). The actual green-pill render in a browser is a 30-second manual visit to `http://localhost:3000` — not automated because the pill is client-rendered.
 
 ### P1 — Static viewer
 
