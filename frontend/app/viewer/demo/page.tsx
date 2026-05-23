@@ -1,0 +1,148 @@
+"use client";
+
+import React, { useRef, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { Atom, RotateCcw, Loader2 } from "lucide-react";
+import type {
+  MolstarViewerRef,
+  MolstarRepresentation,
+} from "@/components/molstar-viewer";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
+// Mol* must be dynamically imported (no SSR — it touches WebGL/window).
+const MolstarViewer = dynamic(() => import("@/components/molstar-viewer"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center bg-zinc-950">
+      <Loader2 className="size-6 animate-spin text-zinc-500" />
+    </div>
+  ),
+});
+
+const REPR_OPTIONS: readonly MolstarRepresentation[] = [
+  "cartoon",
+  "surface",
+  "stick",
+  "ball-stick",
+  "spacefill",
+] as const;
+
+const DEMO_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
+  "http://localhost:8000";
+
+export default function DemoViewerPage() {
+  const viewerRef = useRef<MolstarViewerRef>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [repr, setRepr] = useState<MolstarRepresentation>("cartoon");
+
+  useEffect(() => {
+    // Mol* mounts asynchronously inside the dynamic component. Give it a tick
+    // so the imperative ref is wired before we issue loadStructure().
+    const timer = window.setTimeout(async () => {
+      if (!viewerRef.current) {
+        setError("Viewer failed to initialize.");
+        setLoading(false);
+        return;
+      }
+      try {
+        await viewerRef.current.loadStructure(
+          `${DEMO_URL}/api/proteins/demo/file`,
+          "pdb",
+        );
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        setError("Could not load demo structure. Is the backend running?");
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  function handleRepr(type: MolstarRepresentation) {
+    setRepr(type);
+    viewerRef.current?.setRepresentation(type);
+  }
+
+  return (
+    <>
+      {/* Mol* ships a bundled CSS — load it as a static asset so the viewer
+          UI inherits its own theme without touching the global Tailwind layer. */}
+      <link rel="stylesheet" href="/molstar.css" />
+
+      <div className="flex h-screen flex-col bg-zinc-950 text-zinc-100">
+        {/* Toolbar */}
+        <header className="flex h-12 shrink-0 items-center gap-3 border-b border-zinc-800 px-4">
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-100"
+          >
+            <Atom className="size-4" aria-hidden />
+            <span className="font-semibold">ProteoLens</span>
+          </Link>
+          <span aria-hidden className="text-zinc-700">
+            /
+          </span>
+          <span className="text-sm font-medium">
+            1CRN &mdash; Crambin (demo)
+          </span>
+          <Badge
+            variant="outline"
+            className="ml-1 border-zinc-700 text-[10px] text-zinc-400 uppercase"
+          >
+            P1
+          </Badge>
+
+          <div className="ml-auto flex items-center gap-1.5">
+            {REPR_OPTIONS.map((r) => (
+              <Button
+                key={r}
+                size="sm"
+                variant={repr === r ? "secondary" : "ghost"}
+                className="h-7 text-xs"
+                onClick={() => handleRepr(r)}
+              >
+                {r}
+              </Button>
+            ))}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7"
+              onClick={() => viewerRef.current?.resetCamera()}
+              title="Reset camera"
+              aria-label="Reset camera"
+            >
+              <RotateCcw className="size-3.5" aria-hidden />
+            </Button>
+          </div>
+        </header>
+
+        {/* Viewer area */}
+        <div className="relative flex-1 overflow-hidden">
+          {loading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-950/80">
+              <div className="flex flex-col items-center gap-2 text-zinc-400">
+                <Loader2 className="size-6 animate-spin" aria-hidden />
+                <span className="text-xs">Loading 1CRN&hellip;</span>
+              </div>
+            </div>
+          )}
+          {error && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-950/90">
+              <p className="max-w-xs text-center text-sm text-red-400">
+                {error}
+              </p>
+            </div>
+          )}
+          <MolstarViewer ref={viewerRef} className="h-full w-full" />
+        </div>
+      </div>
+    </>
+  );
+}
