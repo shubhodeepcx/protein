@@ -3,13 +3,13 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-05-23 by Shubhodeep Chatterjee (P0 smoke test passed; phase complete; P1 ready to claim)
+**Last updated:** 2026-05-24 by Shubhodeep Chatterjee (P1 complete — crambin renders, build/lint/tests green; P2 ready to claim)
 
 ---
 
 ## Current phase
 
-**P1 — Static viewer** (P0 complete)
+**P2 — Upload + parse** (P1 complete)
 
 Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](superpowers/specs/2026-05-23-protein-mvp-slice-design.md)
 
@@ -17,7 +17,7 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in flight. P0 fully done; P1 tasks ready to claim._
+_Nothing in flight. P1 fully done; P2 tasks ready to claim._
 
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
@@ -30,10 +30,14 @@ Tasks with no unresolved dependencies. Pick one, move it to In progress, then st
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
-| P1: bundle 1CRN PDB in `backend/app/static/` and serve via `GET /api/proteins/demo/file` | P1 | — | 20m |
-| P1: `MolstarViewer.tsx` component (Mol* wrapper with imperative ref API) | P1 | — | 2h |
-| P1: `/viewer/demo` page using the wrapper | P1 | MolstarViewer + demo file route | 30m |
-| P1: smoke test for P1 in `docs/smoke-tests.md` | P1 | P1 features | 15m |
+| P2: `DropZone.tsx` with client-side validation (extension, size) | P2 | — | 1h |
+| P2: `services/parser.py` (BioPython, returns `ProteinSummary`) | P2 | — | 2h |
+| P2: `services/storage/local.py` (UUID-keyed) | P2 | — | 30m |
+| P2: `POST /api/proteins/upload` | P2 | parser + storage | 1h |
+| P2: `GET /api/proteins/{id}` + `GET /api/proteins/{id}/file` | P2 | storage | 30m |
+| P2: `/viewer/[id]` page loads from API | P2 | upload endpoints | 1h |
+| P2: backend pytest — 1CRN parser test | P2 | parser | 30m |
+| P2: smoke test for P2 in `docs/smoke-tests.md` | P2 | P2 features | 15m |
 
 ---
 
@@ -59,7 +63,10 @@ _No blocked tasks._
 | `docs/smoke-tests.md` skeleton with P0 verification script | P0 | 2026-05-23 | `244e73f` |
 | Next.js scaffold (Next 16 + TS strict + Tailwind v4 + shadcn + Zustand v5, 3-col layout shell, HealthPill, lib/api, store slices, Vitest with 7/7 tests) | P0 | 2026-05-23 | `244e73f` |
 | FastAPI scaffold (FastAPI 0.110+ + Python 3.11+ + pyproject, CORS, /health, Pydantic ProteinSummary, stub modules for parser/analytics/rcsb/alphafold/uniprot/storage, pytest test_health passing) | P0 | 2026-05-23 | `244e73f` (Codex subagent) |
-| P0 integration smoke test (backend venv install, both servers up, /health returns ok, CORS preflight allows :3000, frontend serves shell HTML with all expected layout strings) | P0 | 2026-05-23 | this commit |
+| P0 integration smoke test (backend venv install, both servers up, /health returns ok, CORS preflight allows :3000, frontend serves shell HTML with all expected layout strings) | P0 | 2026-05-23 | `e386c0a` |
+| P1: 1CRN.pdb bundled in `backend/app/static/`; `GET /api/proteins/demo/file` returns chemical/x-pdb; 3 pytest tests pass | P1 | 2026-05-24 | `e411039` |
+| P1: `MolstarViewer.tsx` forwardRef component (Mol* 5.9.0, `loadStructure`, `resetCamera`, `setRepresentation`, `setColoring`); `/viewer/demo` page with toolbar + loading/error overlay; Next.js build + lint + 7/7 tests green | P1 | 2026-05-24 | `bac1f80` |
+| P1: smoke test written in `docs/smoke-tests.md`; tracker updated to P2 | P1 | 2026-05-24 | this commit |
 
 ---
 
@@ -103,11 +110,11 @@ Goal: both servers run, frontend → backend smoke test passes.
 
 Goal: open `/viewer/demo` and rotate a real 3D crambin.
 
-- [ ] Bundle 1CRN PDB in `backend/app/static/`
-- [ ] `GET /api/proteins/demo/file` serves the bundled file
-- [ ] `MolstarViewer.tsx` component with `loadStructure`, `setRepresentation`, `setColoring`, `resetCamera` imperative API
-- [ ] `/viewer/demo` page using the wrapper
-- [ ] P1 smoke test in `docs/smoke-tests.md`
+- [x] Bundle 1CRN PDB in `backend/app/static/`
+- [x] `GET /api/proteins/demo/file` serves the bundled file
+- [x] `MolstarViewer.tsx` component with `loadStructure`, `setRepresentation`, `setColoring`, `resetCamera` imperative API
+- [x] `/viewer/demo` page using the wrapper
+- [x] P1 smoke test in `docs/smoke-tests.md`
 
 ### P2 — Upload + parse
 

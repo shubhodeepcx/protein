@@ -52,7 +52,43 @@ Run from the repo root (`g:\protein`) unless noted.
 
 **Goal:** open `/viewer/demo` and rotate a real 3D crambin structure.
 
-_Will be filled in when P1 starts._
+1. Start backend (if not running):
+   ```
+   cd backend
+   .\.venv\Scripts\Activate.ps1
+   uvicorn app.main:app --reload --port 8000
+   ```
+   - Visit `http://localhost:8000/api/proteins/demo/file` → browser downloads `1CRN.pdb` (~49 KB).
+
+2. Start frontend (if not running):
+   ```
+   cd frontend
+   npm run dev
+   ```
+   - Visit `http://localhost:3000/viewer/demo` → page loads with dark toolbar (ProteoLens / 1CRN — Crambin / P1 badge).
+   - Loading spinner appears briefly, then the Mol\* canvas renders crambin in cartoon representation.
+   - Drag to rotate, scroll to zoom — structure moves responsively.
+   - Click **surface**, **stick**, **ball-stick**, **spacefill** → active button highlights.
+   - Click the reset-camera (↺) button → structure re-centers.
+
+3. Stop the backend; reload `/viewer/demo`.
+   - Expect: "Could not load demo structure. Is the backend running?" overlay — no crash.
+
+4. Backend tests:
+   ```
+   cd backend
+   pytest
+   ```
+   - Expect: `test_demo_file` (3 tests) + `test_health` = 4 passed.
+
+5. Frontend tests:
+   ```
+   cd frontend
+   npm test
+   ```
+   - Expect: 7/7 pass (Mol\* itself is exercised only in the browser).
+
+**Pass criteria:** crambin renders and rotates in the browser; all automated tests pass.
 
 ---
 
