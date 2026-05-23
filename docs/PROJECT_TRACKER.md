@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-05-23 by Shubhodeep Chatterjee (initial seed from MVP slice design)
+**Last updated:** 2026-05-23 by Shubhodeep Chatterjee (P0 scaffold committed at 61c1355)
 
 ---
 
@@ -17,12 +17,10 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
+_All P0 build tasks done. P0 integration smoke test is the only thing keeping the phase from being fully Done — it requires running `pip install` in the backend venv and starting both servers, which needs user authorization._
+
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
-| Next.js scaffold (App Router, TS, Tailwind, shadcn init, 3-col layout shell, `/health` fetch) | shubhodeep | main (orchestrated) | wip | Dispatched 2026-05-23 — non-overlapping with backend |
-| FastAPI scaffold (project layout, `/health`, CORS, pyproject.toml, stub modules) | codex (subagent) | main (orchestrated) | wip | Dispatched 2026-05-23 — non-overlapping with frontend |
-| Repo root README | shubhodeep | main | wip | Done after subagents complete so it can reference real scaffold |
-| Smoke-test doc skeleton (`docs/smoke-tests.md`) | shubhodeep | main | wip | Done in parallel with subagents |
 
 ---
 
@@ -32,8 +30,11 @@ Tasks with no unresolved dependencies. Pick one, move it to In progress, then st
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
-
-_(P0 tasks all claimed — see In progress)_
+| P0 integration smoke test (`docs/smoke-tests.md` → P0 section) | P0 | backend pip install, both servers running | 10m once installed |
+| P1: bundle 1CRN PDB in `backend/app/static/` and serve via `GET /api/proteins/demo/file` | P1 | P0 smoke pass | 20m |
+| P1: `MolstarViewer.tsx` component (Mol* wrapper with imperative ref API) | P1 | P0 smoke pass | 2h |
+| P1: `/viewer/demo` page using the wrapper | P1 | MolstarViewer + demo file route | 30m |
+| P1: smoke test for P1 in `docs/smoke-tests.md` | P1 | P1 features | 15m |
 
 ---
 
@@ -51,9 +52,14 @@ _No blocked tasks._
 | Task | Phase | Date | PR / commit |
 |---|---|---|---|
 | Source docs imported (spec.md, sdlc.md, project_report.md) | pre-P0 | 2026-05-23 | initial extract |
-| MVP slice design (this spec) | pre-P0 | 2026-05-23 | `docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md` |
-| AGENTS.md created | pre-P0 | 2026-05-23 | initial seed |
-| PROJECT_TRACKER.md created | pre-P0 | 2026-05-23 | initial seed |
+| MVP slice design | pre-P0 | 2026-05-23 | `0678ae8` |
+| AGENTS.md created | pre-P0 | 2026-05-23 | `0678ae8` |
+| PROJECT_TRACKER.md created | pre-P0 | 2026-05-23 | `0678ae8` |
+| Repo `.gitignore` (root) | P0 | 2026-05-23 | `0678ae8`, refined in `61c1355` |
+| Repo root `README.md` | P0 | 2026-05-23 | `61c1355` |
+| `docs/smoke-tests.md` skeleton with P0 verification script | P0 | 2026-05-23 | `61c1355` |
+| Next.js scaffold (Next 16 + TS strict + Tailwind v4 + shadcn + Zustand v5, 3-col layout shell, HealthPill, lib/api, store slices, Vitest with 7/7 tests) | P0 | 2026-05-23 | `61c1355` |
+| FastAPI scaffold (FastAPI 0.110+ + Python 3.11+ + pyproject, CORS, /health, Pydantic ProteinSummary, stub modules for parser/analytics/rcsb/alphafold/uniprot/storage, pytest test_health passing) | P0 | 2026-05-23 | `61c1355` (Codex subagent) |
 
 ---
 
@@ -72,6 +78,11 @@ Append-only. Never edit past entries — supersede with a new entry referencing 
 | 2026-05-23 | Local disk UUID-keyed file storage | Trivial; defer MinIO/S3 until deployment | yes |
 | 2026-05-23 | Read secondary structure from PDB HELIX/SHEET headers; defer DSSP | Avoid native binary dependency in P0–P3 | yes — DSSP slice later |
 | 2026-05-23 | Recharts for charts (not Plotly/ECharts) | Smaller bundle, more idiomatic React | yes |
+| 2026-05-23 | Next.js 16 (not 14) | Latest stable when scaffolded; App Router unchanged; Next 16 removed `next lint` so `lint` script runs `tsc --noEmit` | yes |
+| 2026-05-23 | shadcn CLI defaults (style `base-nova`, base color `neutral`) | Current shadcn CLI no longer exposes "New York" / "Slate" flags from spec; `neutral` is essentially slate without the blue tint | yes |
+| 2026-05-23 | Zustand v5 (not v4) | npm latest; slice composition pattern unchanged | yes |
+| 2026-05-23 | Tailwind v4 (default from create-next-app) | Modern PostCSS-based; CSS variables on; works cleanly with shadcn | yes |
+| 2026-05-23 | next-themes for theme provider; dark mode default | Canonical shadcn integration; sci tool reads better dark | yes |
 
 ---
 
@@ -81,11 +92,12 @@ Append-only. Never edit past entries — supersede with a new entry referencing 
 
 Goal: both servers run, frontend → backend smoke test passes.
 
-- [ ] Repo root README + .gitignore
-- [ ] Next.js init in `frontend/` (App Router, TS strict, Tailwind, shadcn/ui base)
-- [ ] FastAPI init in `backend/` (pyproject.toml with httpx + biopython + pydantic + fastapi + uvicorn, `app/main.py` with CORS, `/health` endpoint)
-- [ ] Frontend `lib/api.ts` calls `/health` and renders status on landing page
-- [ ] `docs/smoke-tests.md` with the P0 smoke test recorded
+- [x] Repo root README + .gitignore
+- [x] Next.js init in `frontend/` (App Router, TS strict, Tailwind, shadcn/ui base)
+- [x] FastAPI init in `backend/` (pyproject.toml with httpx + biopython + pydantic + fastapi + uvicorn, `app/main.py` with CORS, `/health` endpoint)
+- [x] Frontend `lib/api.ts` calls `/health` and renders status on landing page
+- [x] `docs/smoke-tests.md` with the P0 smoke test recorded
+- [ ] **Integration smoke test:** start both servers, confirm green pill on landing page. Requires `pip install -e ".[dev]"` in backend venv (pending user authorization).
 
 ### P1 — Static viewer
 
