@@ -17,10 +17,12 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing claimed yet. Agents: move a task here with owner + branch name **before** touching code._
-
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
+| Next.js scaffold (App Router, TS, Tailwind, shadcn init, 3-col layout shell, `/health` fetch) | shubhodeep | main (orchestrated) | wip | Dispatched 2026-05-23 — non-overlapping with backend |
+| FastAPI scaffold (project layout, `/health`, CORS, pyproject.toml, stub modules) | codex (subagent) | main (orchestrated) | wip | Dispatched 2026-05-23 — non-overlapping with frontend |
+| Repo root README | shubhodeep | main | wip | Done after subagents complete so it can reference real scaffold |
+| Smoke-test doc skeleton (`docs/smoke-tests.md`) | shubhodeep | main | wip | Done in parallel with subagents |
 
 ---
 
@@ -30,10 +32,8 @@ Tasks with no unresolved dependencies. Pick one, move it to In progress, then st
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
-| Next.js scaffold (App Router, TS, Tailwind, shadcn init) | P0 | none | 1h |
-| FastAPI scaffold (project layout, `/health`, CORS, pyproject.toml) | P0 | none | 45m |
-| Repo root README + .gitignore | P0 | none | 20m |
-| Smoke-test doc skeleton (`docs/smoke-tests.md`) | P0 | none | 20m |
+
+_(P0 tasks all claimed — see In progress)_
 
 ---
 

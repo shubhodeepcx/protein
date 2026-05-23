@@ -18,8 +18,9 @@ venv/
 .mypy_cache/
 .ruff_cache/
 
-# Runtime storage (uploaded proteins)
-backend/storage/proteins/
+# Runtime storage (uploaded proteins) — ignore contents but keep the directory
+backend/storage/proteins/*
+!backend/storage/proteins/.gitkeep
 
 # IDE
 .vscode/

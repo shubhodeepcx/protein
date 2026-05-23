@@ -1,0 +1,100 @@
+# Smoke Tests
+
+Per-phase manual checks. An agent claims a phase "Done" in `PROJECT_TRACKER.md` only when the corresponding smoke test passes — type-check and unit tests alone are not enough.
+
+Run from the repo root (`g:\protein`) unless noted.
+
+---
+
+## P0 — Scaffold
+
+**Goal:** both servers start and the frontend successfully calls the backend.
+
+1. Backend: open a terminal, run
+   ```
+   cd backend
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1        # PowerShell  (or source .venv/bin/activate on bash)
+   pip install -e ".[dev]"
+   uvicorn app.main:app --reload --port 8000
+   ```
+   - Expect: server reports `Uvicorn running on http://127.0.0.1:8000`.
+   - Visit `http://localhost:8000/health` → JSON `{"status": "ok", "service": "protein-backend", "version": "0.1.0"}`.
+   - Visit `http://localhost:8000/docs` → Swagger UI loads.
+2. Frontend: open a second terminal, run
+   ```
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   - Expect: Next.js reports `Ready in …` on port 3000.
+   - Visit `http://localhost:3000/` → page loads with header, 3-column layout shell, and a green "Backend OK" pill (because the page fetched `/health`).
+3. Stop the backend; reload the frontend page.
+   - Expect: the pill flips to red "Backend unreachable" with no crash.
+4. Backend tests:
+   ```
+   cd backend
+   pytest
+   ```
+   - Expect: `test_health` passes.
+5. Frontend tests:
+   ```
+   cd frontend
+   npm test
+   ```
+   - Expect: the selection-slice smoke test passes.
+
+**Pass criteria:** all of the above without errors.
+
+---
+
+## P1 — Static viewer
+
+**Goal:** open `/viewer/demo` and rotate a real 3D crambin structure.
+
+_Will be filled in when P1 starts._
+
+---
+
+## P2 — Upload + parse
+
+**Goal:** drag a `.pdb` file onto the landing page → see it render with chain/residue counts.
+
+_Will be filled in when P2 starts._
+
+---
+
+## P3 — Dashboard
+
+**Goal:** uploaded protein shows MW, residue count, atom count, composition bar chart, secondary-structure donut, hydrophobicity line, chain-length bar chart in the right panel.
+
+_Will be filled in when P3 starts._
+
+---
+
+## P4 — Sequence panel
+
+**Goal:** clicking a residue in the sequence panel highlights it in 3D, and clicking a residue in 3D scrolls + highlights it in the sequence panel.
+
+_Will be filled in when P4 starts._
+
+---
+
+## P5 — DB search + import
+
+**Goal:** searching "insulin" returns merged results from RCSB + AlphaFold + UniProt; clicking import lands the user in the viewer with that structure rendered.
+
+_Will be filled in when P5 starts._
+
+---
+
+## How to add a smoke test
+
+When you start a phase, replace the placeholder for that phase with the concrete steps. The steps should be the minimum sequence a fresh agent or human needs to verify the phase works end-to-end, including:
+
+- Setup commands (idempotent)
+- Expected outputs (exact strings or close)
+- Negative cases (what should fail gracefully — e.g. backend down)
+- Test commands (`pytest`, `npm test`)
+
+Keep each phase ≤ 10 steps. If it gets longer, split into multiple smoke tests.
