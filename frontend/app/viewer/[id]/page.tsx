@@ -12,10 +12,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-import type {
-  MolstarViewerRef,
-  MolstarRepresentation,
-} from "@/components/molstar-viewer";
+import type { MolstarViewerRef } from "@/components/molstar-viewer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { API_BASE_URL } from "@/lib/api";
@@ -30,14 +27,6 @@ const MolstarViewer = dynamic(() => import("@/components/molstar-viewer"), {
     </div>
   ),
 });
-
-const REPR_OPTIONS: readonly MolstarRepresentation[] = [
-  "cartoon",
-  "surface",
-  "stick",
-  "ball-stick",
-  "spacefill",
-] as const;
 
 type ViewerError = { kind: "notfound" | "other"; message: string };
 
@@ -59,8 +48,15 @@ export default function DynamicViewerPage() {
   const [structureLoading, setStructureLoading] = useState(false);
   const [structureError, setStructureError] = useState<string | null>(null);
   const [viewerReady, setViewerReady] = useState(false);
-  const [repr, setRepr] = useState<MolstarRepresentation>("cartoon");
   const [showMeta, setShowMeta] = useState(false);
+
+  // Reset viewerReady whenever the route id changes. Without this the local
+  // flag survives MolstarViewer unmount/remount on /viewer/A → /viewer/B, so
+  // the load effect below would fire against the previous plugin instance
+  // before the new one has called onReady.
+  useEffect(() => {
+    setViewerReady(false);
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -76,6 +72,9 @@ export default function DynamicViewerPage() {
     if (!viewerReady || !summary) return;
     let cancelled = false;
     setStructureLoading(true);
+    // Clear any prior structure error so a successful retry on the same id
+    // wipes the previous failure rather than stacking on top of it.
+    setStructureError(null);
 
     (async () => {
       try {
@@ -104,17 +103,12 @@ export default function DynamicViewerPage() {
   const loading = metaLoading || structureLoading;
   const error: ViewerError | null = metaError
     ? {
-        kind: metaError.toLowerCase().includes("not found") ? "notfound" : "other",
-        message: metaError,
+        kind: metaError.status === 404 ? "notfound" : "other",
+        message: metaError.message,
       }
     : structureError
       ? { kind: "other", message: structureError }
       : null;
-
-  function handleRepr(type: MolstarRepresentation) {
-    setRepr(type);
-    viewerRef.current?.setRepresentation(type);
-  }
 
   const title =
     summary?.name && summary.name.trim().length > 0
@@ -167,18 +161,12 @@ export default function DynamicViewerPage() {
               )}
               metadata
             </Button>
-            {REPR_OPTIONS.map((r) => (
-              <Button
-                key={r}
-                size="sm"
-                variant={repr === r ? "secondary" : "ghost"}
-                className="h-7 text-xs"
-                onClick={() => handleRepr(r)}
-                disabled={!summary}
-              >
-                {r}
-              </Button>
-            ))}
+            <Badge
+              variant="outline"
+              className="border-zinc-700 text-[10px] text-zinc-400 uppercase"
+            >
+              cartoon
+            </Badge>
             <Button
               size="sm"
               variant="ghost"
@@ -249,7 +237,11 @@ export default function DynamicViewerPage() {
         {/* Viewer area */}
         <div className="relative flex-1 overflow-hidden">
           {loading && !error && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-950/80">
+            <div
+              role="status"
+              aria-live="polite"
+              className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-950/80"
+            >
               <div className="flex flex-col items-center gap-2 text-zinc-400">
                 <Loader2 className="size-6 animate-spin" aria-hidden />
                 <span className="text-xs">
@@ -259,7 +251,10 @@ export default function DynamicViewerPage() {
             </div>
           )}
           {error && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-zinc-950/90 text-center">
+            <div
+              role="alert"
+              className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-zinc-950/90 text-center"
+            >
               <AlertCircle className="size-8 text-red-400" aria-hidden />
               <p className="max-w-md text-sm text-red-400">{error.message}</p>
               {isNotFound && (
