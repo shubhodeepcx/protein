@@ -10,6 +10,7 @@ import type {
 } from "@/components/molstar-viewer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { API_BASE_URL } from "@/lib/api";
 
 // Mol* must be dynamically imported (no SSR — it touches WebGL/window).
 const MolstarViewer = dynamic(() => import("@/components/molstar-viewer"), {
@@ -29,40 +30,36 @@ const REPR_OPTIONS: readonly MolstarRepresentation[] = [
   "spacefill",
 ] as const;
 
-const DEMO_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
-  "http://localhost:8000";
-
 export default function DemoViewerPage() {
   const viewerRef = useRef<MolstarViewerRef>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [repr, setRepr] = useState<MolstarRepresentation>("cartoon");
+  const [viewerReady, setViewerReady] = useState(false);
 
   useEffect(() => {
-    // Mol* mounts asynchronously inside the dynamic component. Give it a tick
-    // so the imperative ref is wired before we issue loadStructure().
-    const timer = window.setTimeout(async () => {
-      if (!viewerRef.current) {
-        setError("Viewer failed to initialize.");
-        setLoading(false);
-        return;
-      }
+    if (!viewerReady) return;
+    let cancelled = false;
+
+    (async () => {
       try {
-        await viewerRef.current.loadStructure(
-          `${DEMO_URL}/api/proteins/demo/file`,
+        await viewerRef.current!.loadStructure(
+          `${API_BASE_URL}/api/proteins/demo/file`,
           "pdb",
         );
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e);
-        setError("Could not load demo structure. Is the backend running?");
+      } catch {
+        if (!cancelled) {
+          setError("Could not load demo structure. Is the backend running?");
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    }, 300);
-    return () => window.clearTimeout(timer);
-  }, []);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [viewerReady]);
 
   function handleRepr(type: MolstarRepresentation) {
     setRepr(type);
@@ -140,7 +137,11 @@ export default function DemoViewerPage() {
               </p>
             </div>
           )}
-          <MolstarViewer ref={viewerRef} className="h-full w-full" />
+          <MolstarViewer
+            ref={viewerRef}
+            className="h-full w-full"
+            onReady={() => setViewerReady(true)}
+          />
         </div>
       </div>
     </>
