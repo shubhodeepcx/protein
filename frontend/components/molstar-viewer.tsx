@@ -33,12 +33,18 @@ export interface MolstarViewerRef {
 export interface MolstarViewerProps {
   className?: string;
   style?: React.CSSProperties;
+  onReady?: () => void;
 }
 
 const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
-  function MolstarViewer({ className, style }, ref) {
+  function MolstarViewer({ className, style, onReady }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
     const pluginRef = useRef<PluginUIContext | null>(null);
+    const onReadyRef = useRef(onReady);
+    // Keep ref in sync without re-running the init effect.
+    useEffect(() => {
+      onReadyRef.current = onReady;
+    }, [onReady]);
 
     useEffect(() => {
       const target = containerRef.current;
@@ -74,6 +80,7 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
         }
         pluginInstance = plugin;
         pluginRef.current = plugin;
+        onReadyRef.current?.();
       }
 
       init().catch((err) => {
@@ -111,18 +118,13 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
         );
       },
 
-      setRepresentation(type: MolstarRepresentation) {
+      setRepresentation(_type: MolstarRepresentation) {
         // Imperative representation switching is wired in P4 alongside the
-        // selection slice. Logged here so the toolbar can demonstrate state
-        // changes without a full Mol* state diff.
-        // eslint-disable-next-line no-console
-        console.log("[MolstarViewer] setRepresentation:", type);
+        // selection slice.
       },
 
-      setColoring(scheme: MolstarColoring) {
+      setColoring(_scheme: MolstarColoring) {
         // Imperative coloring is wired in P4 alongside the selection slice.
-        // eslint-disable-next-line no-console
-        console.log("[MolstarViewer] setColoring:", scheme);
       },
 
       resetCamera() {

@@ -18,8 +18,8 @@ import type {
 } from "@/components/molstar-viewer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { apiGet, ApiError, API_BASE_URL } from "@/lib/api";
-import type { ProteinSummary } from "@/lib/types";
+import { API_BASE_URL } from "@/lib/api";
+import { useStore } from "@/lib/store";
 
 // Mol* must be dynamically imported (no SSR — it touches WebGL/window).
 const MolstarViewer = dynamic(() => import("@/components/molstar-viewer"), {
@@ -46,78 +46,70 @@ export default function DynamicViewerPage() {
   const id = params.id;
 
   const viewerRef = useRef<MolstarViewerRef>(null);
-  const [summary, setSummary] = useState<ProteinSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<ViewerError | null>(null);
+
+  // Protein metadata lives in the shared Zustand store so other surfaces
+  // (sidebars, future selection panels) can read the same `current` protein.
+  const summary = useStore((s) => s.current);
+  const metaLoading = useStore((s) => s.isLoading);
+  const metaError = useStore((s) => s.error);
+  const loadProtein = useStore((s) => s.loadProtein);
+  const clearProtein = useStore((s) => s.clearProtein);
+
+  // Mol*-specific load state stays local — it's not shareable across surfaces.
+  const [structureLoading, setStructureLoading] = useState(false);
+  const [structureError, setStructureError] = useState<string | null>(null);
+  const [viewerReady, setViewerReady] = useState(false);
   const [repr, setRepr] = useState<MolstarRepresentation>("cartoon");
   const [showMeta, setShowMeta] = useState(false);
 
-  // Fetch metadata.
   useEffect(() => {
     if (!id) return;
+    void loadProtein(id);
+    return () => {
+      clearProtein();
+    };
+    // loadProtein/clearProtein are stable Zustand actions; depending only on id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  useEffect(() => {
+    if (!viewerReady || !summary) return;
     let cancelled = false;
+    setStructureLoading(true);
 
     (async () => {
       try {
-        const s = await apiGet<ProteinSummary>(`/api/proteins/${id}`);
-        if (cancelled) return;
-        setSummary(s);
+        await viewerRef.current!.loadStructure(
+          `${API_BASE_URL}${summary.file_url}`,
+          summary.file_format,
+        );
       } catch (e) {
-        if (cancelled) return;
-        if (e instanceof ApiError && e.status === 404) {
-          setError({ kind: "notfound", message: `Protein ${id} not found` });
-        } else {
-          setError({
-            kind: "other",
-            message: e instanceof Error ? e.message : String(e),
-          });
+        if (!cancelled) {
+          setStructureError(
+            `Could not load structure: ${
+              e instanceof Error ? e.message : String(e)
+            }`,
+          );
         }
-        setLoading(false);
+      } finally {
+        if (!cancelled) setStructureLoading(false);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [viewerReady, summary]);
 
-  // Once summary is in, load the structure into Mol*.
-  useEffect(() => {
-    if (!summary) return;
-    let cancelled = false;
-    const timer = window.setTimeout(async () => {
-      if (cancelled) return;
-      if (!viewerRef.current) {
-        setError({ kind: "other", message: "Viewer failed to initialize." });
-        setLoading(false);
-        return;
+  const loading = metaLoading || structureLoading;
+  const error: ViewerError | null = metaError
+    ? {
+        kind: metaError.toLowerCase().includes("not found") ? "notfound" : "other",
+        message: metaError,
       }
-      try {
-        await viewerRef.current.loadStructure(
-          `${API_BASE_URL}/api/proteins/${id}/file`,
-          summary.file_format,
-        );
-      } catch (e) {
-        if (!cancelled) {
-          // eslint-disable-next-line no-console
-          console.error(e);
-          setError({
-            kind: "other",
-            message: `Could not load structure: ${
-              e instanceof Error ? e.message : String(e)
-            }`,
-          });
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }, 300);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [summary, id]);
+    : structureError
+      ? { kind: "other", message: structureError }
+      : null;
 
   function handleRepr(type: MolstarRepresentation) {
     setRepr(type);
@@ -281,7 +273,11 @@ export default function DynamicViewerPage() {
             </div>
           )}
           {summary && !error && (
-            <MolstarViewer ref={viewerRef} className="h-full w-full" />
+            <MolstarViewer
+              ref={viewerRef}
+              className="h-full w-full"
+              onReady={() => setViewerReady(true)}
+            />
           )}
         </div>
       </div>
