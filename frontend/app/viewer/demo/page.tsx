@@ -4,10 +4,7 @@ import React, { useRef, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Atom, RotateCcw, Loader2 } from "lucide-react";
-import type {
-  MolstarViewerRef,
-  MolstarRepresentation,
-} from "@/components/molstar-viewer";
+import type { MolstarViewerRef } from "@/components/molstar-viewer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { API_BASE_URL } from "@/lib/api";
@@ -22,19 +19,10 @@ const MolstarViewer = dynamic(() => import("@/components/molstar-viewer"), {
   ),
 });
 
-const REPR_OPTIONS: readonly MolstarRepresentation[] = [
-  "cartoon",
-  "surface",
-  "stick",
-  "ball-stick",
-  "spacefill",
-] as const;
-
 export default function DemoViewerPage() {
   const viewerRef = useRef<MolstarViewerRef>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [repr, setRepr] = useState<MolstarRepresentation>("cartoon");
   const [viewerReady, setViewerReady] = useState(false);
 
   useEffect(() => {
@@ -60,11 +48,6 @@ export default function DemoViewerPage() {
       cancelled = true;
     };
   }, [viewerReady]);
-
-  function handleRepr(type: MolstarRepresentation) {
-    setRepr(type);
-    viewerRef.current?.setRepresentation(type);
-  }
 
   return (
     <>
@@ -96,17 +79,12 @@ export default function DemoViewerPage() {
           </Badge>
 
           <div className="ml-auto flex items-center gap-1.5">
-            {REPR_OPTIONS.map((r) => (
-              <Button
-                key={r}
-                size="sm"
-                variant={repr === r ? "secondary" : "ghost"}
-                className="h-7 text-xs"
-                onClick={() => handleRepr(r)}
-              >
-                {r}
-              </Button>
-            ))}
+            <Badge
+              variant="outline"
+              className="border-zinc-700 text-[10px] text-zinc-400 uppercase"
+            >
+              cartoon
+            </Badge>
             <Button
               size="sm"
               variant="ghost"
@@ -123,7 +101,11 @@ export default function DemoViewerPage() {
         {/* Viewer area */}
         <div className="relative flex-1 overflow-hidden">
           {loading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-950/80">
+            <div
+              role="status"
+              aria-live="polite"
+              className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-950/80"
+            >
               <div className="flex flex-col items-center gap-2 text-zinc-400">
                 <Loader2 className="size-6 animate-spin" aria-hidden />
                 <span className="text-xs">Loading 1CRN&hellip;</span>
@@ -131,7 +113,10 @@ export default function DemoViewerPage() {
             </div>
           )}
           {error && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-950/90">
+            <div
+              role="alert"
+              className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-950/90"
+            >
               <p className="max-w-xs text-center text-sm text-red-400">
                 {error}
               </p>

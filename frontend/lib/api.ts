@@ -27,7 +27,6 @@ export class ApiError extends Error {
 }
 
 function joinUrl(path: string): string {
-  if (/^https?:\/\//i.test(path)) return path;
   const normalized = path.startsWith("/") ? path : `/${path}`;
   return `${API_BASE_URL}${normalized}`;
 }

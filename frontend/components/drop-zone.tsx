@@ -126,7 +126,7 @@ export function DropZone({ className }: { className?: string }) {
       onDragEnter={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`relative flex w-full max-w-2xl cursor-pointer flex-col items-center justify-center border-2 border-dashed p-10 transition-colors ${
+      className={`relative flex w-full max-w-2xl cursor-pointer flex-col items-center justify-center border-2 border-dashed p-10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
         isDragging
           ? "border-primary bg-primary/5"
           : "border-border/60 hover:border-border"

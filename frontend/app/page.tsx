@@ -67,10 +67,13 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* 3-column workspace shell */}
-      <main className="grid flex-1 grid-cols-[18rem_1fr_24rem] overflow-hidden">
-        {/* Left sidebar */}
-        <aside className="flex w-72 flex-col border-r border-border/60 bg-card/30">
+      {/* Responsive workspace shell.
+          - mobile (<md): single column, both side panels hidden
+          - tablet (md..xl): left rail + center, right panel hidden
+          - desktop (xl+): full three-column layout */}
+      <main className="grid flex-1 grid-cols-1 overflow-hidden md:grid-cols-[16rem_1fr] xl:grid-cols-[18rem_1fr_24rem]">
+        {/* Left sidebar — hidden on mobile, narrower on tablet */}
+        <aside className="hidden w-full flex-col border-r border-border/60 bg-card/30 md:flex xl:w-72">
           <div className="flex items-center justify-between px-4 py-3">
             <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               Chains &amp; residues
@@ -107,8 +110,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Right tabbed panel */}
-        <aside className="flex w-96 flex-col border-l border-border/60 bg-card/30">
+        {/* Right tabbed panel — desktop only (xl+) */}
+        <aside className="hidden w-96 flex-col border-l border-border/60 bg-card/30 xl:flex">
           <Tabs defaultValue="overview" className="flex h-full flex-col gap-0">
             <TabsList className="m-3 w-[calc(100%-1.5rem)] shrink-0">
               <TabsTrigger value="overview">Overview</TabsTrigger>
