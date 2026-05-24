@@ -38,12 +38,13 @@ async def test_parse_1crn_chain_a() -> None:
 
 @pytest.mark.asyncio
 async def test_parse_1crn_header_metadata() -> None:
-    """1CRN has COMPND/SOURCE — parser should populate name and organism."""
     summary = await parse(PDB_PATH, uid="t3", source="uploaded")
-    # name comes from compound molecule field; allow either case
-    assert summary.name is None or "CRAMBIN" in summary.name.upper()
-    # organism from SOURCE record
-    assert summary.organism is None or "CRAMBE" in summary.organism.upper()
+    # 1CRN has COMPND/SOURCE records; parser should extract them.
+    # If both are None, the header extraction path is broken.
+    assert summary.name is not None, "Expected name from 1CRN COMPND record"
+    assert "CRAMBIN" in summary.name.upper()
+    assert summary.organism is not None, "Expected organism from 1CRN SOURCE record"
+    assert "CRAMBE" in summary.organism.upper()
 
 
 @pytest.mark.asyncio

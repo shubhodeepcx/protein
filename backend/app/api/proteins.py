@@ -13,12 +13,11 @@ router = APIRouter(prefix="/proteins", tags=["proteins"])
 
 _STATIC = Path(__file__).parent.parent / "static"
 
-# In-memory cache: uid -> ProteinSummary. Resets on server restart; persistence
-# is a later slice.
+# Persistence is a later slice — this dict resets on restart.
 _SUMMARY_CACHE: dict[str, ProteinSummary] = {}
 
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
-ALLOWED_EXTS = {"pdb", "cif", "mmcif"}
+_ALLOWED_EXTS = {"pdb", "cif", "mmcif"}
 
 
 @router.get("/demo/file")
@@ -33,10 +32,10 @@ def get_demo_file() -> FileResponse:
 async def upload_protein(file: UploadFile = File(...)) -> ProteinSummary:
     filename = file.filename or ""
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
-    if ext not in ALLOWED_EXTS:
+    if ext not in _ALLOWED_EXTS:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported file extension '{ext}'. Allowed: {sorted(ALLOWED_EXTS)}",
+            detail=f"Unsupported file extension. Allowed: pdb, cif, mmcif",
         )
 
     content = await file.read()
@@ -45,25 +44,25 @@ async def upload_protein(file: UploadFile = File(...)) -> ProteinSummary:
     if len(content) > MAX_UPLOAD_BYTES:
         raise HTTPException(
             status_code=413,
-            detail=f"File too large ({len(content)} bytes). Max {MAX_UPLOAD_BYTES} bytes.",
+            detail=f"File too large ({len(content) // 1024} KB). Max 50 MB.",
         )
 
     try:
         uid, stored_path = storage.store_upload(content, ext)
-    except ValueError as exc:
+    except (ValueError, OSError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     try:
         summary = await parser.parse(stored_path, uid=uid, source="uploaded")
     except Exception as exc:  # noqa: BLE001
-        # Clean up the stored file if parsing fails so we don't leak disk space.
         try:
             stored_path.unlink(missing_ok=True)
         except OSError:
             pass
+        # Don't leak internal path from exc — use a generic message.
         raise HTTPException(
             status_code=400,
-            detail=f"Failed to parse structure: {exc}",
+            detail="Failed to parse structure file. Check the file is a valid PDB or mmCIF.",
         ) from exc
 
     _SUMMARY_CACHE[uid] = summary
@@ -72,9 +71,14 @@ async def upload_protein(file: UploadFile = File(...)) -> ProteinSummary:
 
 @router.get("/{uid}", response_model=ProteinSummary)
 def get_protein(uid: str) -> ProteinSummary:
+    # Validate format before cache lookup to avoid reflecting attacker input in 404 detail.
+    try:
+        storage._validate_uid(uid)  # noqa: SLF001
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Protein not found")
     summary = _SUMMARY_CACHE.get(uid)
     if not summary:
-        raise HTTPException(status_code=404, detail=f"Protein {uid} not found")
+        raise HTTPException(status_code=404, detail="Protein not found")
     return summary
 
 
@@ -82,11 +86,8 @@ def get_protein(uid: str) -> ProteinSummary:
 def get_protein_file(uid: str) -> FileResponse:
     try:
         path = storage.get_file(uid)
-    except FileNotFoundError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"File for {uid} not found",
-        ) from exc
+    except (FileNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail="File not found") from exc
 
     ext = path.suffix.lower().lstrip(".")
     media_type = "chemical/x-pdb" if ext == "pdb" else "chemical/x-mmcif"

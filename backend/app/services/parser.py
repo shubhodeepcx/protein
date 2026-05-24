@@ -163,11 +163,15 @@ async def parse(
         except Exception as exc:  # noqa: BLE001
             warnings.append(f"MW failed for chain {ch.label}: {exc}")
 
-    # pLDDT heuristic: AlphaFold writes per-atom confidence in the B-factor column,
-    # always within (0, 100]. Require at least ~10 atoms before deciding.
-    has_plddt = len(b_factors) >= 10 and atom_count > 0 and len(b_factors) == atom_count
-
     name, organism = _extract_header_strings(structure)
+
+    # pLDDT heuristic: trust the header over B-factor pattern.
+    # B-factor range alone is not reliable for distinguishing AlphaFold from X-ray.
+    header = getattr(structure, "header", None) or {}
+    header_str = str(header).upper()
+    has_plddt = "ALPHAFOLD" in header_str or (
+        source == "alphafold"  # explicit when coming from P5 AlphaFold import
+    )
 
     return ProteinSummary(
         id=uid,
