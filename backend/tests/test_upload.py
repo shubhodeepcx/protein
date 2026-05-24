@@ -51,17 +51,14 @@ def test_upload_rejects_unknown_extension() -> None:
     assert r.status_code == 400
 
 
-def test_upload_garbage_pdb_returns_empty_structure() -> None:
-    """BioPython parses garbage PDB as an empty structure rather than erroring."""
+def test_upload_rejects_garbage_pdb_content() -> None:
+    """Non-PDB content parses to an empty structure — the route should reject it 400."""
     r = client.post(
         "/api/proteins/upload",
         files={"file": ("garbage.pdb", b"this is not a pdb file", "chemical/x-pdb")},
     )
-    assert r.status_code == 200, r.text
-    body = r.json()
-    assert body["residue_count"] == 0
-    assert body["atom_count"] == 0
-    assert body["source"] == "uploaded"
+    assert r.status_code == 400, r.text
+    assert "Could not parse" in r.json()["detail"]
 
 
 def test_get_missing_protein_returns_404() -> None:

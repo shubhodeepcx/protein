@@ -6,7 +6,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import import_, proteins, search
+from app.api import proteins
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,23 +15,25 @@ logger.setLevel(logging.INFO)
 app = FastAPI(title="ProteoLens API", version="0.1.0")
 app.openapi_tags = [
     {"name": "proteins", "description": "Protein upload, metadata, and structure files."},
-    {"name": "search", "description": "Public protein database search."},
-    {"name": "import", "description": "Public database structure imports."},
 ]
 
-_cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
+# CORS_ORIGINS is required — leave unset to deny all origins (deploy-time loud failure).
+# See backend/.env.example for the local-dev value.
+_cors_origins = [
+    o.strip()
+    for o in os.getenv("CORS_ORIGINS", "").split(",")
+    if o.strip()
+]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["*"],
 )
 
 app.include_router(proteins.router, prefix="/api")
-app.include_router(search.router, prefix="/api")
-app.include_router(import_.router, prefix="/api")
 
 
 @app.get("/health")

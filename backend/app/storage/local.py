@@ -12,7 +12,7 @@ _ALLOWED_EXTS = ("pdb", "cif")
 _UID_RE = re.compile(r"^[0-9a-f]{32}$")
 
 
-def _validate_uid(uid: str) -> None:
+def validate_uid(uid: str) -> None:
     if not _UID_RE.match(uid):
         raise ValueError(f"Invalid uid: {uid!r}")
 
@@ -33,7 +33,7 @@ def store_upload(file_bytes: bytes, ext: str) -> tuple[str, Path]:
 
 
 def get_file(uid: str) -> Path:
-    _validate_uid(uid)
+    validate_uid(uid)
     for ext in _ALLOWED_EXTS:
         candidate = STORAGE_ROOT / f"{uid}.{ext}"
         if candidate.exists():

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
 
 from app.models.protein import ProteinSummary
@@ -35,7 +36,7 @@ async def upload_protein(file: UploadFile = File(...)) -> ProteinSummary:
     if ext not in _ALLOWED_EXTS:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported file extension. Allowed: pdb, cif, mmcif",
+            detail="Unsupported file extension. Allowed: pdb, cif, mmcif",
         )
 
     content = await file.read()
@@ -53,7 +54,7 @@ async def upload_protein(file: UploadFile = File(...)) -> ProteinSummary:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     try:
-        summary = await parser.parse(stored_path, uid=uid, source="uploaded")
+        summary = await run_in_threadpool(parser.parse, stored_path, uid=uid, source="uploaded")
     except Exception as exc:  # noqa: BLE001
         try:
             stored_path.unlink(missing_ok=True)
@@ -65,6 +66,17 @@ async def upload_protein(file: UploadFile = File(...)) -> ProteinSummary:
             detail="Failed to parse structure file. Check the file is a valid PDB or mmCIF.",
         ) from exc
 
+    if not summary.chains:
+        # Parser returned empty structure (likely non-PDB content).
+        try:
+            stored_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+        raise HTTPException(
+            status_code=400,
+            detail="Could not parse any protein chains from the file. Check the file is a valid PDB or mmCIF structure.",
+        )
+
     _SUMMARY_CACHE[uid] = summary
     return summary
 
@@ -73,7 +85,7 @@ async def upload_protein(file: UploadFile = File(...)) -> ProteinSummary:
 def get_protein(uid: str) -> ProteinSummary:
     # Validate format before cache lookup to avoid reflecting attacker input in 404 detail.
     try:
-        storage._validate_uid(uid)  # noqa: SLF001
+        storage.validate_uid(uid)
     except ValueError:
         raise HTTPException(status_code=404, detail="Protein not found")
     summary = _SUMMARY_CACHE.get(uid)

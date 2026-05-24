@@ -2,16 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from app.services.parser import parse
 
 PDB_PATH = Path(__file__).resolve().parents[1] / "app" / "static" / "1CRN.pdb"
 
 
-@pytest.mark.asyncio
-async def test_parse_1crn_basic() -> None:
-    summary = await parse(PDB_PATH, uid="test-uid", source="uploaded")
+def test_parse_1crn_basic() -> None:
+    summary = parse(PDB_PATH, uid="test-uid", source="uploaded")
     assert summary.id == "test-uid"
     assert summary.source == "uploaded"
     assert summary.file_format == "pdb"
@@ -24,9 +21,8 @@ async def test_parse_1crn_basic() -> None:
     assert summary.molecular_weight > 4000
 
 
-@pytest.mark.asyncio
-async def test_parse_1crn_chain_a() -> None:
-    summary = await parse(PDB_PATH, uid="t2", source="uploaded")
+def test_parse_1crn_chain_a() -> None:
+    summary = parse(PDB_PATH, uid="t2", source="uploaded")
     chain_a = next((c for c in summary.chains if c.label == "A"), None)
     assert chain_a is not None
     assert chain_a.residue_count >= 40
@@ -36,9 +32,8 @@ async def test_parse_1crn_chain_a() -> None:
     assert chain_a.id == "t2:A"
 
 
-@pytest.mark.asyncio
-async def test_parse_1crn_header_metadata() -> None:
-    summary = await parse(PDB_PATH, uid="t3", source="uploaded")
+def test_parse_1crn_header_metadata() -> None:
+    summary = parse(PDB_PATH, uid="t3", source="uploaded")
     # 1CRN has COMPND/SOURCE records; parser should extract them.
     # If both are None, the header extraction path is broken.
     assert summary.name is not None, "Expected name from 1CRN COMPND record"
@@ -47,10 +42,9 @@ async def test_parse_1crn_header_metadata() -> None:
     assert "CRAMBE" in summary.organism.upper()
 
 
-@pytest.mark.asyncio
-async def test_parse_1crn_summary_shape() -> None:
+def test_parse_1crn_summary_shape() -> None:
     """All required ProteinSummary fields should be populated and well-typed."""
-    summary = await parse(PDB_PATH, uid="t4", source="uploaded")
+    summary = parse(PDB_PATH, uid="t4", source="uploaded")
     assert isinstance(summary.warnings, list)
     assert isinstance(summary.has_plddt, bool)
     assert summary.molecular_weight > 0

@@ -16,8 +16,10 @@ Run from the repo root (`g:\protein`) unless noted.
    python -m venv .venv
    .\.venv\Scripts\Activate.ps1        # PowerShell  (or source .venv/bin/activate on bash)
    pip install -e ".[dev]"
+   $env:CORS_ORIGINS="http://localhost:3000"   # PowerShell  (bash: export CORS_ORIGINS=http://localhost:3000)
    uvicorn app.main:app --reload --port 8000
    ```
+   - `CORS_ORIGINS` is required — see `backend/.env.example`. Without it the frontend will fail browser preflight.
    - Expect: server reports `Uvicorn running on http://127.0.0.1:8000`.
    - Visit `http://localhost:8000/health` → JSON `{"status": "ok", "service": "protein-backend", "version": "0.1.0"}`.
    - Visit `http://localhost:8000/docs` → Swagger UI loads.

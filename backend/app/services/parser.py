@@ -62,7 +62,7 @@ def _extract_header_strings(structure) -> tuple[str | None, str | None]:
     return name, organism
 
 
-async def parse(
+def parse(
     path: Path | str,
     uid: str,
     source: Literal["uploaded", "rcsb", "alphafold"] = "uploaded",
@@ -87,7 +87,6 @@ async def parse(
 
     chains: list[ChainInfo] = []
     atom_count = 0
-    b_factors: list[float] = []
     nonstandard_seen: set[str] = set()
 
     # Take the first model (most PDB files have only model 1; AlphaFold likewise).
@@ -121,11 +120,8 @@ async def parse(
             if not is_std:
                 nonstandard_seen.add(residue.get_resname().upper())
             seq_chars.append(one)
-            for atom in residue.get_atoms():
+            for _atom in residue.get_atoms():
                 atom_count += 1
-                b = atom.get_bfactor()
-                if 0 < b <= 100:
-                    b_factors.append(b)
 
         seq = "".join(seq_chars)
         if not seq:
