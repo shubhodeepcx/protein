@@ -4,17 +4,11 @@ import React, { useRef, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import {
-  Atom,
-  RotateCcw,
-  Loader2,
-  AlertCircle,
-  ChevronDown,
-  ChevronRight,
-} from "lucide-react";
+import { Atom, RotateCcw, Loader2, AlertCircle } from "lucide-react";
 import type { MolstarViewerRef } from "@/components/molstar-viewer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AnalyticsPanel } from "@/components/analytics-panel";
 import { API_BASE_URL } from "@/lib/api";
 import { useStore } from "@/lib/store";
 
@@ -48,7 +42,6 @@ export default function DynamicViewerPage() {
   const [structureLoading, setStructureLoading] = useState(false);
   const [structureError, setStructureError] = useState<string | null>(null);
   const [viewerReady, setViewerReady] = useState(false);
-  const [showMeta, setShowMeta] = useState(false);
 
   // Reset viewerReady whenever the route id changes. Without this the local
   // flag survives MolstarViewer unmount/remount on /viewer/A → /viewer/B, so
@@ -145,22 +138,6 @@ export default function DynamicViewerPage() {
           )}
 
           <div className="ml-auto flex items-center gap-1.5">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 text-xs"
-              onClick={() => setShowMeta((v) => !v)}
-              disabled={!summary}
-              aria-expanded={showMeta}
-              aria-label="Toggle raw metadata"
-            >
-              {showMeta ? (
-                <ChevronDown className="size-3.5" aria-hidden />
-              ) : (
-                <ChevronRight className="size-3.5" aria-hidden />
-              )}
-              metadata
-            </Button>
             <Badge
               variant="outline"
               className="border-zinc-700 text-[10px] text-zinc-400 uppercase"
@@ -181,99 +158,58 @@ export default function DynamicViewerPage() {
           </div>
         </header>
 
-        {/* Optional metadata panel */}
-        {showMeta && summary && (
-          <div className="max-h-48 shrink-0 overflow-auto border-b border-zinc-800 bg-zinc-900/40 px-4 py-2 font-mono text-[11px] leading-relaxed text-zinc-400">
-            <div>
-              id: <span className="text-zinc-100">{summary.id}</span>
-            </div>
-            <div>
-              chains:{" "}
-              <span className="text-zinc-100">{summary.chains.length}</span>
-              {summary.chains.length > 0 && (
-                <>
-                  {" "}
-                  ({summary.chains.map((c) => c.label).join(", ")})
-                </>
-              )}
-            </div>
-            <div>
-              residues:{" "}
-              <span className="text-zinc-100">
-                {summary.residue_count.toLocaleString()}
-              </span>
-            </div>
-            <div>
-              atoms:{" "}
-              <span className="text-zinc-100">
-                {summary.atom_count.toLocaleString()}
-              </span>
-            </div>
-            <div>
-              MW:{" "}
-              <span className="text-zinc-100">
-                {summary.molecular_weight.toFixed(0)}
-              </span>{" "}
-              Da
-            </div>
-            <div>
-              format:{" "}
-              <span className="text-zinc-100">{summary.file_format}</span>
-            </div>
-            {summary.organism && (
-              <div>
-                organism:{" "}
-                <span className="text-zinc-100">{summary.organism}</span>
+        {/* Split content: viewer left, analytics panel right (xl+) or stacked below (narrow). */}
+        <div className="grid flex-1 grid-cols-1 overflow-hidden xl:grid-cols-[1fr_24rem]">
+          <div className="relative overflow-hidden">
+            {loading && !error && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-950/80"
+              >
+                <div className="flex flex-col items-center gap-2 text-zinc-400">
+                  <Loader2 className="size-6 animate-spin" aria-hidden />
+                  <span className="text-xs">
+                    Loading {summary ? title : "metadata"}&hellip;
+                  </span>
+                </div>
               </div>
             )}
-            {summary.warnings.length > 0 && (
-              <div className="mt-1 text-amber-400">
-                warnings: {summary.warnings.join("; ")}
+            {error && (
+              <div
+                role="alert"
+                className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-zinc-950/90 text-center"
+              >
+                <AlertCircle className="size-8 text-red-400" aria-hidden />
+                <p className="max-w-md text-sm text-red-400">{error.message}</p>
+                {isNotFound && (
+                  <Link
+                    href="/"
+                    className="text-xs text-zinc-400 underline hover:text-zinc-100"
+                  >
+                    Upload a new protein
+                  </Link>
+                )}
               </div>
+            )}
+            {summary && !error && (
+              <MolstarViewer
+                ref={viewerRef}
+                className="h-full w-full"
+                onReady={() => setViewerReady(true)}
+              />
             )}
           </div>
-        )}
 
-        {/* Viewer area */}
-        <div className="relative flex-1 overflow-hidden">
-          {loading && !error && (
-            <div
-              role="status"
-              aria-live="polite"
-              className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-950/80"
-            >
-              <div className="flex flex-col items-center gap-2 text-zinc-400">
-                <Loader2 className="size-6 animate-spin" aria-hidden />
-                <span className="text-xs">
-                  Loading {summary ? title : "metadata"}&hellip;
-                </span>
-              </div>
-            </div>
-          )}
-          {error && (
-            <div
-              role="alert"
-              className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-zinc-950/90 text-center"
-            >
-              <AlertCircle className="size-8 text-red-400" aria-hidden />
-              <p className="max-w-md text-sm text-red-400">{error.message}</p>
-              {isNotFound && (
-                <Link
-                  href="/"
-                  className="text-xs text-zinc-400 underline hover:text-zinc-100"
-                >
-                  Upload a new protein
-                </Link>
-              )}
-            </div>
-          )}
-          {summary && !error && (
-            <MolstarViewer
-              ref={viewerRef}
-              className="h-full w-full"
-              onReady={() => setViewerReady(true)}
-            />
-          )}
+          {/* xl+ side panel */}
+          <aside className="hidden border-l border-zinc-800 bg-zinc-950 xl:block">
+            {id && summary && <AnalyticsPanel proteinId={id} />}
+          </aside>
+        </div>
+
+        {/* Narrow viewports: stacked analytics panel below the viewer. */}
+        <div className="border-t border-zinc-800 bg-zinc-950 xl:hidden">
+          {id && summary && <AnalyticsPanel proteinId={id} />}
         </div>
       </div>
     </>

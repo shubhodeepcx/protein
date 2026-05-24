@@ -1,5 +1,5 @@
 import type { StateCreator } from "zustand";
-import type { ProteinSummary } from "@/lib/types";
+import type { ProteinSummary, AnalyticsResponse } from "@/lib/types";
 import { apiGet, ApiError } from "@/lib/api";
 
 export interface ProteinLoadError {
@@ -11,6 +11,9 @@ export interface ProteinSlice {
   current: ProteinSummary | null;
   isLoading: boolean;
   error: ProteinLoadError | null;
+  analytics: AnalyticsResponse | null;
+  analyticsLoading: boolean;
+  analyticsError: ProteinLoadError | null;
   /**
    * Loads protein metadata by id from `GET /api/proteins/{id}`.
    *
@@ -26,11 +29,19 @@ export interface ProteinSlice {
    * older request overwrite the newer one.
    */
   loadProtein: (id: string) => Promise<void>;
+  /**
+   * Loads analytics for a protein from `GET /api/proteins/{id}/analytics`.
+   *
+   * Uses its own monotonic request token (independent of `loadProtein`) so
+   * the two requests can race without clobbering each other.
+   */
+  loadAnalytics: (id: string) => Promise<void>;
   clearProtein: () => void;
 }
 
-// Module-level counter so stale responses can detect they were superseded.
-let requestSeq = 0;
+// Module-level counters so stale responses can detect they were superseded.
+let metaSeq = 0;
+let analyticsSeq = 0;
 
 export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice> = (
   set,
@@ -38,24 +49,56 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
   current: null,
   isLoading: false,
   error: null,
+  analytics: null,
+  analyticsLoading: false,
+  analyticsError: null,
   loadProtein: async (id: string) => {
-    const myReq = ++requestSeq;
+    const myReq = ++metaSeq;
     // Clear stale data immediately so consumers don't see protein A while loading B.
-    set({ current: null, isLoading: true, error: null });
+    // Also clear analytics for the previous protein so we never render mismatched data.
+    set({
+      current: null,
+      isLoading: true,
+      error: null,
+      analytics: null,
+      analyticsError: null,
+    });
     try {
       const summary = await apiGet<ProteinSummary>(`/api/proteins/${id}`);
-      if (myReq !== requestSeq) return; // a newer load started; drop this result
+      if (myReq !== metaSeq) return; // a newer load started; drop this result
       set({ current: summary, isLoading: false });
     } catch (e) {
-      if (myReq !== requestSeq) return;
+      if (myReq !== metaSeq) return;
       const status = e instanceof ApiError ? e.status : null;
       const message = e instanceof Error ? e.message : String(e);
       set({ error: { status, message }, isLoading: false });
     }
   },
+  loadAnalytics: async (id: string) => {
+    const myReq = ++analyticsSeq;
+    set({ analyticsLoading: true, analyticsError: null });
+    try {
+      const a = await apiGet<AnalyticsResponse>(`/api/proteins/${id}/analytics`);
+      if (myReq !== analyticsSeq) return;
+      set({ analytics: a, analyticsLoading: false });
+    } catch (e) {
+      if (myReq !== analyticsSeq) return;
+      const status = e instanceof ApiError ? e.status : null;
+      const message = e instanceof Error ? e.message : String(e);
+      set({ analyticsError: { status, message }, analyticsLoading: false });
+    }
+  },
   clearProtein: () => {
-    // Bumping the sequence invalidates any in-flight loadProtein.
-    requestSeq++;
-    set({ current: null, error: null, isLoading: false });
+    // Bumping the sequences invalidates any in-flight loads.
+    metaSeq++;
+    analyticsSeq++;
+    set({
+      current: null,
+      error: null,
+      isLoading: false,
+      analytics: null,
+      analyticsError: null,
+      analyticsLoading: false,
+    });
   },
 });
