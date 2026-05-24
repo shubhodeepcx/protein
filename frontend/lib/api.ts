@@ -11,7 +11,6 @@ export const API_BASE_URL =
 export interface ApiErrorBody {
   error?: string;
   detail?: string;
-  suggestion?: string;
   [key: string]: unknown;
 }
 
@@ -76,12 +75,10 @@ export async function apiPost<T>(
   init?: RequestInit,
 ): Promise<T> {
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-    ...((init?.headers as Record<string, string>) ?? {}),
-  };
+  const headers = new Headers(init?.headers);
+  headers.set("Accept", "application/json");
   if (!isFormData && body !== undefined) {
-    headers["Content-Type"] = "application/json";
+    headers.set("Content-Type", "application/json");
   }
 
   const res = await fetch(joinUrl(path), {
