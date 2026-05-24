@@ -149,7 +149,44 @@ Run from the repo root (`g:\protein`) unless noted.
 
 **Goal:** uploaded protein shows MW, residue count, atom count, composition bar chart, secondary-structure donut, hydrophobicity line, chain-length bar chart in the right panel.
 
-_Will be filled in when P3 starts._
+1. Start backend (P0 instructions). Set `CORS_ORIGINS` first:
+   ```
+   cd backend
+   $env:CORS_ORIGINS = "http://localhost:3000"
+   uvicorn app.main:app --reload --port 8000
+   ```
+2. Start frontend:
+   ```
+   cd frontend
+   npm run dev
+   ```
+3. Visit `http://localhost:3000` → drop `backend/app/static/1CRN.pdb` onto the DropZone → page navigates to `/viewer/{id}`.
+4. Verify the right-side panel (visible at ≥1280px viewport; stacks below viewer at narrower widths):
+   - **Metric cards**: MW ~4736 Da, Residues 46, Atoms 327, Chains 1.
+   - **Amino-acid composition**: 20 blue bars; hovering Cys shows "6 (13.04%)".
+   - **Secondary structure**: donut with three slices (helix ~46%, sheet ~17%, coil ~37% for 1CRN); legend below.
+   - **Hydrophobicity**: green line spanning residue positions ~5–42 (window 9 on 46-residue chain → 38 points); horizontal reference line at y=0; range stays within −4.5 to 4.5.
+   - **Chain lengths**: single purple bar labeled "A" at length 46.
+5. Resize browser to <1024px: analytics panel moves below the viewer and remains fully scrollable.
+6. Probe the API directly:
+   ```
+   curl http://localhost:8000/api/proteins/<uid>/analytics | jq .
+   ```
+   - Expect: `molecular_weight` in [4700, 4770], `composition` array of length 20, `hydrophobicity.values` length 38, `secondary_structure` sums to ~1.0.
+7. Backend tests:
+   ```
+   cd backend
+   pytest
+   ```
+   - Expect: 31 passed (17 analytics + 14 prior).
+8. Frontend tests:
+   ```
+   cd frontend
+   npm test
+   ```
+   - Expect: 13/13 pass (charts are exercised only in the browser).
+
+**Pass criteria:** all four charts render with the expected shapes for 1CRN; metric cards show MW/Residues/Atoms/Chains accurately; automated tests pass.
 
 ---
 

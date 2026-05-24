@@ -3,13 +3,13 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-05-24 by Shubhodeep Chatterjee (P2 complete — upload + parse working end-to-end; P3 ready to claim; deepscan audit + hygiene fixes applied: path traversal validation, CORS hardening, race conditions in protein-slice, viewerReady reset, no-op buttons removed, responsive layout, pytest cleanup fixture)
+**Last updated:** 2026-05-25 by Shubhodeep Chatterjee (P3 complete — analytics service + endpoint + dashboard panel with 4 Recharts charts; 31 backend + 13 frontend tests green; P4 ready to claim)
 
 ---
 
 ## Current phase
 
-**P3 — Dashboard** (P2 complete)
+**P4 — Sequence panel** (P3 complete)
 
 Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](superpowers/specs/2026-05-23-protein-mvp-slice-design.md)
 
@@ -17,7 +17,7 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in flight. P2 fully done; P3 tasks ready to claim._
+_Nothing in flight. P3 fully done; P4 tasks ready to claim._
 
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
@@ -30,15 +30,13 @@ Tasks with no unresolved dependencies. Pick one, move it to In progress, then st
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
-| P3: `services/analytics.py` (MW, composition, hydrophobicity, SS%, property distribution) | P3 | — | 2h |
-| P3: `GET /api/proteins/{id}/analytics` | P3 | analytics service | 30m |
-| P3: Metric cards (MW, residues, atoms, chains) in Overview tab | P3 | — | 1h |
-| P3: Composition bar chart (Recharts) | P3 | analytics endpoint | 1h |
-| P3: SS donut chart | P3 | analytics endpoint | 1h |
-| P3: Hydrophobicity line chart (Kyte-Doolittle, window 9) | P3 | analytics endpoint | 1h |
-| P3: Chain length bar chart | P3 | analytics endpoint | 30m |
-| P3: backend pytest — MW + composition for crambin | P3 | analytics service | 30m |
-| P3: smoke test for P3 in `docs/smoke-tests.md` | P3 | P3 features | 15m |
+| P4: `SequencePanel.tsx` (per-chain, color by residue type) | P4 | — | 2h |
+| P4: Zustand `selectionSlice` real wiring (already scaffolded) | P4 | — | 1h |
+| P4: Mol\* selection event → store dispatch | P4 | MolstarViewer extension | 2h |
+| P4: Store subscribe → Mol\* `highlightResidues` | P4 | selectionSlice | 1h |
+| P4: Residue search input (`A:123` syntax) | P4 | SequencePanel | 1h |
+| P4: Frontend Vitest — selection reducer tests | P4 | selectionSlice wiring | 30m |
+| P4: smoke test for P4 in `docs/smoke-tests.md` | P4 | P4 features | 15m |
 
 ---
 
@@ -74,6 +72,11 @@ _No blocked tasks._
 | P2: `DropZone.tsx` (drag-and-drop + click-to-browse, extension/size validation, inline errors, multipart upload via `apiPost`) + 6 vitest tests | P2 | 2026-05-24 | `1a03651` |
 | P2: `/viewer/[id]` dynamic-route page (fetches summary, renders Mol\*, 404 fallback, metadata toggle); landing page DropZone replaces placeholder; `protein-slice` wired to real API | P2 | 2026-05-24 | `1a03651` |
 | P2: smoke test written in `docs/smoke-tests.md`; tracker updated to P3 | P2 | 2026-05-24 | this commit |
+| Deepscan audit + fixes (path traversal, CORS hardening, race conditions, viewerReady reset, responsive layout, pytest cleanup fixture) | P2.5 | 2026-05-24 | `6a9cea6` + `d57b2ba` + `2f01f20` |
+| P3: `services/analytics.py` pure functions (MW, composition, Kyte-Doolittle, SS%, property distribution) + Pydantic `AnalyticsResponse` | P3 | 2026-05-25 | `02f24d8` |
+| P3: `GET /api/proteins/{uid}/analytics` via `run_in_threadpool` + 17 pytest tests (crambin MW ~4736, 6 cysteines, 38 hydrophobicity windows, SS sums to 1) | P3 | 2026-05-25 | `02f24d8` |
+| P3: AnalyticsPanel.tsx + 4 Recharts charts (composition bar, SS donut, hydrophobicity line, chain-length bar) + metric cards in `/viewer/[id]` split layout | P3 | 2026-05-25 | `25453a4` |
+| P3: smoke test written in `docs/smoke-tests.md`; tracker updated to P4 | P3 | 2026-05-25 | this commit |
 
 ---
 
