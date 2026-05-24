@@ -42,3 +42,49 @@ export interface HealthResponse {
   status: "ok" | "degraded" | "down";
   version?: string;
 }
+
+export interface CompositionEntry {
+  aa: string;
+  label: string;
+  count: number;
+  percent: number;
+}
+
+export interface SecondaryStructurePercentages {
+  helix: number;
+  sheet: number;
+  coil: number;
+}
+
+export interface HydrophobicityProfile {
+  chain_id: string;
+  window: number;
+  values: number[];
+}
+
+export interface PropertyDistribution {
+  hydrophobic: number;
+  polar: number;
+  charged_positive: number;
+  charged_negative: number;
+  aromatic: number;
+  cysteine: number;
+}
+
+export interface ChainLength {
+  chain_id: string;
+  length: number;
+}
+
+export interface AnalyticsResponse {
+  id: string;
+  molecular_weight: number;
+  residue_count: number;
+  atom_count: number;
+  chain_count: number;
+  composition: CompositionEntry[];
+  secondary_structure: SecondaryStructurePercentages;
+  hydrophobicity: HydrophobicityProfile;
+  property_distribution: PropertyDistribution;
+  chain_lengths: ChainLength[];
+}
