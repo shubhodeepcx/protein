@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-05-24 by Shubhodeep Chatterjee (P2 complete — upload + parse working end-to-end; P3 ready to claim)
+**Last updated:** 2026-05-24 by Shubhodeep Chatterjee (P2 complete — upload + parse working end-to-end; P3 ready to claim; deepscan audit + hygiene fixes applied: path traversal validation, CORS hardening, race conditions in protein-slice, viewerReady reset, no-op buttons removed, responsive layout, pytest cleanup fixture)
 
 ---
 
