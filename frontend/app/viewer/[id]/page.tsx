@@ -42,6 +42,7 @@ export default function DynamicViewerPage() {
   const clearSelection = useStore((s) => s.clearSelection);
   const representation = useStore((s) => s.representation);
   const coloring = useStore((s) => s.coloring);
+  const resetView = useStore((s) => s.resetView);
 
   // Mol*-specific load state stays local — it's not shareable across surfaces.
   const [structureLoading, setStructureLoading] = useState(false);
@@ -71,6 +72,7 @@ export default function DynamicViewerPage() {
     return () => {
       clearProtein();
       clearSelection();
+      resetView();
     };
     // loadProtein/clearProtein are stable Zustand actions; depending only on id.
     // eslint-disable-next-line react-hooks/exhaustive-deps

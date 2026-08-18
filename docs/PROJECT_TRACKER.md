@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (final whole-branch review done — residue seam verified correct incl. mmCIF; 1 critical + 5 important findings filed below and dispatched to cloud agents. P4 + P5 built in parallel, each through two review + fix rounds, both merged to main; 83 backend + 79 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests.)
+**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (fixed `viewer-slice` representation/coloring not resetting across proteins; flagged the open-PR pile-up — see PR list. 83 backend + 82 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests and reconciliation of PRs #1-#7.)
 
 ---
 
@@ -17,9 +17,10 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
+_Nothing in flight._
+
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
-| `viewer-slice` representation/coloring never reset across proteins | shubhodeep | `feature/fix-viewer-options-reset-on-route-change` | wip | Small, isolated fix — see note below on why this task was picked over the pLDDT row. |
 
 ---
 
@@ -120,6 +121,7 @@ _No blocked tasks._
 | P5: `/search` page (source filter, result cards, per-card import state, failed-source banner) + 43 backend / 10 frontend tests, all external HTTP mocked | P5 | 2026-08-18 | `819167f` |
 | P5 review rounds 1-2: cache scope split, AlphaFold status classification reworked so a transport error can never read as "no model", search request sequencing | P5 | 2026-08-18 | `a8c1cd8`, `11301a7`, `ffab9cc`, `42f4b64` |
 | P4 + P5 smoke tests written in `docs/smoke-tests.md`; decisions log extended with 7 entries | P4/P5 | 2026-08-18 | `005bea1`, `d04beb6` |
+| P5.5 review follow-up: `viewer-slice` `resetView()` clears representation/coloring back to defaults on route change, alongside the existing selection clear | P5.5 | 2026-08-18 | `feature/fix-viewer-options-reset-on-route-change` (this PR) |
 
 ---
 
