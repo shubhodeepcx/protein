@@ -1,0 +1,107 @@
+/**
+ * Imperative Mol* operations, kept out of the React component so
+ * `components/molstar-viewer.tsx` stays a thin ref-forwarding shell.
+ *
+ * Every function here takes an already-created plugin; callers are responsible
+ * for the null check on the asynchronously created instance.
+ */
+
+import type { PluginContext } from "molstar/lib/mol-plugin/context";
+import { StructureElement, type Structure } from "molstar/lib/mol-model/structure";
+import { createStructureRepresentationParams } from "molstar/lib/mol-plugin-state/helpers/structure-representation-params";
+import { keysToLoci, type ResidueIndexMap } from "@/lib/molstar/residue-index";
+import {
+  COLOR_THEME,
+  REPRESENTATION_SPEC,
+  type MolstarColoring,
+  type MolstarRepresentation,
+} from "@/lib/molstar/theming";
+
+export type MolstarFormat = "pdb" | "mmcif";
+
+/**
+ * Downloads, parses and renders a structure, returning the resulting
+ * `Structure` (or `null` if the hierarchy came back empty).
+ */
+export async function loadStructureInto(
+  plugin: PluginContext,
+  url: string,
+  format: MolstarFormat,
+): Promise<Structure | null> {
+  await plugin.clear();
+
+  const data = await plugin.builders.data.download(
+    { url, isBinary: false },
+    { state: { isGhost: true } },
+  );
+  const trajectory = await plugin.builders.structure.parseTrajectory(
+    data,
+    format === "mmcif" ? "mmcif" : "pdb",
+  );
+  await plugin.builders.structure.hierarchy.applyPreset(trajectory, "default");
+
+  return (
+    plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data ??
+    null
+  );
+}
+
+/**
+ * Store -> Mol*. Writes to the selection manager only; it never re-emits a
+ * click event, so this direction cannot ping-pong back into the store.
+ */
+export function applySelection(
+  plugin: PluginContext,
+  structure: Structure,
+  keys: readonly string[],
+  index: ResidueIndexMap,
+): void {
+  const loci = keys.length === 0 ? null : keysToLoci(structure, keys, index);
+  // An empty loci must clear rather than "select nothing", which would leave
+  // stale markers on screen.
+  if (!loci || StructureElement.Loci.isEmpty(loci)) {
+    plugin.managers.structure.selection.clear();
+    return;
+  }
+  plugin.managers.structure.selection.fromLoci("set", loci);
+}
+
+export function applyRepresentation(
+  plugin: PluginContext,
+  type: MolstarRepresentation,
+): void {
+  const spec = REPRESENTATION_SPEC[type];
+
+  for (const s of plugin.managers.structure.hierarchy.current.structures) {
+    const data = s.cell.obj?.data;
+    const params =
+      spec.sizeAspectRatio === undefined
+        ? createStructureRepresentationParams(plugin, data, { type: spec.type })
+        : createStructureRepresentationParams(plugin, data, {
+            type: "ball-and-stick",
+            typeParams: { sizeAspectRatio: spec.sizeAspectRatio },
+          });
+    for (const component of s.components) {
+      const pivot = component.representations[0];
+      if (!pivot) continue;
+      void plugin.managers.structure.component.updateRepresentations(
+        [component],
+        pivot,
+        params,
+      );
+    }
+  }
+}
+
+export function applyColoring(
+  plugin: PluginContext,
+  scheme: MolstarColoring,
+): void {
+  const color = COLOR_THEME[scheme];
+  for (const s of plugin.managers.structure.hierarchy.current.structures) {
+    void plugin.managers.structure.component.updateRepresentationsTheme(
+      s.components,
+      { color },
+    );
+  }
+}
