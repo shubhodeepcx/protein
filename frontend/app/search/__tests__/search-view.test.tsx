@@ -112,6 +112,55 @@ describe("SearchView", () => {
     expect(lastFetchUrl(fetchMock)).toContain("q=crambin");
   });
 
+  it("discards a stale search response that lands after a newer one", async () => {
+    // Deferred all-sources request; the RCSB request that supersedes it resolves first.
+    let releaseAll: (r: Response) => void = () => {};
+    fetchMock.mockReturnValueOnce(
+      new Promise<Response>((resolve) => {
+        releaseAll = resolve;
+      }),
+    );
+    render(<SearchView />);
+    submitSearch("insulin");
+    expect(lastFetchUrl(fetchMock)).toContain("source=all");
+
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        searchResponse({
+          query: "insulin",
+          results: [hit({ source: "rcsb", source_id: "1BOM", title: "Insulin hexamer" })],
+        }),
+      ),
+    );
+    fireEvent.change(screen.getByLabelText(/source database/i), {
+      target: { value: "rcsb" },
+    });
+
+    // The newer, narrower response lands first and paints.
+    await screen.findByTestId("result-card-rcsb-1BOM");
+
+    // Now the superseded all-sources response finally arrives.
+    releaseAll(
+      jsonResponse(
+        searchResponse({
+          query: "insulin",
+          results: [
+            hit({ source: "uniprot", source_id: "P01308", title: "Insulin" }),
+            hit({ source: "alphafold", source_id: "P06213", title: "Insulin receptor" }),
+          ],
+        }),
+      ),
+    );
+
+    // It must be dropped: the filter reads RCSB, so the list must stay RCSB-only.
+    await waitFor(() =>
+      expect(screen.getByTestId("result-list").children).toHaveLength(1),
+    );
+    expect(screen.getByTestId("result-card-rcsb-1BOM")).toBeInTheDocument();
+    expect(screen.queryByTestId("result-card-uniprot-P01308")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("result-card-alphafold-P06213")).not.toBeInTheDocument();
+  });
+
   it("shows a distinct empty-results state", async () => {
     fetchMock.mockResolvedValue(
       jsonResponse(searchResponse({ query: "zzzz", results: [] })),

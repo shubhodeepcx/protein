@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { AlertTriangle, Database, Loader2, Search } from "lucide-react";
 import { apiGet, ApiError } from "@/lib/api";
 import type { SearchResponse, SearchSourceFilter } from "@/lib/types";
@@ -36,6 +36,14 @@ export function SearchView() {
   const [data, setData] = useState<SearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Monotonic request token, mirroring `lib/store/protein-slice.ts`: every
+  // search takes the next number and any response whose number is no longer
+  // the latest is discarded. Without it, switching the source filter mid-flight
+  // lets the older all-sources response land last and repaint the list with
+  // results the filter says are excluded. A ref (not a module-level counter)
+  // keeps the sequence per-mount.
+  const searchSeq = useRef(0);
+
   const runSearch = useCallback(async (q: string, src: SearchSourceFilter) => {
     const trimmed = q.trim();
     if (!trimmed) {
@@ -43,13 +51,17 @@ export function SearchView() {
       setStatus("error");
       return;
     }
+    const myReq = ++searchSeq.current;
     setStatus("loading");
     setError(null);
     const params = new URLSearchParams({ q: trimmed, source: src });
     try {
-      setData(await apiGet<SearchResponse>(`/api/search?${params.toString()}`));
+      const response = await apiGet<SearchResponse>(`/api/search?${params.toString()}`);
+      if (myReq !== searchSeq.current) return; // a newer search started; drop this
+      setData(response);
       setStatus("done");
     } catch (e) {
+      if (myReq !== searchSeq.current) return;
       setData(null);
       setError(searchErrorMessage(e));
       setStatus("error");
