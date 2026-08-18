@@ -51,13 +51,18 @@ export default function DynamicViewerPage() {
   // below re-apply their state against the freshly built Mol* hierarchy.
   const [structureVersion, setStructureVersion] = useState(0);
 
-  // Reset viewerReady whenever the route id changes. Without this the local
-  // flag survives MolstarViewer unmount/remount on /viewer/A → /viewer/B, so
-  // the load effect below would fire against the previous plugin instance
-  // before the new one has called onReady.
+  // Reset ALL Mol*-local state on route change: each flag outlives a
+  // MolstarViewer unmount/remount on /viewer/A → /viewer/B and would otherwise
+  // describe the previous protein. viewerReady would fire the load effect at
+  // the old plugin; structureVersion would push state at a dead hierarchy;
+  // structureError would keep the `summary && !error` gate shut so the next
+  // route's viewer never mounts and onReady never fires again; and
+  // structureLoading sticks on because the cancelled load skips its `finally`.
   useEffect(() => {
     setViewerReady(false);
     setStructureVersion(0);
+    setStructureError(null);
+    setStructureLoading(false);
   }, [id]);
 
   useEffect(() => {
