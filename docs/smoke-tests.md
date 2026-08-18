@@ -207,22 +207,36 @@ Run from the repo root (`g:\protein`) unless noted.
    cysteine in 3D and verify a `C` cell lights up (crambin has 6: positions 3, 4, 16, 26, 32, 40).
    This is the step that catches residue-numbering drift between Mol\* `auth_seq_id` and the panel's
    1-based index — if the wrong cell highlights, P4 is not done.
-6. **Residue search:** type `A:23` in the search box → that residue becomes the sole selection and
+6. **Non-protein geometry must not clear the selection.** Import or upload a structure with a
+   cofactor — `1HHO` (haemoglobin, HEM groups) is the reference case. Select any chain A residue,
+   then click the **HEM cofactor** in the viewport: the selection must **survive**, because a
+   ligand is real geometry that simply has no sequence cell. Then click empty background: *now*
+   the selection clears. These two must behave differently.
+   This step exists because the fix separating "no locus at all" from "locus not in the residue
+   index" has no unit-testable path — Mol\* is a trusted library and is not unit-tested, so this
+   is the only place that distinction is verified.
+7. **Navigation after a failed load.** Open a viewer URL whose structure fails to load (e.g. a
+   uuid whose file was deleted from `backend/storage/proteins/`), then navigate to a working
+   protein. The new viewer must mount and render — no stale error overlay, no stuck spinner.
+8. **Residue search:** type `A:23` in the search box → that residue becomes the sole selection and
    scrolls into view. Type `A:999` → inline error naming chain A's real length (46). Type `Z:1` →
    inline error for the unknown chain. Lowercase `a:23` must work.
-7. **Viewer controls:** change representation (cartoon → surface → spacefill) and coloring scheme
+9. **Viewer controls:** change representation (cartoon → surface → spacefill) and coloring scheme
    from the toolbar; the viewport updates each time. The selection survives a representation change.
-8. Tests:
-   ```
-   cd frontend
-   npm run lint     # tsc --noEmit, clean
-   npm test
-   npm run build
-   ```
-   - Expect: all pre-existing tests still pass, plus new tests for `parseResidueQuery` and `SequencePanel`.
+10. Tests:
+    ```
+    cd frontend
+    npm run lint     # tsc --noEmit, clean
+    npm test
+    npm run build
+    ```
+    - Expect: all pre-existing tests still pass, plus the `parseResidueQuery`, `SequencePanel`, and
+      residue-map tests. The residue-map suite is the one that pins the ordinal convention against a
+      non-1-based, gapped, multi-chain fixture — if someone swaps ordinal for `auth_seq_id`, it fails.
 
-**Pass criteria:** selection round-trips in both directions with the *same* residue, the search box
-resolves and rejects correctly, and lint/test/build are all green.
+**Pass criteria:** selection round-trips in both directions with the *same* residue, a cofactor click
+preserves the selection while a background click clears it, navigation recovers from a failed load,
+the search box resolves and rejects correctly, and lint/test/build are all green.
 
 ---
 
