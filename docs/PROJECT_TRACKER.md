@@ -3,13 +3,13 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (P4 + P5 claimed and dispatched in parallel worktrees — final two phases of the MVP slice)
+**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (P4 + P5 built in parallel, each through two review + fix rounds, both merged to main; 83 backend + 79 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests.)
 
 ---
 
 ## Current phase
 
-**P4 — Sequence panel** and **P5 — DB search + import** (both in flight; P0–P3 complete)
+**Slice complete (P0–P5)** — all six phases merged. Remaining work is the manual smoke tests in [docs/smoke-tests.md](smoke-tests.md), which need a browser and live internet.
 
 Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](superpowers/specs/2026-05-23-protein-mvp-slice-design.md)
 
@@ -17,21 +17,28 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-Both remaining phases are claimed. They touch disjoint files (P4 = frontend selection/sequence; P5 = backend external clients + search page), so they run in parallel worktrees per AGENTS.md §5.
+_Nothing in flight. P4 and P5 both merged; the slice is feature-complete._
 
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
-| P4: sequence panel + bidirectional Mol\* selection sync (SequencePanel, selectionSlice wiring, `highlightResidues`, residue search, vitest) | shubhodeep | `feature/p4-sequence-panel` | wip | Owns `frontend/components/sequence/*`, `molstar-viewer.tsx`, `selection-slice.ts`, `app/viewer/[id]/page.tsx` |
-| P5: RCSB + AlphaFold + UniProt clients, `GET /api/search`, `POST /api/proteins/import`, search page (respx-mocked pytest) | shubhodeep | `feature/p5-db-search-import` | wip | Owns `backend/app/services/{rcsb,alphafold,uniprot}.py`, `api/{search,import_}.py`, `main.py`, `app/search/page.tsx` |
 
 ---
 
 ## Ready to claim
 
-_Empty — every task in the P0–P5 slice is either done or in flight. New follow-ups discovered during P4/P5 land here._
+Follow-ups discovered during P4/P5. None block the slice; each was deliberately deferred with a reason.
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
+| Run the P4 + P5 manual smoke tests (browser + live internet required) | P5.5 | — | 45m |
+| Add a `"uniprot"` member to `ProteinSummary.source` so a UniProt-card import keeps its provenance | follow-up | shared model change | 45m |
+| Derive the AlphaFold fallback file URL from `latestVersion` instead of the hard-coded `-model_v4.pdb` | follow-up | — | 30m |
+| Batch RCSB search enrichment via the GraphQL Data API (currently up to 50 REST calls per search) | follow-up | — | 2h |
+| Retries / backoff / rate limiting on the three outbound clients | follow-up | — | 2h |
+| Virtualise the sequence panel (one `<button>` per residue gets heavy above ~2,000 residues) | follow-up | — | 2h |
+| Make HETATM amino acids (e.g. MSE) selectable — currently skipped consistently by both parser and panel | follow-up | — | 1h |
+| Browser-level coverage for `extractResidueRecords` (the Mol\*-facing half of residue indexing, untestable in jsdom) | follow-up | a browser test runner | 3h |
+| Persistence slice — the in-memory registry resets on restart, so `/viewer/{id}` 404s afterwards though the file survives on disk | separate slice | Postgres decision | — |
 
 ---
 
@@ -72,6 +79,17 @@ _No blocked tasks._
 | P3: `GET /api/proteins/{uid}/analytics` via `run_in_threadpool` + 17 pytest tests (crambin MW ~4736, 6 cysteines, 38 hydrophobicity windows, SS sums to 1) | P3 | 2026-05-25 | `02f24d8` |
 | P3: AnalyticsPanel.tsx + 4 Recharts charts (composition bar, SS donut, hydrophobicity line, chain-length bar) + metric cards in `/viewer/[id]` split layout | P3 | 2026-05-25 | `25453a4` |
 | P3: smoke test written in `docs/smoke-tests.md`; tracker updated to P4 | P3 | 2026-05-25 | this commit |
+| P4: `sequence-panel.tsx` + `sequence-chain.tsx` (per-chain grid, residue-type colouring, legend, position ruler, scroll-to-selected) | P4 | 2026-08-18 | `712bfd6` |
+| P4: `highlightResidues` + real `setRepresentation` / `setColoring`; 3D-click -> store via `onResidueClick`; ordinal<->Mol\* residue-index mapping in `lib/residue-map.ts` | P4 | 2026-08-18 | `712bfd6` |
+| P4: `A:123` residue search (`parseResidueQuery`), tabbed Overview / Sequence / Analytics rail, viewer page decomposed into 10 components | P4 | 2026-08-18 | `712bfd6` |
+| P4 review round 1: ligand click no longer clears selection; all four page-local flags reset on route change; numbering convention pinned by a non-1-based gapped multi-chain fixture; load-staleness guards | P4 | 2026-08-18 | `290eba1`, `11dfdd0`, `448c6ad` |
+| P4 review round 2: `source` pinned as the residue sort key (prior test passed under mutation) | P4 | 2026-08-18 | `8e6c6c6` |
+| P5: `services/registry.py` extracted from the proteins router so imports and uploads share one store | P5 | 2026-08-18 | `819167f` |
+| P5: real RCSB / AlphaFold / UniProt clients behind one uniform interface, `services/external.py` + `services/cache.py` (LRU 256 / TTL 1h) | P5 | 2026-08-18 | `819167f` |
+| P5: `GET /api/search` fan-out with dedupe + `failed_sources` degradation; `POST /api/proteins/import` returning the upload `ProteinSummary` shape | P5 | 2026-08-18 | `819167f` |
+| P5: `/search` page (source filter, result cards, per-card import state, failed-source banner) + 43 backend / 10 frontend tests, all external HTTP mocked | P5 | 2026-08-18 | `819167f` |
+| P5 review rounds 1-2: cache scope split, AlphaFold status classification reworked so a transport error can never read as "no model", search request sequencing | P5 | 2026-08-18 | `a8c1cd8`, `11301a7`, `ffab9cc`, `42f4b64` |
+| P4 + P5 smoke tests written in `docs/smoke-tests.md`; decisions log extended with 7 entries | P4/P5 | 2026-08-18 | `005bea1`, `d04beb6` |
 
 ---
 
@@ -95,6 +113,13 @@ Append-only. Never edit past entries — supersede with a new entry referencing 
 | 2026-05-23 | Zustand v5 (not v4) | npm latest; slice composition pattern unchanged | yes |
 | 2026-05-23 | Tailwind v4 (default from create-next-app) | Modern PostCSS-based; CSS variables on; works cleanly with shadcn | yes |
 | 2026-05-23 | next-themes for theme provider; dark mode default | Canonical shadcn integration; sci tool reads better dark | yes |
+| 2026-08-18 | In-memory summary registry extracted to `services/registry.py` | Import and upload must register into the SAME store the viewer reads, or an imported protein 404s. A router importing another router's private dict is fragile. | yes |
+| 2026-08-18 | AlphaFold search resolves via UniProt with a `(database:alphafolddb)` filter | AlphaFold DB has no full-text search endpoint at all — it is keyed strictly by UniProt accession. Filtering at UniProt is 1 request and guarantees every hit has a model; probing 25 accessions costs 25 round trips for one display field. Trade-off: mean pLDDT is null on search results, populated on fetch_metadata. | yes |
+| 2026-08-18 | Metadata TTL cache split: `download_structure` bypasses it, search enrichment keeps it | Spec 5.4 says search and download bypass the cache. A stale cached `pdbUrl` is a real failure, so download must bypass. But each search enrichment IS a `fetch_metadata` call, and bypassing would mean up to 50 uncached upstream calls per RCSB search. | yes |
+| 2026-08-18 | A transport error on an external leg can never classify as 404 | A connection failure teaches us nothing about whether a model exists. Only a 404 on the published/authoritative URL means "no model"; everything else upstream is 502. | yes |
+| 2026-08-18 | UniProt imports are stored as `source: "alphafold"` | `ProteinSummary.source` has no `"uniprot"` member (spec 5.1) and a UniProt import literally downloads the cross-referenced AlphaFold model. Truthful, and keeps `has_plddt` correct. Cost: the viewer cannot show that the user arrived via a UniProt card. | yes — add a `"uniprot"` member if provenance matters |
+| 2026-08-18 | Residue keys are `chain:ordinal` (1-based within chain), NOT `auth_seq_id` | PDB files can start at any residue number and contain gaps and insertion codes. The frontend mirrors the backend parser's filter and maps ordinal to Mol*'s model residue index. Pinned by tests against a non-1-based, gapped, multi-chain fixture. | hard — changing it breaks selection sync in both directions |
+| 2026-08-18 | A click on unindexed 3D geometry (ligand, water) preserves the selection | A cofactor is real geometry that simply has no sequence cell; only genuinely empty space clears the selection. These were previously conflated as `null`. | yes |
 
 ---
 
@@ -154,26 +179,26 @@ Goal: upload → analytics appear beside viewer.
 
 Goal: bidirectional click sync between sequence and 3D.
 
-- [ ] `SequencePanel.tsx` (per-chain, color by residue type)
-- [ ] Zustand `selectionSlice`
-- [ ] Mol* selection event → store dispatch
-- [ ] Store subscribe → Mol* `highlightResidues`
-- [ ] Residue search input (`A:123` syntax)
-- [ ] Frontend Vitest: selection reducer tests
-- [ ] P4 smoke test
+- [x] `SequencePanel.tsx` (per-chain, color by residue type)
+- [x] Zustand `selectionSlice`
+- [x] Mol* selection event → store dispatch
+- [x] Store subscribe → Mol* `highlightResidues`
+- [x] Residue search input (`A:123` syntax)
+- [x] Frontend Vitest: selection reducer tests
+- [x] P4 smoke test
 
 ### P5 — DB search + import
 
 Goal: search "insulin", click a result, see it in the viewer.
 
-- [ ] `services/rcsb.py` (search, fetch_metadata, download_structure)
-- [ ] `services/alphafold.py` (search via UniProt cross-ref, fetch model)
-- [ ] `services/uniprot.py` (search, fetch_metadata)
-- [ ] `GET /api/search?q=&source=` with `asyncio.gather` fan-out + dedupe
-- [ ] `POST /api/proteins/import`
-- [ ] `app/search/page.tsx` (search input, result cards, source filter)
-- [ ] Backend pytest: each client with recorded HTTP fixtures (respx / pytest-httpx)
-- [ ] P5 smoke test
+- [x] `services/rcsb.py` (search, fetch_metadata, download_structure)
+- [x] `services/alphafold.py` (search via UniProt cross-ref, fetch model)
+- [x] `services/uniprot.py` (search, fetch_metadata)
+- [x] `GET /api/search?q=&source=` with `asyncio.gather` fan-out + dedupe
+- [x] `POST /api/proteins/import`
+- [x] `app/search/page.tsx` (search input, result cards, source filter)
+- [x] Backend pytest: each client with recorded HTTP fixtures (respx / pytest-httpx)
+- [x] P5 smoke test
 
 ---
 

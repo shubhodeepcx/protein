@@ -2,7 +2,7 @@
 
 A web-based workspace for protein 3D visualization, structural analysis, annotation, and reporting. Combines a Mol*-based molecular viewer with bioinformatics pipelines, public-database integration (RCSB PDB, AlphaFold DB, UniProt), and AI-assisted annotation.
 
-**Status:** P0–P3 complete (viewer, upload + parse, analytics dashboard); P4 (sequence panel) and P5 (database search + import) in flight. See [docs/PROJECT_TRACKER.md](docs/PROJECT_TRACKER.md) for the current phase and what's queued.
+**Status:** MVP slice P0–P5 feature-complete — viewer, upload + parse, analytics dashboard, sequence panel with bidirectional 3D selection sync, and public-database search + import (RCSB PDB, AlphaFold DB, UniProt). 83 backend + 79 frontend tests green. See [docs/PROJECT_TRACKER.md](docs/PROJECT_TRACKER.md) for follow-ups and the next slice.
 
 **Smoke tests:** After setup, run [docs/smoke-tests.md](docs/smoke-tests.md) to verify each phase end-to-end.
 
