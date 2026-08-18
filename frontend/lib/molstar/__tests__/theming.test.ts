@@ -29,6 +29,7 @@ import {
   COLOR_THEME,
   PLDDT_COLOR_DOMAIN,
   colorParamsFor,
+  coloringOptionsFor,
 } from "@/lib/molstar/theming";
 
 const THEME_DEFAULTS = PD.getDefaultValues(UncertaintyColorThemeParams);
@@ -96,6 +97,20 @@ describe("colorParamsFor", () => {
       expect(colorParamsFor(scheme, true)).toBeUndefined();
       expect(colorParamsFor(scheme, false)).toBeUndefined();
     }
+  });
+});
+
+describe("coloringOptionsFor", () => {
+  it("offers pLDDT when the B-factor column holds pLDDT", () => {
+    expect(coloringOptionsFor(true).map(([v]) => v)).toContain("plddt");
+  });
+
+  it("hides pLDDT on a structure without it, keeping every other option", () => {
+    const values = coloringOptionsFor(false).map(([v]) => v);
+    expect(values).not.toContain("plddt");
+    expect(values).toEqual(
+      COLORING_OPTIONS.map(([v]) => v).filter((v) => v !== "plddt"),
+    );
   });
 });
 

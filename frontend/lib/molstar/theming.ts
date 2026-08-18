@@ -121,7 +121,24 @@ export const COLORING_OPTIONS: ReadonlyArray<readonly [MolstarColoring, string]>
     ["chain", "Chain"],
     ["ss", "Secondary structure"],
     ["hydrophobicity", "Hydrophobicity"],
-    ["plddt", "pLDDT / B-factor"],
+    ["plddt", "pLDDT confidence"],
     ["residueType", "Residue type"],
   ];
 
+/**
+ * The coloring options offered for a given structure.
+ *
+ * pLDDT is a property of predicted models only, so offering it on an X-ray
+ * entry advertises a confidence score that structure does not have — the
+ * `uncertainty` theme would happily paint its crystallographic temperature
+ * factors on a scale labelled "pLDDT confidence". `has_plddt` on
+ * `ProteinSummary` is the backend's answer to "is the B-factor column pLDDT?",
+ * so it decides.
+ */
+export function coloringOptionsFor(
+  hasPlddt: boolean,
+): ReadonlyArray<readonly [MolstarColoring, string]> {
+  return hasPlddt
+    ? COLORING_OPTIONS
+    : COLORING_OPTIONS.filter(([value]) => value !== "plddt");
+}

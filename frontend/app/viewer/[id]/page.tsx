@@ -166,6 +166,7 @@ export default function DynamicViewerPage() {
         <ViewerHeader
           title={title}
           source={summary?.source ?? null}
+          hasPlddt={hasPlddt}
           onResetCamera={() => viewerRef.current?.resetCamera()}
         />
 
