@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import Link from "next/link";
-import { Atom, RotateCcw, Loader2, AlertCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { MolstarViewerRef } from "@/components/molstar-viewer";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { AnalyticsPanel } from "@/components/analytics-panel";
+import { ViewerRail } from "@/components/viewer-rail";
+import { ViewerHeader } from "@/components/viewer-header";
+import {
+  ViewerOverlays,
+  type ViewerError,
+} from "@/components/viewer-overlays";
 import { API_BASE_URL } from "@/lib/api";
 import { useStore } from "@/lib/store";
 
@@ -22,8 +24,6 @@ const MolstarViewer = dynamic(() => import("@/components/molstar-viewer"), {
   ),
 });
 
-type ViewerError = { kind: "notfound" | "other"; message: string };
-
 export default function DynamicViewerPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
@@ -31,17 +31,25 @@ export default function DynamicViewerPage() {
   const viewerRef = useRef<MolstarViewerRef>(null);
 
   // Protein metadata lives in the shared Zustand store so other surfaces
-  // (sidebars, future selection panels) can read the same `current` protein.
+  // (sequence panel, analytics) read the same `current` protein.
   const summary = useStore((s) => s.current);
   const metaLoading = useStore((s) => s.isLoading);
   const metaError = useStore((s) => s.error);
   const loadProtein = useStore((s) => s.loadProtein);
   const clearProtein = useStore((s) => s.clearProtein);
+  const selected = useStore((s) => s.selected);
+  const toggleResidue = useStore((s) => s.toggleResidue);
+  const clearSelection = useStore((s) => s.clearSelection);
+  const representation = useStore((s) => s.representation);
+  const coloring = useStore((s) => s.coloring);
 
   // Mol*-specific load state stays local — it's not shareable across surfaces.
   const [structureLoading, setStructureLoading] = useState(false);
   const [structureError, setStructureError] = useState<string | null>(null);
   const [viewerReady, setViewerReady] = useState(false);
+  // Bumped every time a structure finishes loading, so the imperative effects
+  // below re-apply their state against the freshly built Mol* hierarchy.
+  const [structureVersion, setStructureVersion] = useState(0);
 
   // Reset viewerReady whenever the route id changes. Without this the local
   // flag survives MolstarViewer unmount/remount on /viewer/A → /viewer/B, so
@@ -49,6 +57,7 @@ export default function DynamicViewerPage() {
   // before the new one has called onReady.
   useEffect(() => {
     setViewerReady(false);
+    setStructureVersion(0);
   }, [id]);
 
   useEffect(() => {
@@ -56,6 +65,7 @@ export default function DynamicViewerPage() {
     void loadProtein(id);
     return () => {
       clearProtein();
+      clearSelection();
     };
     // loadProtein/clearProtein are stable Zustand actions; depending only on id.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -75,6 +85,7 @@ export default function DynamicViewerPage() {
           `${API_BASE_URL}${summary.file_url}`,
           summary.file_format,
         );
+        if (!cancelled) setStructureVersion((v) => v + 1);
       } catch (e) {
         if (!cancelled) {
           setStructureError(
@@ -93,6 +104,33 @@ export default function DynamicViewerPage() {
     };
   }, [viewerReady, summary]);
 
+  // Store -> Mol*: selection. One effect, one direction — a Mol* click routes
+  // through `onResidueClick` below and never re-enters this effect's source.
+  useEffect(() => {
+    if (structureVersion === 0) return;
+    viewerRef.current?.highlightResidues([...selected]);
+  }, [structureVersion, selected]);
+
+  // Store -> Mol*: representation + coloring.
+  useEffect(() => {
+    if (structureVersion === 0) return;
+    viewerRef.current?.setRepresentation(representation);
+  }, [structureVersion, representation]);
+
+  useEffect(() => {
+    if (structureVersion === 0) return;
+    viewerRef.current?.setColoring(coloring);
+  }, [structureVersion, coloring]);
+
+  // Mol* -> store: a 3D click toggles the residue, empty space clears.
+  const onResidueClick = useCallback(
+    (key: string | null) => {
+      if (key === null) clearSelection();
+      else toggleResidue(key);
+    },
+    [clearSelection, toggleResidue],
+  );
+
   const loading = metaLoading || structureLoading;
   const error: ViewerError | null = metaError
     ? {
@@ -107,7 +145,6 @@ export default function DynamicViewerPage() {
     summary?.name && summary.name.trim().length > 0
       ? summary.name
       : `Protein ${id?.slice(0, 8) ?? ""}`;
-  const isNotFound = error?.kind === "notfound";
 
   return (
     <>
@@ -115,101 +152,40 @@ export default function DynamicViewerPage() {
       <link rel="stylesheet" href="/molstar.css" />
 
       <div className="flex h-screen flex-col bg-zinc-950 text-zinc-100">
-        {/* Toolbar */}
-        <header className="flex h-12 shrink-0 items-center gap-3 border-b border-zinc-800 px-4">
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-100"
-          >
-            <Atom className="size-4" aria-hidden />
-            <span className="font-semibold">ProteoLens</span>
-          </Link>
-          <span aria-hidden className="text-zinc-700">
-            /
-          </span>
-          <span className="text-sm font-medium">{title}</span>
-          {summary && (
-            <Badge
-              variant="outline"
-              className="border-zinc-700 text-[10px] text-zinc-400 uppercase"
-            >
-              {summary.source}
-            </Badge>
-          )}
+        <ViewerHeader
+          title={title}
+          source={summary?.source ?? null}
+          onResetCamera={() => viewerRef.current?.resetCamera()}
+        />
 
-          <div className="ml-auto flex items-center gap-1.5">
-            <Badge
-              variant="outline"
-              className="border-zinc-700 text-[10px] text-zinc-400 uppercase"
-            >
-              cartoon
-            </Badge>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7"
-              onClick={() => viewerRef.current?.resetCamera()}
-              title="Reset camera"
-              aria-label="Reset camera"
-              disabled={!summary}
-            >
-              <RotateCcw className="size-3.5" aria-hidden />
-            </Button>
-          </div>
-        </header>
-
-        {/* Split content: viewer left, analytics panel right (xl+) or stacked below (narrow). */}
+        {/* Split content: viewer left, tabbed rail right (xl+) or stacked below. */}
         <div className="grid flex-1 grid-cols-1 overflow-hidden xl:grid-cols-[1fr_24rem]">
           <div className="relative overflow-hidden">
-            {loading && !error && (
-              <div
-                role="status"
-                aria-live="polite"
-                className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-950/80"
-              >
-                <div className="flex flex-col items-center gap-2 text-zinc-400">
-                  <Loader2 className="size-6 animate-spin" aria-hidden />
-                  <span className="text-xs">
-                    Loading {summary ? title : "metadata"}&hellip;
-                  </span>
-                </div>
-              </div>
-            )}
-            {error && (
-              <div
-                role="alert"
-                className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-zinc-950/90 text-center"
-              >
-                <AlertCircle className="size-8 text-red-400" aria-hidden />
-                <p className="max-w-md text-sm text-red-400">{error.message}</p>
-                {isNotFound && (
-                  <Link
-                    href="/"
-                    className="text-xs text-zinc-400 underline hover:text-zinc-100"
-                  >
-                    Upload a new protein
-                  </Link>
-                )}
-              </div>
-            )}
+            <ViewerOverlays
+              loading={loading}
+              error={error}
+              label={summary ? title : "metadata"}
+            />
             {summary && !error && (
               <MolstarViewer
                 ref={viewerRef}
                 className="h-full w-full"
                 onReady={() => setViewerReady(true)}
+                onResidueClick={onResidueClick}
+                chains={summary.chains}
               />
             )}
           </div>
 
           {/* xl+ side panel */}
-          <aside className="hidden border-l border-zinc-800 bg-zinc-950 xl:block">
-            {id && summary && <AnalyticsPanel proteinId={id} />}
+          <aside className="hidden min-h-0 border-l border-zinc-800 bg-zinc-950 xl:block">
+            {id && summary && <ViewerRail proteinId={id} />}
           </aside>
         </div>
 
-        {/* Narrow viewports: stacked analytics panel below the viewer. */}
+        {/* Narrow viewports: stacked rail below the viewer. */}
         <div className="border-t border-zinc-800 bg-zinc-950 xl:hidden">
-          {id && summary && <AnalyticsPanel proteinId={id} />}
+          {id && summary && <ViewerRail proteinId={id} />}
         </div>
       </div>
     </>
