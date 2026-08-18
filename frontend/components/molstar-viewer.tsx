@@ -6,25 +6,33 @@ import { renderReact18 } from "molstar/lib/mol-plugin-ui/react18";
 import { DefaultPluginUISpec } from "molstar/lib/mol-plugin-ui/spec";
 import type { PluginUIContext } from "molstar/lib/mol-plugin-ui/context";
 import { PluginCommands } from "molstar/lib/mol-plugin/commands";
+import type { Structure } from "molstar/lib/mol-model/structure";
+import {
+  applyColoring,
+  applyRepresentation,
+  applySelection,
+  loadStructureInto,
+  type MolstarFormat,
+} from "@/lib/molstar/actions";
+import {
+  buildResidueIndex,
+  findIndexDrift,
+  lociToResidueKey,
+  EMPTY_RESIDUE_INDEX,
+  type ResidueIndexMap,
+} from "@/lib/molstar/residue-index";
+import type {
+  MolstarColoring,
+  MolstarRepresentation,
+} from "@/lib/molstar/theming";
+import type { QueryChain } from "@/lib/residue";
 
-export type MolstarFormat = "pdb" | "mmcif";
-
-export type MolstarRepresentation =
-  | "cartoon"
-  | "surface"
-  | "stick"
-  | "ball-stick"
-  | "spacefill";
-
-export type MolstarColoring =
-  | "chain"
-  | "ss"
-  | "hydrophobicity"
-  | "plddt"
-  | "residueType";
+export type { MolstarFormat, MolstarRepresentation, MolstarColoring };
 
 export interface MolstarViewerRef {
   loadStructure(url: string, format?: MolstarFormat): Promise<void>;
+  /** Keys are `"<chain>:<1-based position>"`, matching the sequence panel. */
+  highlightResidues(keys: string[]): void;
   setRepresentation(type: MolstarRepresentation): void;
   setColoring(scheme: MolstarColoring): void;
   resetCamera(): void;
@@ -34,17 +42,32 @@ export interface MolstarViewerProps {
   className?: string;
   style?: React.CSSProperties;
   onReady?: () => void;
+  /** Fires with a residue key on click, or `null` when empty space is clicked. */
+  onResidueClick?: (key: string | null) => void;
+  /** Optional: used only to warn when Mol*'s residue count drifts from the API's. */
+  chains?: readonly QueryChain[];
 }
 
 const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
-  function MolstarViewer({ className, style, onReady }, ref) {
+  function MolstarViewer(
+    { className, style, onReady, onResidueClick, chains },
+    ref,
+  ) {
     const containerRef = useRef<HTMLDivElement>(null);
     const pluginRef = useRef<PluginUIContext | null>(null);
+    const structureRef = useRef<Structure | null>(null);
+    const indexRef = useRef<ResidueIndexMap>(EMPTY_RESIDUE_INDEX);
     const onReadyRef = useRef(onReady);
-    // Keep ref in sync without re-running the init effect.
+    const onResidueClickRef = useRef(onResidueClick);
+    const chainsRef = useRef(chains);
+
+    // Keep refs in sync without re-running the init effect (which would tear
+    // down and rebuild the WebGL context on every parent render).
     useEffect(() => {
       onReadyRef.current = onReady;
-    }, [onReady]);
+      onResidueClickRef.current = onResidueClick;
+      chainsRef.current = chains;
+    }, [onReady, onResidueClick, chains]);
 
     useEffect(() => {
       const target = containerRef.current;
@@ -52,6 +75,7 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
 
       let disposed = false;
       let pluginInstance: PluginUIContext | null = null;
+      let clickSub: { unsubscribe(): void } | null = null;
 
       async function init() {
         const spec = DefaultPluginUISpec();
@@ -80,18 +104,34 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
         }
         pluginInstance = plugin;
         pluginRef.current = plugin;
+
+        // Direction 1 of the selection sync: 3D click -> store. `click` is a
+        // BehaviorSubject that replays an empty seed value on subscribe;
+        // swallowing it stops a spurious "clear selection" on mount.
+        let seeded = false;
+        clickSub = plugin.behaviors.interaction.click.subscribe((e) => {
+          if (!seeded) {
+            seeded = true;
+            return;
+          }
+          onResidueClickRef.current?.(
+            lociToResidueKey(e.current.loci, indexRef.current),
+          );
+        });
+
         onReadyRef.current?.();
       }
 
-      init().catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error("Mol* init failed:", err);
-      });
+      // eslint-disable-next-line no-console
+      init().catch((err) => console.error("Mol* init failed:", err));
 
       return () => {
         disposed = true;
+        clickSub?.unsubscribe();
         pluginInstance?.dispose();
         pluginRef.current = null;
+        structureRef.current = null;
+        indexRef.current = EMPTY_RESIDUE_INDEX;
       };
     }, []);
 
@@ -100,31 +140,43 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
         const plugin = pluginRef.current;
         if (!plugin) return;
 
-        await plugin.clear();
+        structureRef.current = null;
+        indexRef.current = EMPTY_RESIDUE_INDEX;
 
-        const data = await plugin.builders.data.download(
-          { url, isBinary: false },
-          { state: { isGhost: true } },
-        );
+        const structure = await loadStructureInto(plugin, url, format);
+        structureRef.current = structure;
+        indexRef.current = structure
+          ? buildResidueIndex(structure)
+          : EMPTY_RESIDUE_INDEX;
 
-        const trajectory = await plugin.builders.structure.parseTrajectory(
-          data,
-          format === "mmcif" ? "mmcif" : "pdb",
-        );
-
-        await plugin.builders.structure.hierarchy.applyPreset(
-          trajectory,
-          "default",
-        );
+        const expected = chainsRef.current;
+        const drift = expected ? findIndexDrift(indexRef.current, expected) : [];
+        if (drift.length > 0) {
+          // eslint-disable-next-line no-console
+          console.warn(
+            "Residue numbering drift between Mol* and the API:",
+            drift.join("; "),
+          );
+        }
       },
 
-      setRepresentation(_type: MolstarRepresentation) {
-        // Imperative representation switching is wired in P4 alongside the
-        // selection slice.
+      highlightResidues(keys: string[]) {
+        const plugin = pluginRef.current;
+        const structure = structureRef.current;
+        if (!plugin || !structure) return;
+        applySelection(plugin, structure, keys, indexRef.current);
       },
 
-      setColoring(_scheme: MolstarColoring) {
-        // Imperative coloring is wired in P4 alongside the selection slice.
+      setRepresentation(type: MolstarRepresentation) {
+        const plugin = pluginRef.current;
+        if (!plugin) return;
+        applyRepresentation(plugin, type);
+      },
+
+      setColoring(scheme: MolstarColoring) {
+        const plugin = pluginRef.current;
+        if (!plugin) return;
+        applyColoring(plugin, scheme);
       },
 
       resetCamera() {
