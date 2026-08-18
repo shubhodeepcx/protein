@@ -161,6 +161,40 @@ describe("SearchView", () => {
     expect(screen.queryByTestId("result-card-alphafold-P06213")).not.toBeInTheDocument();
   });
 
+  it("lets an invalid submit supersede a search still in flight", async () => {
+    // Clearing the box and switching the filter mid-search must not leave the
+    // old response free to land on top of the validation error.
+    let releaseAll: (r: Response) => void = () => {};
+    fetchMock.mockReturnValueOnce(
+      new Promise<Response>((resolve) => {
+        releaseAll = resolve;
+      }),
+    );
+    render(<SearchView />);
+    submitSearch("insulin");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // Empty the input, then change the source — runSearch bails on validation.
+    fireEvent.change(screen.getByLabelText(/search public protein databases/i), {
+      target: { value: "" },
+    });
+    fireEvent.change(screen.getByLabelText(/source database/i), {
+      target: { value: "rcsb" },
+    });
+
+    expect(screen.getByRole("alert").textContent).toMatch(/Enter a protein name/i);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // the invalid submit issued nothing
+
+    // The superseded in-flight response finally arrives.
+    releaseAll(jsonResponse(searchResponse()));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    // It must be discarded: the validation error stands, no results painted.
+    expect(screen.getByRole("alert").textContent).toMatch(/Enter a protein name/i);
+    expect(screen.queryByTestId("result-list")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("result-card-rcsb-1CRN")).not.toBeInTheDocument();
+  });
+
   it("shows a distinct empty-results state", async () => {
     fetchMock.mockResolvedValue(
       jsonResponse(searchResponse({ query: "zzzz", results: [] })),

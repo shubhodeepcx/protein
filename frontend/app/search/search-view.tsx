@@ -45,13 +45,17 @@ export function SearchView() {
   const searchSeq = useRef(0);
 
   const runSearch = useCallback(async (q: string, src: SearchSourceFilter) => {
+    // Take the token BEFORE validating. An invalid submit still supersedes
+    // whatever is in flight — otherwise clearing the box and switching the
+    // filter mid-search lets the old response land on top of the validation
+    // error and repaint results the user can no longer see a query for.
+    const myReq = ++searchSeq.current;
     const trimmed = q.trim();
     if (!trimmed) {
       setError("Enter a protein name, PDB ID, or UniProt accession to search.");
       setStatus("error");
       return;
     }
-    const myReq = ++searchSeq.current;
     setStatus("loading");
     setError(null);
     const params = new URLSearchParams({ q: trimmed, source: src });
