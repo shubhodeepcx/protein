@@ -17,32 +17,52 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in flight. P4 and P5 both merged; the slice is feature-complete._
-
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
+| `viewer-slice` representation/coloring never reset across proteins | shubhodeep | `feature/fix-viewer-options-reset-on-route-change` | wip | Small, isolated fix — see note below on why this task was picked over the pLDDT row. |
+
+---
+
+## ⚠️ Open-PR pile-up — read before claiming
+
+As of 2026-08-18, **7 PRs are open against `main` and none are merged** (`#1`–`#7`). The claim-before-code protocol only works if claims land on `main`; since every run branches from `main` and nothing has merged back yet, several runs re-picked the same row. Notably **`#3`, `#4`, `#5`, and `#7` are four independent fixes for the same CRITICAL pLDDT row** below — do not open a fifth. `#3` is the most complete (closes the CRITICAL finding plus 5 more rows in one PR); `#1`, `#2`, and `#6` each close a distinct row and don't overlap with `#3` or each other.
+
+A human needs to reconcile this — pick one of the pLDDT PRs (`#3` is the superset), close the other three, and merge `#1`/`#2`/`#6`/`#3` in some order. Until that happens, treat every row already covered by an open PR as **claimed**, not free:
+
+| Ready-to-claim row | Covered by |
+|---|---|
+| CRITICAL pLDDT coloring inverted | `#3`, `#4`, `#5`, `#7` (pick one, close the rest) |
+| Organism `None` on mmCIF import | `#3` |
+| `has_plddt` never reaches the UI | `#3` |
+| `search-view.tsx` over 200 LOC | `#3` |
+| Landing page + README deny shipped features | `#3` |
+| Smoke step for imported RCSB mmCIF | `#3` |
+| `1CRN.cif` fixture too thin for parser-parity testing | `#2` |
+| `proteins.py:64` OSError path leak | `#6` |
+| AlphaFold fallback URL hard-coded to v4 | `#1` |
+
+Rows not in that table are still genuinely unclaimed.
 
 ---
 
 ## Ready to claim
 
-Follow-ups discovered during P4/P5. None block the slice; each was deliberately deferred with a reason.
+Follow-ups discovered during P4/P5. None block the slice; each was deliberately deferred with a reason. See the pile-up warning above — several of these already have an open PR.
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
 | Run the P4 + P5 manual smoke tests (browser + live internet required) | P5.5 | — | 45m |
-| **CRITICAL** — pLDDT coloring is inverted: `theming.ts` maps `plddt` to Mol\*'s `uncertainty` theme (0=blue, 100=red), correct for B-factor but backwards for pLDDT. Confident core renders red on every AlphaFold import. Fix via `domain: [100, 0]`. | fix | — | 30m |
-| Organism is `None` on every RCSB mmCIF import — `parser._extract_header_strings` reads PDB-header keys only, and MMCIFParser's header has no `source`. UI shows "Organism: Unknown" right after the search card showed it correctly. | fix | — | 1h |
-| `has_plddt` never reaches the UI — pLDDT coloring is offered unconditionally, even on X-ray entries | fix | — | 45m |
-| `frontend/app/search/search-view.tsx` is 226 LOC, over the 200 limit in AGENTS.md section 3 | fix | — | 30m |
-| Landing page + README still deny shipped features ("P2" badge, "arrives in P4", disabled Upload button) | fix | — | 30m |
-| Add a smoke step that clicks a residue on an IMPORTED RCSB mmCIF — only uploaded 1CRN.pdb is covered today | fix | — | 20m |
-| `tests/fixtures/1CRN.cif` is `_atom_site`-only, single-chain, 1-based — exercises none of the mmCIF shape that could break the residue seam | test | — | 45m |
+| **CRITICAL** — pLDDT coloring is inverted: `theming.ts` maps `plddt` to Mol\*'s `uncertainty` theme (0=blue, 100=red), correct for B-factor but backwards for pLDDT. Confident core renders red on every AlphaFold import. Fix via `domain: [100, 0]`. **Open PRs #3, #4, #5, #7 — do not open a 5th.** | fix | — | 30m |
+| Organism is `None` on every RCSB mmCIF import — `parser._extract_header_strings` reads PDB-header keys only, and MMCIFParser's header has no `source`. UI shows "Organism: Unknown" right after the search card showed it correctly. **Open PR #3.** | fix | — | 1h |
+| `has_plddt` never reaches the UI — pLDDT coloring is offered unconditionally, even on X-ray entries. **Open PR #3.** | fix | — | 45m |
+| `frontend/app/search/search-view.tsx` is 226 LOC, over the 200 limit in AGENTS.md section 3. **Open PR #3.** | fix | — | 30m |
+| Landing page + README still deny shipped features ("P2" badge, "arrives in P4", disabled Upload button). **Open PR #3.** | fix | — | 30m |
+| Add a smoke step that clicks a residue on an IMPORTED RCSB mmCIF — only uploaded 1CRN.pdb is covered today. **Open PR #3.** | fix | — | 20m |
+| `tests/fixtures/1CRN.cif` is `_atom_site`-only, single-chain, 1-based — exercises none of the mmCIF shape that could break the residue seam. **Open PR #2.** | test | — | 45m |
 | Dedupe backend constants: 50 MB ceiling defined twice, `_ALLOWED_EXTS` twice with different members, store->parse->register->unlink flow duplicated | cleanup | — | 1h |
-| `viewer-slice` representation/coloring never reset across proteins (selection is) | fix | — | 20m |
-| `proteins.py:64` `detail=str(exc)` can leak the storage path from an OSError (pre-existing; the P5 import path is already generic) | fix | — | 20m |
+| `proteins.py:64` `detail=str(exc)` can leak the storage path from an OSError (pre-existing; the P5 import path is already generic). **Open PR #6.** | fix | — | 20m |
 | Add a `"uniprot"` member to `ProteinSummary.source` so a UniProt-card import keeps its provenance | follow-up | shared model change | 45m |
-| Derive the AlphaFold fallback file URL from `latestVersion` instead of the hard-coded `-model_v4.pdb` | follow-up | — | 30m |
+| Derive the AlphaFold fallback file URL from `latestVersion` instead of the hard-coded `-model_v4.pdb`. **Open PR #1.** | follow-up | — | 30m |
 | Batch RCSB search enrichment via the GraphQL Data API (currently up to 50 REST calls per search) | follow-up | — | 2h |
 | Retries / backoff / rate limiting on the three outbound clients | follow-up | — | 2h |
 | Virtualise the sequence panel (one `<button>` per residue gets heavy above ~2,000 residues) | follow-up | — | 2h |
