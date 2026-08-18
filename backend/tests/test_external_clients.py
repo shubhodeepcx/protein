@@ -263,6 +263,52 @@ async def test_alphafold_download_404_on_obsolete_fallback_only_is_unavailable()
 
 
 @respx.mock
+async def test_alphafold_download_transport_error_falls_through_to_fallback() -> None:
+    """A connection error on the published URL must not abort the chain.
+
+    A transient network failure on pdbUrl is not evidence about the fallback,
+    so the fallback still gets its turn — exactly as it does for a bad status.
+    """
+    respx.get(url__startswith=AF_PREDICTION).mock(
+        return_value=httpx.Response(200, json=load_json("alphafold_prediction_P69905.json"))
+    )
+    primary = respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(
+        side_effect=httpx.ConnectError("connection reset by peer")
+    )
+    fallback = respx.get(f"{AF_FILES}AF-P69905-F1-model_v4.pdb").mock(
+        return_value=httpx.Response(200, content=b"HEADER FALLBACK END")
+    )
+
+    content, fmt = await AlphaFoldClient().download_structure("P69905")
+
+    assert primary.called
+    assert fallback.called
+    assert fmt == "pdb"
+    assert b"FALLBACK" in content
+
+
+@respx.mock
+async def test_alphafold_download_fails_only_once_every_leg_is_exhausted() -> None:
+    """Transport error on the published URL + 404 on the fallback is an outage."""
+    respx.get(url__startswith=AF_PREDICTION).mock(
+        return_value=httpx.Response(200, json=load_json("alphafold_prediction_P69905.json"))
+    )
+    primary = respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(
+        side_effect=httpx.ConnectError("connection reset by peer")
+    )
+    fallback = respx.get(f"{AF_FILES}AF-P69905-F1-model_v4.pdb").mock(
+        return_value=httpx.Response(404)
+    )
+
+    with pytest.raises(SourceUnavailableError) as excinfo:
+        await AlphaFoldClient().download_structure("P69905")
+
+    assert primary.called
+    assert fallback.called
+    assert "could not be reached" in str(excinfo.value)
+
+
+@respx.mock
 async def test_alphafold_download_structure_bypasses_the_metadata_cache() -> None:
     """Spec 5.4: a cached payload must not be able to supply a stale pdbUrl."""
     prediction = respx.get(url__startswith=AF_PREDICTION).mock(

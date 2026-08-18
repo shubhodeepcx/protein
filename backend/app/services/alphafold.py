@@ -141,24 +141,40 @@ class AlphaFoldClient:
         if fallback not in urls:
             urls.append(fallback)
 
-        statuses: list[int] = []
+        # (url, status) per attempt; status is None when the request never
+        # completed at all (DNS, TLS, connect timeout, …).
+        attempts: list[tuple[str, int | None]] = []
+        transport_errors: list[str] = []
         async with new_client() as client:
             for url in urls:
                 try:
                     response = await client.get(url)
                 except httpx.HTTPError as exc:
-                    raise SourceUnavailableError(
-                        f"AlphaFold file download failed: {exc}"
-                    ) from exc
+                    # A transport error on one leg must not abort the chain: a
+                    # flaky connection to the published URL should fall through
+                    # to the fallback exactly as a bad status does. We only give
+                    # up once every candidate is exhausted.
+                    attempts.append((url, None))
+                    transport_errors.append(f"{url}: {exc}")
+                    logger.warning(
+                        "AlphaFold file %s could not be reached for %s (%s); "
+                        "trying next candidate",
+                        url,
+                        accession,
+                        exc,
+                    )
+                    continue
                 if response.status_code == 200 and response.content:
                     return response.content, "pdb"
-                statuses.append(response.status_code)
+                attempts.append((url, response.status_code))
                 logger.warning(
                     "AlphaFold file %s returned HTTP %s for %s; trying next candidate",
                     url,
                     response.status_code,
                     accession,
                 )
+
+        statuses = [status for _, status in attempts if status is not None]
 
         # Classify on the whole chain, not just the last attempt. A 5xx
         # anywhere is an upstream outage; reporting it as "no model" would tell
@@ -168,11 +184,18 @@ class AlphaFoldClient:
                 f"AlphaFold file download for {accession} failed upstream "
                 f"(HTTP {', '.join(str(s) for s in statuses)})"
             )
+        # A leg that never completed is an outage too — we learned nothing
+        # about whether the model exists.
+        if transport_errors:
+            raise SourceUnavailableError(
+                f"AlphaFold file download for {accession} could not be reached: "
+                + "; ".join(transport_errors)
+            )
         # Only a 404 on the URL AlphaFold published is a genuine "no model
         # file". If we never had that URL, the prediction lookup above already
         # confirmed a model record exists, so a 404 on the obsolete fallback is
         # our problem, not the user's.
-        if authoritative is not None and statuses and statuses[0] == 404:
+        if authoritative is not None and attempts and attempts[0][1] == 404:
             raise SourceNotFoundError(f"AlphaFold DB has no model file for {accession}")
         raise SourceUnavailableError(
             f"AlphaFold file download for {accession} returned HTTP "
