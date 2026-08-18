@@ -143,6 +143,19 @@ async def test_rcsb_search_upstream_error_raises_unavailable() -> None:
 # ---------------------------------------------------------------- AlphaFold
 
 
+def _prediction_with_stale_pdb_url() -> list[dict]:
+    """P69905 fixture whose `pdbUrl` is one version behind `latestVersion` (6).
+
+    Gives the authoritative leg and the version-derived fallback leg genuinely
+    different URLs, so tests can still exercise two distinct download
+    attempts even though the fixture's `pdbUrl` and `latestVersion` normally
+    agree.
+    """
+    prediction = load_json("alphafold_prediction_P69905.json")
+    prediction[0]["pdbUrl"] = f"{AF_FILES}AF-P69905-F1-model_v5.pdb"
+    return prediction
+
+
 @respx.mock
 async def test_alphafold_search_resolves_through_uniprot_crossrefs() -> None:
     route = respx.get(url__startswith=UNIPROT_SEARCH).mock(
@@ -222,14 +235,15 @@ async def test_alphafold_download_structure_uses_pdb_url() -> None:
 async def test_alphafold_download_5xx_then_404_fallback_is_unavailable_not_missing() -> None:
     """A 5xx anywhere in the chain must never be reported as 'no model'.
 
-    The live pdbUrl is down (503) and the obsolete v4 fallback 404s. Classifying
-    on the last attempt alone would tell the user the structure does not exist.
+    The live pdbUrl is down (503) and the version-derived fallback 404s.
+    Classifying on the last attempt alone would tell the user the structure
+    does not exist.
     """
     respx.get(url__startswith=AF_PREDICTION).mock(
-        return_value=httpx.Response(200, json=load_json("alphafold_prediction_P69905.json"))
+        return_value=httpx.Response(200, json=_prediction_with_stale_pdb_url())
     )
-    respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(return_value=httpx.Response(503))
-    respx.get(f"{AF_FILES}AF-P69905-F1-model_v4.pdb").mock(return_value=httpx.Response(404))
+    respx.get(f"{AF_FILES}AF-P69905-F1-model_v5.pdb").mock(return_value=httpx.Response(503))
+    respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(return_value=httpx.Response(404))
 
     with pytest.raises(SourceUnavailableError) as excinfo:
         await AlphaFoldClient().download_structure("P69905")
@@ -250,7 +264,7 @@ async def test_alphafold_download_404_on_published_url_is_not_found() -> None:
 
 @respx.mock
 async def test_alphafold_download_404_on_obsolete_fallback_only_is_unavailable() -> None:
-    """Without a published pdbUrl the v4 guess 404ing says nothing about the model."""
+    """Without a published pdbUrl the version-derived guess 404ing says nothing about the model."""
     prediction = load_json("alphafold_prediction_P69905.json")
     del prediction[0]["pdbUrl"]
     respx.get(url__startswith=AF_PREDICTION).mock(
@@ -270,12 +284,12 @@ async def test_alphafold_download_transport_error_falls_through_to_fallback() ->
     so the fallback still gets its turn — exactly as it does for a bad status.
     """
     respx.get(url__startswith=AF_PREDICTION).mock(
-        return_value=httpx.Response(200, json=load_json("alphafold_prediction_P69905.json"))
+        return_value=httpx.Response(200, json=_prediction_with_stale_pdb_url())
     )
-    primary = respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(
+    primary = respx.get(f"{AF_FILES}AF-P69905-F1-model_v5.pdb").mock(
         side_effect=httpx.ConnectError("connection reset by peer")
     )
-    fallback = respx.get(f"{AF_FILES}AF-P69905-F1-model_v4.pdb").mock(
+    fallback = respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(
         return_value=httpx.Response(200, content=b"HEADER FALLBACK END")
     )
 
@@ -291,12 +305,12 @@ async def test_alphafold_download_transport_error_falls_through_to_fallback() ->
 async def test_alphafold_download_fails_only_once_every_leg_is_exhausted() -> None:
     """Transport error on the published URL + 404 on the fallback is an outage."""
     respx.get(url__startswith=AF_PREDICTION).mock(
-        return_value=httpx.Response(200, json=load_json("alphafold_prediction_P69905.json"))
+        return_value=httpx.Response(200, json=_prediction_with_stale_pdb_url())
     )
-    primary = respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(
+    primary = respx.get(f"{AF_FILES}AF-P69905-F1-model_v5.pdb").mock(
         side_effect=httpx.ConnectError("connection reset by peer")
     )
-    fallback = respx.get(f"{AF_FILES}AF-P69905-F1-model_v4.pdb").mock(
+    fallback = respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(
         return_value=httpx.Response(404)
     )
 
@@ -328,9 +342,31 @@ async def test_alphafold_download_structure_bypasses_the_metadata_cache() -> Non
 
 
 @respx.mock
-async def test_alphafold_download_structure_falls_back_to_v4_url() -> None:
+async def test_alphafold_download_structure_falls_back_to_latest_version_url() -> None:
+    """Without a published pdbUrl, the guess uses the payload's `latestVersion` (6 here), not a hard-coded v4."""
     prediction = load_json("alphafold_prediction_P69905.json")
     del prediction[0]["pdbUrl"]
+    assert prediction[0]["latestVersion"] == 6
+    respx.get(url__startswith=AF_PREDICTION).mock(
+        return_value=httpx.Response(200, json=prediction)
+    )
+    fallback = respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(
+        return_value=httpx.Response(200, content=b"HEADER    FALLBACK\nEND\n")
+    )
+
+    content, fmt = await AlphaFoldClient().download_structure("P69905")
+
+    assert fallback.called
+    assert fmt == "pdb"
+    assert b"FALLBACK" in content
+
+
+@respx.mock
+async def test_alphafold_download_structure_falls_back_to_default_version_when_latest_version_missing() -> None:
+    """If the payload omits `latestVersion` entirely, the guess falls back to the documented default (v4)."""
+    prediction = load_json("alphafold_prediction_P69905.json")
+    del prediction[0]["pdbUrl"]
+    del prediction[0]["latestVersion"]
     respx.get(url__startswith=AF_PREDICTION).mock(
         return_value=httpx.Response(200, json=prediction)
     )

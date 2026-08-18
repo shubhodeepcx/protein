@@ -22,9 +22,12 @@ logger = logging.getLogger(__name__)
 
 PREDICTION_URL = "https://alphafold.ebi.ac.uk/api/prediction/{accession}"
 # Documented fallback (spec 5.4) for the rare entry whose prediction payload
-# omits `pdbUrl`. AlphaFold DB is currently publishing v6 files, so this is a
-# genuine fallback and not the happy path.
-FALLBACK_PDB_URL = "https://alphafold.ebi.ac.uk/files/AF-{accession}-F1-model_v4.pdb"
+# omits `pdbUrl`. The version segment is derived from the payload's own
+# `latestVersion` field (see `_fallback_pdb_url`) so the guess tracks
+# AlphaFold DB's model versioning instead of going stale behind a constant.
+FALLBACK_PDB_URL_TEMPLATE = "https://alphafold.ebi.ac.uk/files/AF-{accession}-F1-model_v{version}.pdb"
+# Used only when the prediction payload omits `latestVersion` entirely.
+DEFAULT_FALLBACK_VERSION = 4
 
 
 class AlphaFoldClient:
@@ -131,12 +134,12 @@ class AlphaFoldClient:
         meta = await self._prediction(accession, use_cache=False)
 
         pdb_url = meta.get("pdb_url")
-        # Only the URL AlphaFold itself published is authoritative. The v4
-        # constant is a documented guess for payloads that omit `pdbUrl`;
-        # AlphaFold DB is currently publishing v6, so it is genuinely a
-        # fallback and its status says nothing about whether a model exists.
+        # Only the URL AlphaFold itself published is authoritative. The
+        # version-derived guess below is for payloads that omit `pdbUrl`, so
+        # it is genuinely a fallback and its status says nothing about
+        # whether a model exists.
         authoritative = pdb_url if isinstance(pdb_url, str) and pdb_url else None
-        fallback = FALLBACK_PDB_URL.format(accession=accession)
+        fallback = _fallback_pdb_url(accession, meta)
         urls = [authoritative] if authoritative else []
         if fallback not in urls:
             urls.append(fallback)
@@ -234,4 +237,18 @@ def _normalise(accession: str, prediction: Metadata) -> Metadata:
         "pdb_url": prediction.get("pdbUrl"),
         "cif_url": prediction.get("cifUrl"),
         "entry_id": entry_id,
+        "latest_version": as_int(prediction.get("latestVersion")),
     }
+
+
+def _fallback_pdb_url(accession: str, meta: Metadata) -> str:
+    """Guess the file URL from the payload's own `latestVersion`.
+
+    Falls back to `DEFAULT_FALLBACK_VERSION` only when the payload omits
+    `latestVersion` entirely, so the guess tracks AlphaFold DB's model
+    versioning instead of a constant that goes stale as versions roll.
+    """
+    version = meta.get("latest_version")
+    if not isinstance(version, int) or version <= 0:
+        version = DEFAULT_FALLBACK_VERSION
+    return FALLBACK_PDB_URL_TEMPLATE.format(accession=accession, version=version)
