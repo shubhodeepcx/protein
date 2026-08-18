@@ -3,13 +3,13 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-05-25 by Shubhodeep Chatterjee (P3 complete — analytics service + endpoint + dashboard panel with 4 Recharts charts; 31 backend + 13 frontend tests green; P4 ready to claim)
+**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (P4 + P5 claimed and dispatched in parallel worktrees — final two phases of the MVP slice)
 
 ---
 
 ## Current phase
 
-**P4 — Sequence panel** (P3 complete)
+**P4 — Sequence panel** and **P5 — DB search + import** (both in flight; P0–P3 complete)
 
 Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](superpowers/specs/2026-05-23-protein-mvp-slice-design.md)
 
@@ -17,26 +17,21 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in flight. P3 fully done; P4 tasks ready to claim._
+Both remaining phases are claimed. They touch disjoint files (P4 = frontend selection/sequence; P5 = backend external clients + search page), so they run in parallel worktrees per AGENTS.md §5.
 
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
+| P4: sequence panel + bidirectional Mol\* selection sync (SequencePanel, selectionSlice wiring, `highlightResidues`, residue search, vitest) | shubhodeep | `feature/p4-sequence-panel` | wip | Owns `frontend/components/sequence/*`, `molstar-viewer.tsx`, `selection-slice.ts`, `app/viewer/[id]/page.tsx` |
+| P5: RCSB + AlphaFold + UniProt clients, `GET /api/search`, `POST /api/proteins/import`, search page (respx-mocked pytest) | shubhodeep | `feature/p5-db-search-import` | wip | Owns `backend/app/services/{rcsb,alphafold,uniprot}.py`, `api/{search,import_}.py`, `main.py`, `app/search/page.tsx` |
 
 ---
 
 ## Ready to claim
 
-Tasks with no unresolved dependencies. Pick one, move it to In progress, then start work.
+_Empty — every task in the P0–P5 slice is either done or in flight. New follow-ups discovered during P4/P5 land here._
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
-| P4: `SequencePanel.tsx` (per-chain, color by residue type) | P4 | — | 2h |
-| P4: Zustand `selectionSlice` real wiring (already scaffolded) | P4 | — | 1h |
-| P4: Mol\* selection event → store dispatch | P4 | MolstarViewer extension | 2h |
-| P4: Store subscribe → Mol\* `highlightResidues` | P4 | selectionSlice | 1h |
-| P4: Residue search input (`A:123` syntax) | P4 | SequencePanel | 1h |
-| P4: Frontend Vitest — selection reducer tests | P4 | selectionSlice wiring | 30m |
-| P4: smoke test for P4 in `docs/smoke-tests.md` | P4 | P4 features | 15m |
 
 ---
 
