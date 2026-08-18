@@ -17,10 +17,9 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in flight. P4 and P5 both merged; the slice is feature-complete._
-
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
+| Review the P4/P5 seam: do residue ordinals still agree when the structure arrives as mmCIF? | `shubhodeep` | `feature/p5-parser-parity` | `wip` | P4's ordinal mirror was designed against `PDBParser`; P5's RCSB import feeds it `MMCIFParser`. Nobody reviewed the seam. |
 
 ---
 
