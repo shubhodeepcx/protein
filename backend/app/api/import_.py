@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 from fastapi.concurrency import run_in_threadpool
@@ -21,15 +20,6 @@ router = APIRouter(prefix="/proteins/import", tags=["import"])
 # Same ceiling the upload path enforces — an external source should not be able
 # to hand us something we would have rejected from a browser.
 MAX_IMPORT_BYTES = 50 * 1024 * 1024
-
-# UniProt hosts no coordinates of its own: importing from UniProt downloads the
-# entry's AlphaFold model, so the stored summary is an AlphaFold structure.
-# (`ProteinSummary.source` is Literal["uploaded", "rcsb", "alphafold"].)
-_PARSER_SOURCE: dict[SourceName, Literal["rcsb", "alphafold"]] = {
-    "rcsb": "rcsb",
-    "alphafold": "alphafold",
-    "uniprot": "alphafold",
-}
 
 _NOT_FOUND_MESSAGE: dict[SourceName, str] = {
     "rcsb": "RCSB PDB has no entry {id}.",
@@ -96,11 +86,17 @@ async def import_protein(payload: ImportRequest) -> ProteinSummary:
             logger.warning("Could not clean up %s after a failed import", stored_path.name)
 
     try:
+        # UniProt hosts no coordinates of its own: importing from UniProt
+        # downloads the entry's AlphaFold model, so the file on disk is an
+        # AlphaFold structure. The summary still records "uniprot" as its own
+        # source (rather than folding it into "alphafold") so the viewer can
+        # show the user arrived via a UniProt card; `parser.parse` treats
+        # "uniprot" as pLDDT-bearing exactly like "alphafold" for that reason.
         summary = await run_in_threadpool(
             parser.parse,
             stored_path,
             uid=uid,
-            source=_PARSER_SOURCE[source],
+            source=source,
             source_id=source_id,
         )
     except Exception as exc:
