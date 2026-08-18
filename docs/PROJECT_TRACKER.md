@@ -21,6 +21,7 @@ _Nothing in flight. P4 and P5 both merged; the slice is feature-complete._
 
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
+| Derive the AlphaFold fallback file URL from `latestVersion` instead of the hard-coded `-model_v4.pdb` | shubhodeep | `feature/followup-alphafold-fallback-version` | wip | Scheduled backlog run |
 
 ---
 
