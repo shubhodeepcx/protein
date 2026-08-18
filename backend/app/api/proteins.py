@@ -16,15 +16,15 @@ from app.models.analytics import (
     SecondaryStructurePercentages,
 )
 from app.models.protein import ProteinSummary
-from app.services import analytics, parser
+from app.services import analytics, parser, registry
 from app.storage import local as storage
 
 router = APIRouter(prefix="/proteins", tags=["proteins"])
 
 _STATIC = Path(__file__).parent.parent / "static"
 
-# Persistence is a later slice — this dict resets on restart.
-_SUMMARY_CACHE: dict[str, ProteinSummary] = {}
+# Parsed summaries live in `services/registry` so the import router (P5) can
+# register into the same store this router reads from.
 
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
 _ALLOWED_EXTS = {"pdb", "cif", "mmcif"}
@@ -86,7 +86,7 @@ async def upload_protein(file: UploadFile = File(...)) -> ProteinSummary:
             detail="Could not parse any protein chains from the file. Check the file is a valid PDB or mmCIF structure.",
         )
 
-    _SUMMARY_CACHE[uid] = summary
+    registry.put(uid, summary)
     return summary
 
 
@@ -97,7 +97,7 @@ def get_protein(uid: str) -> ProteinSummary:
         storage.validate_uid(uid)
     except ValueError:
         raise HTTPException(status_code=404, detail="Protein not found")
-    summary = _SUMMARY_CACHE.get(uid)
+    summary = registry.get(uid)
     if not summary:
         raise HTTPException(status_code=404, detail="Protein not found")
     return summary
@@ -174,7 +174,7 @@ async def get_protein_analytics(uid: str) -> AnalyticsResponse:
         storage.validate_uid(uid)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail="Protein not found") from exc
-    summary = _SUMMARY_CACHE.get(uid)
+    summary = registry.get(uid)
     if not summary:
         raise HTTPException(status_code=404, detail="Protein not found")
     try:
