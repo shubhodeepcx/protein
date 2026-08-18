@@ -1,5 +1,6 @@
-import { Upload, Search, Atom } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Upload, Search, Atom, Database } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -37,29 +38,28 @@ export default function HomePage() {
         <Separator orientation="vertical" className="h-6" />
 
         <div className="flex max-w-xl flex-1 items-center">
-          <label
-            htmlFor="global-search"
-            className="sr-only"
+          {/* Entry point to the P5 database search page. */}
+          <Link
+            href="/search"
+            className="relative flex h-8 w-full items-center rounded-md border border-input bg-muted/40 pr-3 pl-8 text-xs text-muted-foreground transition-colors hover:border-border hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            Search proteins, chains, or residues
-          </label>
-          <div className="relative w-full">
             <Search
-              className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+              className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2"
               aria-hidden
             />
-            <input
-              id="global-search"
-              type="search"
-              disabled
-              placeholder="Search proteins, chains, residues…  (wired in P5)"
-              className="h-8 w-full rounded-md border border-input bg-muted/40 pr-3 pl-8 text-xs text-muted-foreground placeholder:text-muted-foreground/70 focus-visible:outline-none disabled:cursor-not-allowed"
-            />
-          </div>
+            Search RCSB PDB, AlphaFold DB, or UniProt&hellip;
+          </Link>
         </div>
 
         <div className="ml-auto flex items-center gap-2">
           <HealthPill />
+          <Link
+            href="/search"
+            className={buttonVariants({ size: "sm", variant: "secondary" })}
+          >
+            <Database aria-hidden />
+            Databases
+          </Link>
           <Button size="sm" disabled>
             <Upload aria-hidden />
             Upload

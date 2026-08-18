@@ -1,0 +1,57 @@
+{
+  "entryType": "UniProtKB reviewed (Swiss-Prot)",
+  "primaryAccession": "P01308",
+  "uniProtkbId": "INS_HUMAN",
+  "organism": {
+    "scientificName": "Homo sapiens",
+    "commonName": "Human",
+    "taxonId": 9606
+  },
+  "proteinDescription": {
+    "recommendedName": { "fullName": { "value": "Insulin" } },
+    "contains": [
+      { "recommendedName": { "fullName": { "value": "Insulin B chain" } } },
+      { "recommendedName": { "fullName": { "value": "Insulin A chain" } } }
+    ],
+    "flag": "Precursor"
+  },
+  "genes": [{ "geneName": { "value": "INS" } }],
+  "comments": [
+    {
+      "commentType": "FUNCTION",
+      "texts": [
+        {
+          "value": "Insulin decreases blood glucose concentration. It increases cell permeability to monosaccharides, amino acids and fatty acids. It accelerates glycolysis, the pentose phosphate cycle, and glycogen synthesis in liver"
+        }
+      ]
+    }
+  ],
+  "uniProtKBCrossReferences": [
+    {
+      "database": "PDB",
+      "id": "1A7F",
+      "properties": [
+        { "key": "Method", "value": "NMR" },
+        { "key": "Resolution", "value": "-" }
+      ]
+    },
+    {
+      "database": "PDB",
+      "id": "1B9E",
+      "properties": [
+        { "key": "Method", "value": "X-ray" },
+        { "key": "Resolution", "value": "2.50 A" }
+      ]
+    },
+    {
+      "database": "AlphaFoldDB",
+      "id": "P01308",
+      "properties": [{ "key": "Description", "value": "-" }]
+    }
+  ],
+  "sequence": {
+    "value": "MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKTRREAEDLQVGQVELGGGPGAGSLQPLALEGSLQKRGIVEQCCTSICSLYQLENYCN",
+    "length": 110,
+    "molWeight": 11981
+  }
+}

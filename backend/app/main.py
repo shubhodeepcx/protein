@@ -6,7 +6,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import proteins
+from app.api import import_, proteins, search
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,6 +15,8 @@ logger.setLevel(logging.INFO)
 app = FastAPI(title="ProteoLens API", version="0.1.0")
 app.openapi_tags = [
     {"name": "proteins", "description": "Protein upload, metadata, and structure files."},
+    {"name": "search", "description": "Full-text search across RCSB PDB, AlphaFold DB, and UniProt."},
+    {"name": "import", "description": "One-click import of a public structure into local storage."},
 ]
 
 # CORS_ORIGINS is required — leave unset to deny all origins (deploy-time loud failure).
@@ -33,7 +35,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# `import_` is registered before `proteins` so POST /api/proteins/import can
+# never be shadowed by a future POST /api/proteins/{uid} route.
+app.include_router(import_.router, prefix="/api")
 app.include_router(proteins.router, prefix="/api")
+app.include_router(search.router, prefix="/api")
 
 
 @app.get("/health")

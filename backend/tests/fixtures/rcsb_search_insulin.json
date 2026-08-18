@@ -1,0 +1,9 @@
+{
+  "query_id": "9a0efe20-00d9-40d2-8f74-442362cd995f",
+  "result_type": "entry",
+  "total_count": 12860,
+  "result_set": [
+    { "identifier": "1BOM", "score": 1.0 },
+    { "identifier": "2FHW", "score": 0.9977191440684775 }
+  ]
+}

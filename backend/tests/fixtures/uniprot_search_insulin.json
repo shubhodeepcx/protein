@@ -1,0 +1,72 @@
+{
+  "results": [
+    {
+      "entryType": "UniProtKB reviewed (Swiss-Prot)",
+      "primaryAccession": "P01308",
+      "uniProtkbId": "INS_HUMAN",
+      "organism": {
+        "scientificName": "Homo sapiens",
+        "commonName": "Human",
+        "taxonId": 9606
+      },
+      "proteinDescription": {
+        "recommendedName": { "fullName": { "value": "Insulin" } },
+        "flag": "Precursor"
+      },
+      "comments": [
+        {
+          "commentType": "FUNCTION",
+          "texts": [
+            {
+              "value": "Insulin decreases blood glucose concentration. It increases cell permeability to monosaccharides, amino acids and fatty acids. It accelerates glycolysis, the pentose phosphate cycle, and glycogen synthesis in liver"
+            }
+          ]
+        }
+      ],
+      "uniProtKBCrossReferences": [
+        {
+          "database": "PDB",
+          "id": "1BEN",
+          "properties": [{ "key": "Method", "value": "X-ray" }]
+        },
+        {
+          "database": "AlphaFoldDB",
+          "id": "P01308",
+          "properties": [{ "key": "Description", "value": "-" }]
+        }
+      ],
+      "sequence": { "length": 110 }
+    },
+    {
+      "entryType": "UniProtKB reviewed (Swiss-Prot)",
+      "primaryAccession": "P06213",
+      "uniProtkbId": "INSR_HUMAN",
+      "organism": {
+        "scientificName": "Homo sapiens",
+        "commonName": "Human",
+        "taxonId": 9606
+      },
+      "proteinDescription": {
+        "recommendedName": { "fullName": { "value": "Insulin receptor" } }
+      },
+      "comments": [
+        {
+          "commentType": "FUNCTION",
+          "texts": [
+            {
+              "value": "Receptor tyrosine kinase which mediates the pleiotropic actions of insulin"
+            }
+          ]
+        }
+      ],
+      "uniProtKBCrossReferences": [
+        {
+          "database": "AlphaFoldDB",
+          "id": "P06213",
+          "properties": [{ "key": "Description", "value": "-" }]
+        }
+      ],
+      "sequence": { "length": 1382 }
+    }
+  ]
+}
