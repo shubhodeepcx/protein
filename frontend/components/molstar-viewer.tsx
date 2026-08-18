@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useEffect, useRef, useImperativeHandle } from "react";
-import { createPluginUI } from "molstar/lib/mol-plugin-ui";
-import { renderReact18 } from "molstar/lib/mol-plugin-ui/react18";
-import { DefaultPluginUISpec } from "molstar/lib/mol-plugin-ui/spec";
 import type { PluginUIContext } from "molstar/lib/mol-plugin-ui/context";
 import { PluginCommands } from "molstar/lib/mol-plugin/commands";
 import type { Structure } from "molstar/lib/mol-model/structure";
+import { createViewerPlugin } from "@/lib/molstar/plugin";
 import {
   applyColoring,
   applyRepresentation,
@@ -95,26 +93,7 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
       let clickSub: { unsubscribe(): void } | null = null;
 
       async function init() {
-        const spec = DefaultPluginUISpec();
-        const plugin = await createPluginUI({
-          target: target!,
-          render: renderReact18,
-          spec: {
-            ...spec,
-            layout: {
-              initial: {
-                isExpanded: false,
-                showControls: false,
-                regionState: {
-                  bottom: "hidden",
-                  left: "hidden",
-                  right: "hidden",
-                  top: "hidden",
-                },
-              },
-            },
-          },
-        });
+        const plugin = await createViewerPlugin(target!);
         if (disposed) {
           plugin.dispose();
           return;
