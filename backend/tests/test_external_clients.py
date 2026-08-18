@@ -219,6 +219,69 @@ async def test_alphafold_download_structure_uses_pdb_url() -> None:
 
 
 @respx.mock
+async def test_alphafold_download_5xx_then_404_fallback_is_unavailable_not_missing() -> None:
+    """A 5xx anywhere in the chain must never be reported as 'no model'.
+
+    The live pdbUrl is down (503) and the obsolete v4 fallback 404s. Classifying
+    on the last attempt alone would tell the user the structure does not exist.
+    """
+    respx.get(url__startswith=AF_PREDICTION).mock(
+        return_value=httpx.Response(200, json=load_json("alphafold_prediction_P69905.json"))
+    )
+    respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(return_value=httpx.Response(503))
+    respx.get(f"{AF_FILES}AF-P69905-F1-model_v4.pdb").mock(return_value=httpx.Response(404))
+
+    with pytest.raises(SourceUnavailableError) as excinfo:
+        await AlphaFoldClient().download_structure("P69905")
+    assert "503" in str(excinfo.value)
+
+
+@respx.mock
+async def test_alphafold_download_404_on_published_url_is_not_found() -> None:
+    """A 404 on the URL AlphaFold itself published really is a missing file."""
+    respx.get(url__startswith=AF_PREDICTION).mock(
+        return_value=httpx.Response(200, json=load_json("alphafold_prediction_P69905.json"))
+    )
+    respx.get(url__startswith=AF_FILES).mock(return_value=httpx.Response(404))
+
+    with pytest.raises(SourceNotFoundError):
+        await AlphaFoldClient().download_structure("P69905")
+
+
+@respx.mock
+async def test_alphafold_download_404_on_obsolete_fallback_only_is_unavailable() -> None:
+    """Without a published pdbUrl the v4 guess 404ing says nothing about the model."""
+    prediction = load_json("alphafold_prediction_P69905.json")
+    del prediction[0]["pdbUrl"]
+    respx.get(url__startswith=AF_PREDICTION).mock(
+        return_value=httpx.Response(200, json=prediction)
+    )
+    respx.get(url__startswith=AF_FILES).mock(return_value=httpx.Response(404))
+
+    with pytest.raises(SourceUnavailableError):
+        await AlphaFoldClient().download_structure("P69905")
+
+
+@respx.mock
+async def test_alphafold_download_structure_bypasses_the_metadata_cache() -> None:
+    """Spec 5.4: a cached payload must not be able to supply a stale pdbUrl."""
+    prediction = respx.get(url__startswith=AF_PREDICTION).mock(
+        return_value=httpx.Response(200, json=load_json("alphafold_prediction_P69905.json"))
+    )
+    respx.get(url__startswith=AF_FILES).mock(
+        return_value=httpx.Response(200, content=b"HEADER TEST END")
+    )
+    client = AlphaFoldClient()
+
+    await client.fetch_metadata("P69905")
+    assert prediction.call_count == 1
+
+    await client.download_structure("P69905")
+    # Re-read rather than served from the entry fetch_metadata just cached.
+    assert prediction.call_count == 2
+
+
+@respx.mock
 async def test_alphafold_download_structure_falls_back_to_v4_url() -> None:
     prediction = load_json("alphafold_prediction_P69905.json")
     del prediction[0]["pdbUrl"]
@@ -309,6 +372,43 @@ async def test_uniprot_download_structure_follows_alphafold_crossref() -> None:
     assert af_file.called
     assert fmt == "pdb"
     assert b"VIA UNIPROT" in content
+
+
+@respx.mock
+async def test_uniprot_download_structure_bypasses_the_metadata_cache() -> None:
+    """A stale AlphaFoldDB cross-reference must not misdirect the download."""
+    entry = respx.get(UNIPROT_ENTRY_P01308).mock(
+        return_value=httpx.Response(200, json=load_json("uniprot_entry_P01308.json"))
+    )
+    respx.get(url__startswith=AF_PREDICTION).mock(
+        return_value=httpx.Response(200, json=load_json("alphafold_prediction_P69905.json"))
+    )
+    respx.get(url__startswith=AF_FILES).mock(
+        return_value=httpx.Response(200, content=b"HEADER TEST END")
+    )
+    client = UniProtClient()
+
+    await client.fetch_metadata("P01308")
+    assert entry.call_count == 1
+
+    await client.download_structure("P01308")
+    assert entry.call_count == 2
+
+
+@respx.mock
+async def test_rcsb_search_enrichment_reuses_the_metadata_cache() -> None:
+    """Deliberate: repeat searches must not re-fetch metadata for the same hits."""
+    respx.post(RCSB_SEARCH).mock(
+        return_value=httpx.Response(200, json=load_json("rcsb_search_insulin.json"))
+    )
+    entry, _ = _mock_rcsb_data_api()
+    client = RCSBClient()
+
+    await client.search("insulin")
+    assert entry.call_count == 2  # one per hit in the fixture
+
+    await client.search("insulin")
+    assert entry.call_count == 2  # second search served entirely from cache
 
 
 @respx.mock

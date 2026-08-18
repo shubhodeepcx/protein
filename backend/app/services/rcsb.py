@@ -108,6 +108,13 @@ class RCSBClient:
 
             semaphore = asyncio.Semaphore(_ENRICH_CONCURRENCY)
 
+            # Deliberate: enrichment goes through the *cached* metadata path.
+            # Spec 5.4's "search bypasses the cache" is about the search query
+            # itself (which is never cached, above) — each enrichment here is
+            # literally a fetch_metadata call, and bypassing would turn one
+            # search into 50 uncached upstream requests. Do not "fix" this.
+            # `download_structure` is the path that must be fresh, and it does
+            # not consult metadata at all.
             async def enrich(pdb_id: str) -> Metadata:
                 async with semaphore:
                     return await self._metadata(client, pdb_id)
@@ -163,7 +170,11 @@ class RCSBClient:
     # ------------------------------------------------------------- structure
 
     async def download_structure(self, protein_id: str) -> tuple[bytes, str]:
-        """Download the mmCIF for a PDB entry. Returns (content, 'cif')."""
+        """Download the mmCIF for a PDB entry. Returns (content, 'cif').
+
+        Bypasses the metadata cache by construction: the file URL is derived
+        from the PDB ID alone, so no cached payload can misdirect it.
+        """
         pdb_id = _normalise_pdb_id(protein_id)
         url = FILE_URL.format(pdb_id=pdb_id)
         async with new_client() as client:

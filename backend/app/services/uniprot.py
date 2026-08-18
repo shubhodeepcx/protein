@@ -103,10 +103,21 @@ class UniProtClient:
     # -------------------------------------------------------------- metadata
 
     async def fetch_metadata(self, protein_id: str) -> Metadata:
+        """Normalised entry metadata for one accession. Cached per spec 5.4."""
+        return await self._entry(protein_id, use_cache=True)
+
+    async def _entry(self, protein_id: str, *, use_cache: bool) -> Metadata:
+        """Fetch + normalise a UniProtKB entry.
+
+        `use_cache=False` skips the *read* only; the fresh payload still
+        refreshes the entry. `download_structure` needs it so a stale
+        AlphaFoldDB cross-reference can never send us to the wrong model.
+        """
         accession = normalise_accession(protein_id)
-        cached = self._cache.get(accession)
-        if cached is not None:
-            return cached
+        if use_cache:
+            cached = self._cache.get(accession)
+            if cached is not None:
+                return cached
 
         async with new_client() as client:
             try:
@@ -144,7 +155,9 @@ class UniProtClient:
         from app.services.alphafold import AlphaFoldClient
 
         accession = normalise_accession(protein_id)
-        meta = await self.fetch_metadata(accession)
+        # Spec 5.4: structure download bypasses the metadata cache — a stale
+        # cross-reference would point the download at the wrong model.
+        meta = await self._entry(accession, use_cache=False)
         af_accession = meta.get("alphafold_accession")
         if not isinstance(af_accession, str) or not af_accession:
             raise SourceNotFoundError(

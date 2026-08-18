@@ -119,6 +119,23 @@ def test_import_alphafold_without_a_model_returns_404() -> None:
 
 
 @respx.mock
+def test_import_alphafold_file_outage_returns_502_not_404() -> None:
+    """pdbUrl 503 + obsolete v4 fallback 404 is an outage, not a missing model."""
+    respx.get(url__startswith=AF_PREDICTION).mock(
+        return_value=httpx.Response(200, json=load_json("alphafold_prediction_P69905.json"))
+    )
+    respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(return_value=httpx.Response(503))
+    respx.get(f"{AF_FILES}AF-P69905-F1-model_v4.pdb").mock(return_value=httpx.Response(404))
+
+    r = client.post(
+        "/api/proteins/import", json={"source": "alphafold", "source_id": "P69905"}
+    )
+
+    assert r.status_code == 502, r.text
+    assert "ALPHAFOLD" in r.json()["detail"].upper()
+
+
+@respx.mock
 def test_import_rcsb_unknown_entry_returns_404() -> None:
     respx.get(url__startswith=RCSB_FILES).mock(return_value=httpx.Response(404))
 

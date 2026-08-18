@@ -72,10 +72,22 @@ class AlphaFoldClient:
     # -------------------------------------------------------------- metadata
 
     async def fetch_metadata(self, protein_id: str) -> Metadata:
+        """Normalised prediction metadata for one accession. Cached per spec 5.4."""
+        return await self._prediction(protein_id, use_cache=True)
+
+    async def _prediction(self, protein_id: str, *, use_cache: bool) -> Metadata:
+        """Fetch + normalise the prediction payload.
+
+        `use_cache=False` skips the *read* only — the fresh payload still
+        refreshes the entry, since newer data can never be worse than what is
+        already stored. `download_structure` is the caller that needs this:
+        a cached payload can carry a stale `pdbUrl`.
+        """
         accession = normalise_accession(protein_id)
-        cached = self._cache.get(accession)
-        if cached is not None:
-            return cached
+        if use_cache:
+            cached = self._cache.get(accession)
+            if cached is not None:
+                return cached
 
         async with new_client() as client:
             try:
@@ -113,15 +125,23 @@ class AlphaFoldClient:
     async def download_structure(self, protein_id: str) -> tuple[bytes, str]:
         """Download the predicted PDB model. Returns (content, 'pdb')."""
         accession = normalise_accession(protein_id)
-        meta = await self.fetch_metadata(accession)
+        # Spec 5.4: structure download bypasses the metadata cache. This is the
+        # path where a stale entry has teeth — a cached payload can hand us a
+        # `pdbUrl` that has since moved, so we always re-read it here.
+        meta = await self._prediction(accession, use_cache=False)
 
         pdb_url = meta.get("pdb_url")
+        # Only the URL AlphaFold itself published is authoritative. The v4
+        # constant is a documented guess for payloads that omit `pdbUrl`;
+        # AlphaFold DB is currently publishing v6, so it is genuinely a
+        # fallback and its status says nothing about whether a model exists.
+        authoritative = pdb_url if isinstance(pdb_url, str) and pdb_url else None
         fallback = FALLBACK_PDB_URL.format(accession=accession)
-        urls = [pdb_url] if isinstance(pdb_url, str) and pdb_url else []
+        urls = [authoritative] if authoritative else []
         if fallback not in urls:
             urls.append(fallback)
 
-        last_status: int | None = None
+        statuses: list[int] = []
         async with new_client() as client:
             for url in urls:
                 try:
@@ -132,7 +152,7 @@ class AlphaFoldClient:
                     ) from exc
                 if response.status_code == 200 and response.content:
                     return response.content, "pdb"
-                last_status = response.status_code
+                statuses.append(response.status_code)
                 logger.warning(
                     "AlphaFold file %s returned HTTP %s for %s; trying next candidate",
                     url,
@@ -140,10 +160,23 @@ class AlphaFoldClient:
                     accession,
                 )
 
-        if last_status == 404:
+        # Classify on the whole chain, not just the last attempt. A 5xx
+        # anywhere is an upstream outage; reporting it as "no model" would tell
+        # the user to give up on a structure that exists.
+        if any(status >= 500 for status in statuses):
+            raise SourceUnavailableError(
+                f"AlphaFold file download for {accession} failed upstream "
+                f"(HTTP {', '.join(str(s) for s in statuses)})"
+            )
+        # Only a 404 on the URL AlphaFold published is a genuine "no model
+        # file". If we never had that URL, the prediction lookup above already
+        # confirmed a model record exists, so a 404 on the obsolete fallback is
+        # our problem, not the user's.
+        if authoritative is not None and statuses and statuses[0] == 404:
             raise SourceNotFoundError(f"AlphaFold DB has no model file for {accession}")
         raise SourceUnavailableError(
-            f"AlphaFold file download for {accession} returned HTTP {last_status}"
+            f"AlphaFold file download for {accession} returned HTTP "
+            f"{', '.join(str(s) for s in statuses) or 'no response'}"
         )
 
 
