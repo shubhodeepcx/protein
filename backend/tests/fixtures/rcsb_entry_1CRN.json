@@ -1,0 +1,41 @@
+{
+  "entry": { "id": "1CRN" },
+  "rcsb_id": "1CRN",
+  "struct": {
+    "title": "WATER STRUCTURE OF A HYDROPHOBIC PROTEIN AT ATOMIC RESOLUTION. PENTAGON RINGS OF WATER MOLECULES IN CRYSTALS OF CRAMBIN"
+  },
+  "struct_keywords": {
+    "pdbx_keywords": "PLANT PROTEIN",
+    "text": "PLANT SEED PROTEIN, PLANT PROTEIN"
+  },
+  "exptl": [{ "method": "X-RAY DIFFRACTION" }],
+  "refine": [
+    { "ls_d_res_high": 1.5, "pdbx_diffrn_id": ["1"], "pdbx_refine_id": "X-RAY DIFFRACTION" }
+  ],
+  "rcsb_accession_info": {
+    "deposit_date": "1981-04-30T00:00:00.000+00:00",
+    "initial_release_date": "1981-07-28T00:00:00.000+00:00",
+    "revision_date": "2024-10-30T00:00:00.000+00:00",
+    "status_code": "REL"
+  },
+  "rcsb_entry_container_identifiers": {
+    "assembly_ids": ["1"],
+    "entity_ids": ["1"],
+    "entry_id": "1CRN",
+    "model_ids": [1],
+    "polymer_entity_ids": ["1"],
+    "rcsb_id": "1CRN"
+  },
+  "rcsb_entry_info": {
+    "deposited_atom_count": 327,
+    "deposited_model_count": 1,
+    "deposited_polymer_monomer_count": 46,
+    "experimental_method": "X-ray",
+    "experimental_method_count": 1,
+    "molecular_weight": 4.74,
+    "polymer_composition": "homomeric protein",
+    "polymer_entity_count": 1,
+    "resolution_combined": [1.5],
+    "selected_polymer_entity_types": "Protein (only)"
+  }
+}

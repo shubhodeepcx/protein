@@ -1,0 +1,40 @@
+{
+  "rcsb_id": "1CRN_1",
+  "entity_poly": {
+    "nstd_linkage": "no",
+    "nstd_monomer": "no",
+    "pdbx_seq_one_letter_code": "TTCCPSIVARSNFNVCRLPGTPEAICATYTGCIIIPGATCPGDYAN",
+    "pdbx_seq_one_letter_code_can": "TTCCPSIVARSNFNVCRLPGTPEAICATYTGCIIIPGATCPGDYAN",
+    "pdbx_strand_id": "A",
+    "rcsb_entity_polymer_type": "Protein",
+    "rcsb_sample_sequence_length": 46,
+    "type": "polypeptide(L)"
+  },
+  "rcsb_entity_source_organism": [
+    {
+      "ncbi_common_names": ["Abyssinian crambe", "Crambe abyssinica"],
+      "ncbi_scientific_name": "Crambe hispanica subsp. abyssinica",
+      "ncbi_taxonomy_id": 3721,
+      "pdbx_src_id": 1,
+      "scientific_name": "Crambe hispanica subsp. abyssinica",
+      "source_type": "genetically engineered"
+    }
+  ],
+  "rcsb_polymer_entity": {
+    "formula_weight": 4.738,
+    "pdbx_description": "CRAMBIN",
+    "pdbx_number_of_molecules": 1,
+    "rcsb_macromolecular_names_combined": [
+      { "name": "CRAMBIN", "provenance_source": "PDB Preferred Name" }
+    ],
+    "src_method": "man"
+  },
+  "rcsb_polymer_entity_container_identifiers": {
+    "asym_ids": ["A"],
+    "auth_asym_ids": ["A"],
+    "entity_id": "1",
+    "entry_id": "1CRN",
+    "rcsb_id": "1CRN_1",
+    "uniprot_ids": ["P01542"]
+  }
+}
