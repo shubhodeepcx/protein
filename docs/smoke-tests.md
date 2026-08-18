@@ -194,7 +194,35 @@ Run from the repo root (`g:\protein`) unless noted.
 
 **Goal:** clicking a residue in the sequence panel highlights it in 3D, and clicking a residue in 3D scrolls + highlights it in the sequence panel.
 
-_Will be filled in when P4 starts._
+1. Start both servers as in P0 (backend on `:8000` with `CORS_ORIGINS` set, frontend on `:3000`).
+2. Visit `http://localhost:3000` → drop `backend/app/static/1CRN.pdb` → land on `/viewer/{id}`.
+3. Open the **Sequence** tab in the right rail. Verify:
+   - One block for chain **A**, labelled with its residue count (**46**).
+   - 46 monospace residue cells, colored by residue class, with a legend and a position ruler every 10.
+   - Crambin's sequence starts `TTCCPSIVAR` — cell 1 is `T`, cell 3 is `C`.
+4. **Sequence → 3D:** click residue `A:23`. The cell takes the selected style, and the corresponding
+   residue highlights in the Mol\* viewport. Click it again to deselect; the 3D highlight clears.
+5. **3D → sequence:** rotate the model, click a residue in the viewport. The matching sequence cell
+   becomes selected **and scrolls into view**. Confirm the residue identity matches — click a
+   cysteine in 3D and verify a `C` cell lights up (crambin has 6: positions 3, 4, 16, 26, 32, 40).
+   This is the step that catches residue-numbering drift between Mol\* `auth_seq_id` and the panel's
+   1-based index — if the wrong cell highlights, P4 is not done.
+6. **Residue search:** type `A:23` in the search box → that residue becomes the sole selection and
+   scrolls into view. Type `A:999` → inline error naming chain A's real length (46). Type `Z:1` →
+   inline error for the unknown chain. Lowercase `a:23` must work.
+7. **Viewer controls:** change representation (cartoon → surface → spacefill) and coloring scheme
+   from the toolbar; the viewport updates each time. The selection survives a representation change.
+8. Tests:
+   ```
+   cd frontend
+   npm run lint     # tsc --noEmit, clean
+   npm test
+   npm run build
+   ```
+   - Expect: all pre-existing tests still pass, plus new tests for `parseResidueQuery` and `SequencePanel`.
+
+**Pass criteria:** selection round-trips in both directions with the *same* residue, the search box
+resolves and rejects correctly, and lint/test/build are all green.
 
 ---
 
@@ -202,7 +230,43 @@ _Will be filled in when P4 starts._
 
 **Goal:** searching "insulin" returns merged results from RCSB + AlphaFold + UniProt; clicking import lands the user in the viewer with that structure rendered.
 
-_Will be filled in when P5 starts._
+> This is the only phase that touches the public internet. The automated tests are fully mocked
+> (respx / pytest-httpx); the manual steps below deliberately hit the real APIs.
+
+1. Start both servers as in P0.
+2. Visit `http://localhost:3000/search` (or follow the "Search databases" link from the landing page).
+3. Search `insulin`. Verify:
+   - Results appear from more than one source, each card carrying a source badge (RCSB / AlphaFold /
+     UniProt), a source id, a title, and an organism.
+   - No duplicate `(source, source_id)` pairs in the list.
+4. Use the source filter: selecting **RCSB** narrows results to RCSB only; **All** restores the merge.
+5. **Import an RCSB entry** (e.g. `4INS`). The card shows a spinner, then the app routes to
+   `/viewer/{id}` with the structure rendered in Mol\*, and the Analytics tab populates.
+6. **Import an AlphaFold entry** (e.g. UniProt `P01308`). Verify the viewer loads it and the summary
+   reports `has_plddt: true` — AlphaFold models carry pLDDT in the B-factor column.
+7. **Graceful degradation:** stop the machine's network (or block `files.rcsb.org`) and search again.
+   The request must still return **200** with whatever sources worked, and a non-blocking banner must
+   name the sources in `failed_sources`. A single dead source must never fail the whole search.
+8. **Import 404:** import an accession with no model (e.g. a UniProt entry AlphaFold has not
+   predicted). Expect a 404 with a source-specific message surfaced inline on the card — not a crash.
+9. Probe the API directly:
+   ```
+   curl "http://localhost:8000/api/search?q=insulin&source=all" | jq '.results | length, .failed_sources'
+   curl -X POST http://localhost:8000/api/proteins/import \
+        -H "Content-Type: application/json" -d '{"source":"rcsb","source_id":"4INS"}' | jq .
+   ```
+   - The import response must be the same `ProteinSummary` shape the upload endpoint returns, and the
+     returned `id` must resolve on `GET /api/proteins/{id}` and `GET /api/proteins/{id}/file`.
+10. Tests:
+    ```
+    cd backend && pytest
+    cd frontend && npm run lint && npm test && npm run build
+    ```
+    - Expect: all pre-existing backend tests still pass alongside the new client / search / import
+      tests, and the frontend suite stays green.
+
+**Pass criteria:** a real search merges and dedupes across sources, a failing source degrades to a
+banner instead of an error, import round-trips into a working viewer, and all tests pass offline.
 
 ---
 
