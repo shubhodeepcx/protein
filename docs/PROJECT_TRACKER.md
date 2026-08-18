@@ -140,15 +140,15 @@ Goal: drag a PDB onto the home page → see it render.
 
 Goal: upload → analytics appear beside viewer.
 
-- [ ] `services/analytics.py` (MW, composition, hydrophobicity, SS%, property distribution)
-- [ ] `GET /api/proteins/{id}/analytics`
-- [ ] Metric cards (MW, residues, atoms, chains)
-- [ ] Composition bar chart (Recharts)
-- [ ] SS donut chart
-- [ ] Hydrophobicity line chart (Kyte-Doolittle, window 9)
-- [ ] Chain length bar chart
-- [ ] Backend pytest: MW + composition for crambin
-- [ ] P3 smoke test
+- [x] `services/analytics.py` (MW, composition, hydrophobicity, SS%, property distribution)
+- [x] `GET /api/proteins/{id}/analytics`
+- [x] Metric cards (MW, residues, atoms, chains)
+- [x] Composition bar chart (Recharts)
+- [x] SS donut chart
+- [x] Hydrophobicity line chart (Kyte-Doolittle, window 9)
+- [x] Chain length bar chart
+- [x] Backend pytest: MW + composition for crambin
+- [x] P3 smoke test
 
 ### P4 — Sequence panel
 
