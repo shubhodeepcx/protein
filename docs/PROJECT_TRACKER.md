@@ -17,10 +17,9 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in flight. P4 and P5 both merged; the slice is feature-complete._
-
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
+| `proteins.py:64` `detail=str(exc)` can leak the storage path from an OSError | shubhodeep | `feature/fix-storage-error-detail-leak` | wip | Note: several other Ready-to-claim rows already have open, unmerged PRs from earlier runs of this same routine (#1-#5 on GitHub) — see PR body / decisions log for details before claiming from this list. |
 
 ---
 
