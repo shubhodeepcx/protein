@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (final whole-branch review done — residue seam verified correct incl. mmCIF; 1 critical + 5 important findings filed below and dispatched to cloud agents. P4 + P5 built in parallel, each through two review + fix rounds, both merged to main; 83 backend + 79 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests.)
+**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (P4/P5 seam now pinned, not just reviewed: residue ordinals verified to agree between the PDB and mmCIF parser paths AND between the backend and the Mol* mirror, with regression tests in both trees over a matched fixture pair. Closes the `1CRN.cif` coverage gap filed by the whole-branch review. 98 backend + 92 frontend tests green, lint + build clean. The whole-branch review's 1 critical + 5 important findings remain open below. MVP slice P0-P5 feature-complete pending manual smoke tests.)
 
 ---
 
@@ -17,9 +17,10 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
+_Nothing in flight._
+
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
-| Review the P4/P5 seam: do residue ordinals still agree when the structure arrives as mmCIF? | `shubhodeep` | `feature/p5-parser-parity` | `wip` | P4's ordinal mirror was designed against `PDBParser`; P5's RCSB import feeds it `MMCIFParser`. Nobody reviewed the seam. |
 
 ---
 
@@ -36,7 +37,6 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | `frontend/app/search/search-view.tsx` is 226 LOC, over the 200 limit in AGENTS.md section 3 | fix | — | 30m |
 | Landing page + README still deny shipped features ("P2" badge, "arrives in P4", disabled Upload button) | fix | — | 30m |
 | Add a smoke step that clicks a residue on an IMPORTED RCSB mmCIF — only uploaded 1CRN.pdb is covered today | fix | — | 20m |
-| `tests/fixtures/1CRN.cif` is `_atom_site`-only, single-chain, 1-based — exercises none of the mmCIF shape that could break the residue seam | test | — | 45m |
 | Dedupe backend constants: 50 MB ceiling defined twice, `_ALLOWED_EXTS` twice with different members, store->parse->register->unlink flow duplicated | cleanup | — | 1h |
 | `viewer-slice` representation/coloring never reset across proteins (selection is) | fix | — | 20m |
 | `proteins.py:64` `detail=str(exc)` can leak the storage path from an OSError (pre-existing; the P5 import path is already generic) | fix | — | 20m |
@@ -46,7 +46,8 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | Retries / backoff / rate limiting on the three outbound clients | follow-up | — | 2h |
 | Virtualise the sequence panel (one `<button>` per residue gets heavy above ~2,000 residues) | follow-up | — | 2h |
 | Make HETATM amino acids (e.g. MSE) selectable — currently skipped consistently by both parser and panel | follow-up | — | 1h |
-| Browser-level coverage for `extractResidueRecords` (the Mol\*-facing half of residue indexing, untestable in jsdom) | follow-up | a browser test runner | 3h |
+| Browser-level coverage for Mol\* *rendering* and click delivery (the parsing half of `extractResidueRecords` is now covered in jsdom by `lib/molstar/__tests__/residue-index.test.ts`; what still needs a real browser is WebGL and the click event itself) | follow-up | a browser test runner | 2h |
+| Decide which conformer names a microheterogeneous residue: BioPython reports one altloc's `resname`, Mol\* reports the other, so the panel can show a different letter than the 3D label. Ordinals and counts agree, so selection sync is unaffected. Reproduces identically on PDB and mmCIF, i.e. it predates P5 | follow-up | — | 1h |
 | Persistence slice — the in-memory registry resets on restart, so `/viewer/{id}` 404s afterwards though the file survives on disk | separate slice | Postgres decision | — |
 
 ---
@@ -99,6 +100,7 @@ _No blocked tasks._
 | P5: `/search` page (source filter, result cards, per-card import state, failed-source banner) + 43 backend / 10 frontend tests, all external HTTP mocked | P5 | 2026-08-18 | `819167f` |
 | P5 review rounds 1-2: cache scope split, AlphaFold status classification reworked so a transport error can never read as "no model", search request sequencing | P5 | 2026-08-18 | `a8c1cd8`, `11301a7`, `ffab9cc`, `42f4b64` |
 | P4 + P5 smoke tests written in `docs/smoke-tests.md`; decisions log extended with 7 entries | P4/P5 | 2026-08-18 | `005bea1`, `d04beb6` |
+| P4/P5 seam review: PDB vs mmCIF residue-ordinal parity verified end to end and pinned — matched `parity_multichain.{pdb,cif}` fixture pair, 15 backend tests, 13 frontend tests over real Mol\* parses. No behaviour change: the mirroring already held. Supersedes the whole-branch review's "`1CRN.cif` exercises none of the mmCIF shape" item | P5.5 | 2026-08-18 | PR #2 |
 
 ---
 
@@ -128,6 +130,8 @@ Append-only. Never edit past entries — supersede with a new entry referencing 
 | 2026-08-18 | A transport error on an external leg can never classify as 404 | A connection failure teaches us nothing about whether a model exists. Only a 404 on the published/authoritative URL means "no model"; everything else upstream is 502. | yes |
 | 2026-08-18 | UniProt imports are stored as `source: "alphafold"` | `ProteinSummary.source` has no `"uniprot"` member (spec 5.1) and a UniProt import literally downloads the cross-referenced AlphaFold model. Truthful, and keeps `has_plddt` correct. Cost: the viewer cannot show that the user arrived via a UniProt card. | yes — add a `"uniprot"` member if provenance matters |
 | 2026-08-18 | Residue keys are `chain:ordinal` (1-based within chain), NOT `auth_seq_id` | PDB files can start at any residue number and contain gaps and insertion codes. The frontend mirrors the backend parser's filter and maps ordinal to Mol*'s model residue index. Pinned by tests against a non-1-based, gapped, multi-chain fixture. | hard — changing it breaks selection sync in both directions |
+| 2026-08-18 | The residue ordinal is defined as **input-file order**, and both formats and both stacks must honour it | Verified rather than assumed at the P4/P5 seam. BioPython reads `atom_site` in file order; Mol* re-sorts it — bucketing by `label_entity_id`, then `label_asym_id`, then sorting by `label_seq_id` — and the frontend undoes that sort via `residueSourceIndex`. Both then group by `auth_asym_id` and keep only `group_PDB = ATOM`. Pinned by `backend/tests/test_parser_parity.py` and `frontend/lib/molstar/__tests__/residue-index.test.ts` against one structure written in both formats. | hard — it is the definition the whole selection sync rests on |
+| 2026-08-18 | Parity fixtures are generated offline from one residue list, not downloaded | Two files downloaded from RCSB are derived independently, so a mismatch could be RCSB's rather than ours — and AGENTS.md bars live-API tests. `tests/fixtures/make_parity_fixture.py` emits the PDB and the mmCIF from a single spec, and a test asserts the two files still hold the same atoms in the same order. | yes |
 | 2026-08-18 | A click on unindexed 3D geometry (ligand, water) preserves the selection | A cofactor is real geometry that simply has no sequence cell; only genuinely empty space clears the selection. These were previously conflated as `null`. | yes |
 
 ---
