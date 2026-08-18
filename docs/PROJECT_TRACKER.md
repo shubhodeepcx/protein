@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (final whole-branch review done — residue seam verified correct incl. mmCIF; 1 critical + 5 important findings filed below and dispatched to cloud agents. P4 + P5 built in parallel, each through two review + fix rounds, both merged to main; 83 backend + 79 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests.)
+**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (added `"uniprot"` as its own `ProteinSummary.source` provenance, replacing the "fold into alphafold" decision. 10 PRs are open against this repo — several duplicate each other, see the note in Ready to claim — none merged yet, so the counts above are still the pre-review baseline: 83 backend + 79 frontend tests green, lint + build clean on this branch.)
 
 ---
 
@@ -17,9 +17,10 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
+_Nothing in flight._
+
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
-| Add a `"uniprot"` member to `ProteinSummary.source` so a UniProt-card import keeps its provenance | shubhodeep | `feature/add-uniprot-source-provenance` | wip | Note: as of this claim there are already 10 open PRs (#1-#10) covering nearly every other item in this table, including 4 duplicate PRs for the pLDDT fix — see PR list before claiming anything else here. |
 
 ---
 
@@ -100,6 +101,7 @@ _No blocked tasks._
 | P5: `/search` page (source filter, result cards, per-card import state, failed-source banner) + 43 backend / 10 frontend tests, all external HTTP mocked | P5 | 2026-08-18 | `819167f` |
 | P5 review rounds 1-2: cache scope split, AlphaFold status classification reworked so a transport error can never read as "no model", search request sequencing | P5 | 2026-08-18 | `a8c1cd8`, `11301a7`, `ffab9cc`, `42f4b64` |
 | P4 + P5 smoke tests written in `docs/smoke-tests.md`; decisions log extended with 7 entries | P4/P5 | 2026-08-18 | `005bea1`, `d04beb6` |
+| `"uniprot"` added as its own `ProteinSummary.source` member — UniProt-card imports now store/display `source: "uniprot"` instead of being folded into `"alphafold"`; `has_plddt` heuristic and `import_.py`'s parser call updated to match; decisions log superseded | follow-up | 2026-08-18 | `feature/add-uniprot-source-provenance` |
 
 ---
 
