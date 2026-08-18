@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (claimed the final-review fix pass: 1 critical + 5 important findings, one branch `feature/fix-plddt-inversion-and-final-review`. Prior state: P4 + P5 built in parallel, each through two review + fix rounds, both merged to main; 83 backend + 79 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests.)
+**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (final-review fix pass done — CRITICAL pLDDT inversion plus all five important findings, on `feature/fix-plddt-inversion-and-final-review`. 90 backend + 103 frontend tests green, lint + build clean; every new test verified by mutation. MVP slice P0-P5 feature-complete pending the manual smoke tests, which now include a P5.5 section for these fixes.)
 
 ---
 
@@ -17,9 +17,10 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
+_Nothing in flight. The final-review fix pass is merged-ready on `feature/fix-plddt-inversion-and-final-review`; remaining work is the manual smoke tests._
+
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
-| Final-review fix pass: pLDDT color inversion (CRITICAL) + the five important findings below | shubhodeep | `feature/fix-plddt-inversion-and-final-review` | wip | One branch, one PR. Covers the CRITICAL inversion, mmCIF organism, `has_plddt` in the UI, the `search-view.tsx` LOC split, stale landing-page/README copy, and the mmCIF residue-click smoke step. |
 
 ---
 
@@ -29,7 +30,9 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
-| Run the P4 + P5 manual smoke tests (browser + live internet required) | P5.5 | — | 45m |
+| Run the P4 + P5 + **P5.5** manual smoke tests (browser + live internet required) | P5.5 | — | 1h |
+| B-factor coloring of experimental structures is no longer reachable — the one toolbar option that drove it is now gated on `has_plddt`. Wants its own `bfactor` scheme (same `uncertainty` theme, default domain) rather than sharing the pLDDT entry. | follow-up | — | 45m |
+| `_extract_mmcif_organism` takes the first source category that has a value; a multi-entity mmCIF with different organisms per entity reports only the first. Fine for the single-protein viewer, wrong for a future complex/assembly view. | follow-up | — | 1h |
 | `tests/fixtures/1CRN.cif` is `_atom_site`-only, single-chain, 1-based — exercises none of the mmCIF shape that could break the residue seam | test | — | 45m |
 | Dedupe backend constants: 50 MB ceiling defined twice, `_ALLOWED_EXTS` twice with different members, store->parse->register->unlink flow duplicated | cleanup | — | 1h |
 | `viewer-slice` representation/coloring never reset across proteins (selection is) | fix | — | 20m |
@@ -93,6 +96,12 @@ _No blocked tasks._
 | P5: `/search` page (source filter, result cards, per-card import state, failed-source banner) + 43 backend / 10 frontend tests, all external HTTP mocked | P5 | 2026-08-18 | `819167f` |
 | P5 review rounds 1-2: cache scope split, AlphaFold status classification reworked so a transport error can never read as "no model", search request sequencing | P5 | 2026-08-18 | `a8c1cd8`, `11301a7`, `ffab9cc`, `42f4b64` |
 | P4 + P5 smoke tests written in `docs/smoke-tests.md`; decisions log extended with 7 entries | P4/P5 | 2026-08-18 | `005bea1`, `d04beb6` |
+| **CRITICAL** — pLDDT color inversion fixed: `colorParams { domain: [100, 0] }` on the shared `uncertainty` theme, so high confidence reads blue. Orientation pinned against Mol\*'s real `ColorScale`; `ColoringOptions.hasPlddt` made required so a dropped call-site argument is a type error | review | 2026-08-18 | `61648dc` |
+| Organism now read from the mmCIF source categories (`_entity_src_gen` / `_entity_src_nat` / `_pdbx_entity_src_syn` / `_ma_target_ref_db_details`), skipping the `?` and `.` null tokens — every RCSB import used to parse to `organism=None` | review | 2026-08-18 | `fb6ff33` |
+| `has_plddt` surfaced in the UI: pLDDT coloring offered only when true, explicit fallback for a stale selection carried across navigation, and a "B-factors" field in the Overview panel | review | 2026-08-18 | `712d8b2` |
+| `search-view.tsx` split 226 -> 124 LOC (`search-form.tsx` + `search-results.tsx`); `molstar-viewer.tsx` 210 -> 189 LOC (`lib/molstar/plugin.ts`) — both now under the AGENTS.md 200-LOC cap | review | 2026-08-18 | `d49a6d9` |
+| Landing page + README stopped denying shipped features ("P2" badge, disabled Upload button, "arrives in P4" / "arrive in P3" panel copy) | review | 2026-08-18 | `460b4e4` |
+| P5.5 smoke test added: residue click on an IMPORTED RCSB mmCIF, organism round-trip, pLDDT orientation, and `has_plddt` gating | review | 2026-08-18 | `2b65a74` |
 
 ---
 
@@ -123,6 +132,10 @@ Append-only. Never edit past entries — supersede with a new entry referencing 
 | 2026-08-18 | UniProt imports are stored as `source: "alphafold"` | `ProteinSummary.source` has no `"uniprot"` member (spec 5.1) and a UniProt import literally downloads the cross-referenced AlphaFold model. Truthful, and keeps `has_plddt` correct. Cost: the viewer cannot show that the user arrived via a UniProt card. | yes — add a `"uniprot"` member if provenance matters |
 | 2026-08-18 | Residue keys are `chain:ordinal` (1-based within chain), NOT `auth_seq_id` | PDB files can start at any residue number and contain gaps and insertion codes. The frontend mirrors the backend parser's filter and maps ordinal to Mol*'s model residue index. Pinned by tests against a non-1-based, gapped, multi-chain fixture. | hard — changing it breaks selection sync in both directions |
 | 2026-08-18 | A click on unindexed 3D geometry (ligand, water) preserves the selection | A cofactor is real geometry that simply has no sequence cell; only genuinely empty space clears the selection. These were previously conflated as `null`. | yes |
+| 2026-08-18 | pLDDT keeps riding Mol\*'s `uncertainty` theme, with the domain inverted to `[100, 0]` rather than switching themes | The dedicated `plddt-confidence` theme lives in the model-archive extension and needs the mmCIF `ma_qa_metric_local` category, which AlphaFold *PDB* downloads do not carry — so it would work for some AlphaFold imports and not others. Inverting the domain is one parameter and works for both file formats. | yes |
+| 2026-08-18 | `ColoringOptions.hasPlddt` is required, not optional with a `false` default | The shipped bug was an implicit assumption that the B-factor column means the same thing for every structure. A required field turns a dropped call-site argument into a compile error — verified by mutation: removing it from the viewer page fails `tsc`, not just a test. | yes |
+| 2026-08-18 | Organism for mmCIF is read from the raw category dict, not threaded through from the RCSB client | The parser must work for an *uploaded* mmCIF too, which has no RCSB metadata behind it. Reading the categories fixes both paths at once and keeps the parser self-contained. Cost: the fallback chain takes the first entity's organism (follow-up filed). | yes |
+| 2026-08-18 | pLDDT coloring is hidden rather than relabelled on structures without pLDDT | Offering "pLDDT confidence" on an X-ray entry advertises a score that structure does not have. Cost: B-factor coloring of experimental structures is no longer reachable, since one option served both — follow-up filed to give it its own `bfactor` scheme. | yes — the option list is one function |
 
 ---
 
