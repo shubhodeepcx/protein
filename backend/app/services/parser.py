@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Literal
 
 from Bio.PDB import MMCIFParser, PDBParser
+from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
 from app.models.protein import ChainInfo, ProteinSummary
@@ -31,6 +32,64 @@ def _detect_format(path: Path) -> Literal["pdb", "mmcif"]:
     if ext in {"cif", "mmcif"}:
         return "mmcif"
     return "pdb"
+
+
+# mmCIF source categories that carry the organism, most authoritative first.
+#
+# BioPython's `MMCIFParser` builds its `structure.header` from six keys only —
+# name, head, idcode, deposition_date, structure_method, resolution — and has no
+# `source` entry at all, so `_extract_header_strings` can never find an organism
+# in an mmCIF. Every RCSB import is an mmCIF (`rcsb.download_structure` fetches
+# `.cif`), which is why the viewer showed "Organism: Unknown" seconds after the
+# search card showed the organism correctly. The value has to come from the raw
+# category dict instead.
+_MMCIF_ORGANISM_KEYS: tuple[str, ...] = (
+    # Recombinant expression — the gene's source organism. This is what RCSB's
+    # own `rcsb_entity_source_organism.scientific_name` is derived from.
+    "_entity_src_gen.pdbx_gene_src_scientific_name",
+    # Isolated from a natural source (what real 1CRN carries).
+    "_entity_src_nat.pdbx_organism_scientific",
+    # Synthetic construct.
+    "_pdbx_entity_src_syn.organism_scientific",
+    # AlphaFold / ModelArchive predicted models.
+    "_ma_target_ref_db_details.organism_scientific",
+)
+
+# mmCIF spells "no value" as `?` and "not applicable" as `.`; MMCIF2Dict hands
+# both through verbatim, so they must not be mistaken for an organism name.
+_MMCIF_NULL_TOKENS = frozenset({"?", "."})
+
+
+def _extract_mmcif_organism(mmcif_dict: dict[str, object]) -> str | None:
+    """First non-null organism across the mmCIF source categories, else None."""
+    for key in _MMCIF_ORGANISM_KEYS:
+        raw = mmcif_dict.get(key)
+        if raw is None:
+            continue
+        # MMCIF2Dict returns a list per key for looped categories and, for
+        # single-row categories, still a one-element list — but be tolerant of
+        # a bare string so a hand-written fixture cannot silently read as empty.
+        values = [raw] if isinstance(raw, str) else list(raw)  # type: ignore[arg-type]
+        for value in values:
+            if not isinstance(value, str):
+                continue
+            cleaned = value.strip()
+            if cleaned and cleaned not in _MMCIF_NULL_TOKENS:
+                return cleaned
+    return None
+
+
+def _mmcif_dict_for(struct_parser: MMCIFParser, path: Path) -> dict[str, object]:
+    """The category dict `MMCIFParser` already built, re-reading only if absent.
+
+    `get_structure` stores the parsed dict on the parser, so the common path
+    costs nothing. The fallback keeps this correct if BioPython ever stops
+    exposing it, at the price of one extra read.
+    """
+    existing = getattr(struct_parser, "_mmcif_dict", None)
+    if isinstance(existing, dict) and existing:
+        return existing
+    return MMCIF2Dict(str(path))
 
 
 def _extract_header_strings(structure) -> tuple[str | None, str | None]:
@@ -160,6 +219,8 @@ def parse(
             warnings.append(f"MW failed for chain {ch.label}: {exc}")
 
     name, organism = _extract_header_strings(structure)
+    if fmt == "mmcif" and organism is None:
+        organism = _extract_mmcif_organism(_mmcif_dict_for(struct_parser, p))
 
     # pLDDT heuristic: trust the header over B-factor pattern.
     # B-factor range alone is not reliable for distinguishing AlphaFold from X-ray.
