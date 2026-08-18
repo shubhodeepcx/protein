@@ -17,16 +17,17 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in flight. P4 and P5 both merged; the slice is feature-complete._
-
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
+| Dedupe backend constants (50 MB ceiling, `_ALLOWED_EXTS`, store→parse→register→unlink flow) | shubhodeep | `feature/cleanup-dedupe-backend-constants` | wip | This row isn't in `main`'s Ready-to-claim table below — it's from an in-flight whole-branch review whose other findings live on several open, unmerged PRs (see the note in Ready to claim). Verified the underlying duplication directly against `main`'s code before claiming it. |
 
 ---
 
 ## Ready to claim
 
 Follow-ups discovered during P4/P5. None block the slice; each was deliberately deferred with a reason.
+
+**⚠️ Before claiming, check open PRs on GitHub — this table on `main` is stale.** As of 2026-08-18 ~20:30 UTC there are 8 open, unmerged PRs from earlier runs of the scheduled backlog routine: #1 (AlphaFold fallback version), #2 (parser parity tests), #3 (pLDDT CRITICAL fix + organism-None + has_plddt-UI + search-view LOC + landing/README + P5.5 smoke step, all bundled in one PR), #4, #5, #7 (three more independent duplicates of the same pLDDT fix as #3 — a reviewer should pick one and close the rest), #6 (upload storage-error path leak), #8 (viewer-slice representation/coloring reset on route change). None of the rows those PRs claim are in this `main` copy of the table below because the whole-branch-review commit that filed them was never merged to `main` — only left as an ancestor on several of those branches. A human should reconcile/merge/close these before more agents pick from this list. This run added a 9th: `feature/cleanup-dedupe-backend-constants`, for the same reason (see In progress / Done above).
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
