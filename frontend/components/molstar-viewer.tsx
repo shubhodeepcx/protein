@@ -12,6 +12,7 @@ import {
   applyRepresentation,
   applySelection,
   loadStructureInto,
+  type ColoringOptions,
   type MolstarFormat,
 } from "@/lib/molstar/actions";
 import {
@@ -28,14 +29,23 @@ import type {
 } from "@/lib/molstar/theming";
 import type { QueryChain } from "@/lib/residue";
 
-export type { MolstarFormat, MolstarRepresentation, MolstarColoring };
+export type {
+  ColoringOptions,
+  MolstarFormat,
+  MolstarRepresentation,
+  MolstarColoring,
+};
 
 export interface MolstarViewerRef {
   loadStructure(url: string, format?: MolstarFormat): Promise<void>;
   /** Keys are `"<chain>:<1-based position>"`, matching the sequence panel. */
   highlightResidues(keys: string[]): void;
   setRepresentation(type: MolstarRepresentation): void;
-  setColoring(scheme: MolstarColoring): void;
+  /**
+   * `options.hasPlddt` carries `ProteinSummary.has_plddt`; it is required
+   * because the `plddt` scheme renders backwards without it.
+   */
+  setColoring(scheme: MolstarColoring, options: ColoringOptions): void;
   resetCamera(): void;
 }
 
@@ -179,8 +189,8 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
       setRepresentation: (type) => {
         if (pluginRef.current) applyRepresentation(pluginRef.current, type);
       },
-      setColoring: (scheme) => {
-        if (pluginRef.current) applyColoring(pluginRef.current, scheme);
+      setColoring: (scheme, options) => {
+        if (pluginRef.current) applyColoring(pluginRef.current, scheme, options);
       },
       resetCamera: () => {
         if (pluginRef.current) PluginCommands.Camera.Reset(pluginRef.current, {});
