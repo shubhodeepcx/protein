@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (deduped backend constants — see Done. 91 backend + 79 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests. NOTE: 8 open, unmerged PRs from earlier scheduled-backlog runs duplicate several findings not yet reflected in this `main` copy of the tracker — see the warning banner in Ready to claim.)
+**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (merged main's whole-branch-review findings into this branch and deduped backend constants on top — see Done. 91 backend + 79 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests. NOTE: 10 open, unmerged PRs from scheduled-backlog runs — several duplicate each other — need human reconciliation; see the warning banner in Ready to claim.)
 
 ---
 
@@ -28,11 +28,20 @@ _Nothing in flight._
 
 Follow-ups discovered during P4/P5. None block the slice; each was deliberately deferred with a reason.
 
-**⚠️ Before claiming, check open PRs on GitHub — this table on `main` is stale.** As of 2026-08-18 ~20:30 UTC there are 8 open, unmerged PRs from earlier runs of the scheduled backlog routine: #1 (AlphaFold fallback version), #2 (parser parity tests), #3 (pLDDT CRITICAL fix + organism-None + has_plddt-UI + search-view LOC + landing/README + P5.5 smoke step, all bundled in one PR), #4, #5, #7 (three more independent duplicates of the same pLDDT fix as #3 — a reviewer should pick one and close the rest), #6 (upload storage-error path leak), #8 (viewer-slice representation/coloring reset on route change). None of the rows those PRs claim are in this `main` copy of the table below because the whole-branch-review commit that filed them was never merged to `main` — only left as an ancestor on several of those branches. A human should reconcile/merge/close these before more agents pick from this list. This run added a 9th: `feature/cleanup-dedupe-backend-constants`, for the same reason (see In progress / Done above).
+**⚠️ Before claiming, check open PRs on GitHub — several rows below already have one.** As of 2026-08-18 ~20:40 UTC there are 10 open, unmerged PRs, none from a human: #1 (AlphaFold fallback version), #2 (parser parity tests — narrows the `1CRN.cif` row below), #3 (pLDDT CRITICAL fix + organism-None + has_plddt-UI + search-view LOC + landing/README + P5.5 smoke step, all bundled in one PR), #4, #5, #7 (three more independent duplicates of the same pLDDT fix as #3 — a reviewer should pick one and close the rest), #6 (upload storage-error path leak), #8 (viewer-slice representation/coloring reset on route change), #10 (landing/README, also bundled into #3). #9 (this run: backend constants dedupe) is Done below — merged main's whole-branch-review findings into it while resolving a merge conflict, so the row that PR claimed is removed from the table. A human should merge/close the rest before more agents pick from this list — most of it is one bug fixed 1-4 times over.
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
 | Run the P4 + P5 manual smoke tests (browser + live internet required) | P5.5 | — | 45m |
+| ⚠️ open PR #3, #4, #5, #7 — **CRITICAL** — pLDDT coloring is inverted: `theming.ts` maps `plddt` to Mol\*'s `uncertainty` theme (0=blue, 100=red), correct for B-factor but backwards for pLDDT. Confident core renders red on every AlphaFold import. Fix via `domain: [100, 0]`. | fix | — | 30m |
+| ⚠️ open PR #3 — Organism is `None` on every RCSB mmCIF import — `parser._extract_header_strings` reads PDB-header keys only, and MMCIFParser's header has no `source`. UI shows "Organism: Unknown" right after the search card showed it correctly. | fix | — | 1h |
+| ⚠️ open PR #3 — `has_plddt` never reaches the UI — pLDDT coloring is offered unconditionally, even on X-ray entries | fix | — | 45m |
+| ⚠️ open PR #3 — `frontend/app/search/search-view.tsx` is 226 LOC, over the 200 limit in AGENTS.md section 3 | fix | — | 30m |
+| ⚠️ open PR #3, #10 — Landing page + README still deny shipped features ("P2" badge, "arrives in P4", disabled Upload button) | fix | — | 30m |
+| ⚠️ open PR #3 — Add a smoke step that clicks a residue on an IMPORTED RCSB mmCIF — only uploaded 1CRN.pdb is covered today | fix | — | 20m |
+| ⚠️ narrowed by open PR #2 — `tests/fixtures/1CRN.cif` is `_atom_site`-only, single-chain, 1-based — exercises none of the mmCIF shape that could break the residue seam | test | — | 45m |
+| ⚠️ open PR #8 — `viewer-slice` representation/coloring never reset across proteins (selection is) | fix | — | 20m |
+| ⚠️ open PR #6 — `proteins.py:64` `detail=str(exc)` can leak the storage path from an OSError (pre-existing; the P5 import path is already generic) | fix | — | 20m |
 | Add a `"uniprot"` member to `ProteinSummary.source` so a UniProt-card import keeps its provenance | follow-up | shared model change | 45m |
 | Derive the AlphaFold fallback file URL from `latestVersion` instead of the hard-coded `-model_v4.pdb` | follow-up | — | 30m |
 | Batch RCSB search enrichment via the GraphQL Data API (currently up to 50 REST calls per search) | follow-up | — | 2h |
