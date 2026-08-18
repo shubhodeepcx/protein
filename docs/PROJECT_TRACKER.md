@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (P4 + P5 built in parallel, each through two review + fix rounds, both merged to main; 83 backend + 79 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests.)
+**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (deduped backend constants — see Done. 91 backend + 79 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests. NOTE: 8 open, unmerged PRs from earlier scheduled-backlog runs duplicate several findings not yet reflected in this `main` copy of the tracker — see the warning banner in Ready to claim.)
 
 ---
 
@@ -17,9 +17,10 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
+_Nothing in flight._
+
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
-| Dedupe backend constants (50 MB ceiling, `_ALLOWED_EXTS`, store→parse→register→unlink flow) | shubhodeep | `feature/cleanup-dedupe-backend-constants` | wip | This row isn't in `main`'s Ready-to-claim table below — it's from an in-flight whole-branch review whose other findings live on several open, unmerged PRs (see the note in Ready to claim). Verified the underlying duplication directly against `main`'s code before claiming it. |
 
 ---
 
@@ -91,6 +92,7 @@ _No blocked tasks._
 | P5: `/search` page (source filter, result cards, per-card import state, failed-source banner) + 43 backend / 10 frontend tests, all external HTTP mocked | P5 | 2026-08-18 | `819167f` |
 | P5 review rounds 1-2: cache scope split, AlphaFold status classification reworked so a transport error can never read as "no model", search request sequencing | P5 | 2026-08-18 | `a8c1cd8`, `11301a7`, `ffab9cc`, `42f4b64` |
 | P4 + P5 smoke tests written in `docs/smoke-tests.md`; decisions log extended with 7 entries | P4/P5 | 2026-08-18 | `005bea1`, `d04beb6` |
+| **Cleanup:** deduped backend constants — single `storage.MAX_STRUCTURE_BYTES` (was a literal in both `proteins.py` and `import_.py`); `storage.ALLOWED_UPLOAD_EXTS` now derived from `storage.STORED_EXTS` + an explicit alias map instead of a second, differently-scoped `_ALLOWED_EXTS` in `proteins.py`; new `services/ingest.parse_and_register` replaces the duplicated store→parse→register→unlink block in both routers. 8 new backend tests (91 total) | cleanup | 2026-08-18 | branch `feature/cleanup-dedupe-backend-constants`, PR TBD |
 
 ---
 

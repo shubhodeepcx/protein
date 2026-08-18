@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.storage import local as storage
 
 client = TestClient(app)
 PDB_PATH = Path(__file__).resolve().parents[1] / "app" / "static" / "1CRN.pdb"
@@ -53,12 +54,18 @@ def test_upload_rejects_unknown_extension() -> None:
 
 def test_upload_rejects_garbage_pdb_content() -> None:
     """Non-PDB content parses to an empty structure — the route should reject it 400."""
+    before = set(storage.STORAGE_ROOT.iterdir())
+
     r = client.post(
         "/api/proteins/upload",
         files={"file": ("garbage.pdb", b"this is not a pdb file", "chemical/x-pdb")},
     )
     assert r.status_code == 400, r.text
     assert "Could not parse" in r.json()["detail"]
+
+    # The rejected upload must not leave an orphaned file behind in storage.
+    after = set(storage.STORAGE_ROOT.iterdir())
+    assert after == before
 
 
 def test_get_missing_protein_returns_404() -> None:
