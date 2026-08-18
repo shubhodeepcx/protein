@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from Bio.PDB import MMCIFParser, PDBParser
@@ -18,6 +19,8 @@ from app.models.analytics import (
 from app.models.protein import ProteinSummary
 from app.services import analytics, parser, registry
 from app.storage import local as storage
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/proteins", tags=["proteins"])
 
@@ -59,8 +62,14 @@ async def upload_protein(file: UploadFile = File(...)) -> ProteinSummary:
 
     try:
         uid, stored_path = storage.store_upload(content, ext)
-    except (ValueError, OSError) as exc:
+    except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except OSError as exc:
+        logger.exception("Failed to write uploaded file to storage")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to store uploaded file.",
+        ) from exc
 
     try:
         summary = await run_in_threadpool(parser.parse, stored_path, uid=uid, source="uploaded")

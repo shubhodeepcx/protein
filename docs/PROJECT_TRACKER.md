@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (final whole-branch review done — residue seam verified correct incl. mmCIF; 1 critical + 5 important findings filed below and dispatched to cloud agents. P4 + P5 built in parallel, each through two review + fix rounds, both merged to main; 83 backend + 79 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests.)
+**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (fixed the upload storage-error path leak — OSError now returns a generic HTTP 500 instead of a 400 reflecting the on-disk path. 84 backend + 79 frontend tests green, lint + build clean. NOTE: earlier runs of the scheduled backlog routine left 5 open, unmerged PRs (#1-#5) that duplicate several Ready-to-claim rows — see the warning banner in that section; a human should reconcile them.)
 
 ---
 
@@ -17,9 +17,10 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
+_Nothing in flight._
+
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
-| `proteins.py:64` `detail=str(exc)` can leak the storage path from an OSError | shubhodeep | `feature/fix-storage-error-detail-leak` | wip | Note: several other Ready-to-claim rows already have open, unmerged PRs from earlier runs of this same routine (#1-#5 on GitHub) — see PR body / decisions log for details before claiming from this list. |
 
 ---
 
@@ -27,21 +28,22 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 Follow-ups discovered during P4/P5. None block the slice; each was deliberately deferred with a reason.
 
+**⚠️ Before claiming, check open PRs on GitHub.** Several rows below already have an open, unmerged PR from an earlier run of the scheduled backlog routine — the tracker on `main` doesn't reflect that until one merges, so it's easy to duplicate work. As of 2026-08-18 ~17:25 UTC, open PRs: #1 (AlphaFold fallback version), #2 (parser parity tests — also narrows the `extractResidueRecords` browser-coverage row), #3 (pLDDT CRITICAL fix + organism None + has_plddt UI + search-view LOC + landing/README + P5.5 smoke step, all in one), #4 and #5 (both independently duplicate the same pLDDT CRITICAL fix as #3 — one of the three should be closed once a reviewer picks a winner). Recommend a human reconcile/merge/close these before more agents pick from this list.
+
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
 | Run the P4 + P5 manual smoke tests (browser + live internet required) | P5.5 | — | 45m |
-| **CRITICAL** — pLDDT coloring is inverted: `theming.ts` maps `plddt` to Mol\*'s `uncertainty` theme (0=blue, 100=red), correct for B-factor but backwards for pLDDT. Confident core renders red on every AlphaFold import. Fix via `domain: [100, 0]`. | fix | — | 30m |
-| Organism is `None` on every RCSB mmCIF import — `parser._extract_header_strings` reads PDB-header keys only, and MMCIFParser's header has no `source`. UI shows "Organism: Unknown" right after the search card showed it correctly. | fix | — | 1h |
-| `has_plddt` never reaches the UI — pLDDT coloring is offered unconditionally, even on X-ray entries | fix | — | 45m |
-| `frontend/app/search/search-view.tsx` is 226 LOC, over the 200 limit in AGENTS.md section 3 | fix | — | 30m |
-| Landing page + README still deny shipped features ("P2" badge, "arrives in P4", disabled Upload button) | fix | — | 30m |
-| Add a smoke step that clicks a residue on an IMPORTED RCSB mmCIF — only uploaded 1CRN.pdb is covered today | fix | — | 20m |
-| `tests/fixtures/1CRN.cif` is `_atom_site`-only, single-chain, 1-based — exercises none of the mmCIF shape that could break the residue seam | test | — | 45m |
+| ⚠️ open PR #3, #4, #5 — **CRITICAL** — pLDDT coloring is inverted: `theming.ts` maps `plddt` to Mol\*'s `uncertainty` theme (0=blue, 100=red), correct for B-factor but backwards for pLDDT. Confident core renders red on every AlphaFold import. Fix via `domain: [100, 0]`. | fix | — | 30m |
+| ⚠️ open PR #3 — Organism is `None` on every RCSB mmCIF import — `parser._extract_header_strings` reads PDB-header keys only, and MMCIFParser's header has no `source`. UI shows "Organism: Unknown" right after the search card showed it correctly. | fix | — | 1h |
+| ⚠️ open PR #3 — `has_plddt` never reaches the UI — pLDDT coloring is offered unconditionally, even on X-ray entries | fix | — | 45m |
+| ⚠️ open PR #3 — `frontend/app/search/search-view.tsx` is 226 LOC, over the 200 limit in AGENTS.md section 3 | fix | — | 30m |
+| ⚠️ open PR #3 — Landing page + README still deny shipped features ("P2" badge, "arrives in P4", disabled Upload button) | fix | — | 30m |
+| ⚠️ open PR #3 — Add a smoke step that clicks a residue on an IMPORTED RCSB mmCIF — only uploaded 1CRN.pdb is covered today | fix | — | 20m |
+| ⚠️ narrowed by open PR #2 (still open, not merged) — `tests/fixtures/1CRN.cif` is `_atom_site`-only, single-chain, 1-based — exercises none of the mmCIF shape that could break the residue seam | test | — | 45m |
 | Dedupe backend constants: 50 MB ceiling defined twice, `_ALLOWED_EXTS` twice with different members, store->parse->register->unlink flow duplicated | cleanup | — | 1h |
 | `viewer-slice` representation/coloring never reset across proteins (selection is) | fix | — | 20m |
-| `proteins.py:64` `detail=str(exc)` can leak the storage path from an OSError (pre-existing; the P5 import path is already generic) | fix | — | 20m |
 | Add a `"uniprot"` member to `ProteinSummary.source` so a UniProt-card import keeps its provenance | follow-up | shared model change | 45m |
-| Derive the AlphaFold fallback file URL from `latestVersion` instead of the hard-coded `-model_v4.pdb` | follow-up | — | 30m |
+| ⚠️ open PR #1 (still open, not merged) — Derive the AlphaFold fallback file URL from `latestVersion` instead of the hard-coded `-model_v4.pdb` | follow-up | — | 30m |
 | Batch RCSB search enrichment via the GraphQL Data API (currently up to 50 REST calls per search) | follow-up | — | 2h |
 | Retries / backoff / rate limiting on the three outbound clients | follow-up | — | 2h |
 | Virtualise the sequence panel (one `<button>` per residue gets heavy above ~2,000 residues) | follow-up | — | 2h |
@@ -99,6 +101,7 @@ _No blocked tasks._
 | P5: `/search` page (source filter, result cards, per-card import state, failed-source banner) + 43 backend / 10 frontend tests, all external HTTP mocked | P5 | 2026-08-18 | `819167f` |
 | P5 review rounds 1-2: cache scope split, AlphaFold status classification reworked so a transport error can never read as "no model", search request sequencing | P5 | 2026-08-18 | `a8c1cd8`, `11301a7`, `ffab9cc`, `42f4b64` |
 | P4 + P5 smoke tests written in `docs/smoke-tests.md`; decisions log extended with 7 entries | P4/P5 | 2026-08-18 | `005bea1`, `d04beb6` |
+| **Fix:** upload `store_upload` OSError now returns HTTP 500 with a generic detail + `logger.exception`, instead of 400 with `str(exc)` that could reflect the on-disk storage path to the client | fix | 2026-08-18 | see PR (`feature/fix-storage-error-detail-leak`) |
 
 ---
 

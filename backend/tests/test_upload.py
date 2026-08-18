@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from app.api import proteins
 from app.main import app
 
 client = TestClient(app)
@@ -59,6 +60,24 @@ def test_upload_rejects_garbage_pdb_content() -> None:
     )
     assert r.status_code == 400, r.text
     assert "Could not parse" in r.json()["detail"]
+
+
+def test_upload_storage_failure_does_not_leak_path(monkeypatch) -> None:
+    """A storage OSError must not reflect the on-disk path back to the client."""
+    secret_path = "/home/user/protein/backend/storage/proteins/leaked-uid.pdb"
+
+    def _boom(content: bytes, ext: str):
+        raise OSError(f"[Errno 28] No space left on device: '{secret_path}'")
+
+    monkeypatch.setattr(proteins.storage, "store_upload", _boom)
+
+    with PDB_PATH.open("rb") as f:
+        r = client.post(
+            "/api/proteins/upload",
+            files={"file": ("test.pdb", f, "chemical/x-pdb")},
+        )
+    assert r.status_code == 500
+    assert secret_path not in r.json()["detail"]
 
 
 def test_get_missing_protein_returns_404() -> None:
