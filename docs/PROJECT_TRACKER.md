@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (final whole-branch review done — residue seam verified correct incl. mmCIF; 1 critical + 5 important findings filed below and dispatched to cloud agents. P4 + P5 built in parallel, each through two review + fix rounds, both merged to main; 83 backend + 79 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests.)
+**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (claimed the final-review fix pass: 1 critical + 5 important findings, one branch `feature/fix-plddt-inversion-and-final-review`. Prior state: P4 + P5 built in parallel, each through two review + fix rounds, both merged to main; 83 backend + 79 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests.)
 
 ---
 
@@ -17,10 +17,9 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in flight. P4 and P5 both merged; the slice is feature-complete._
-
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
+| Final-review fix pass: pLDDT color inversion (CRITICAL) + the five important findings below | shubhodeep | `feature/fix-plddt-inversion-and-final-review` | wip | One branch, one PR. Covers the CRITICAL inversion, mmCIF organism, `has_plddt` in the UI, the `search-view.tsx` LOC split, stale landing-page/README copy, and the mmCIF residue-click smoke step. |
 
 ---
 
@@ -31,12 +30,6 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
 | Run the P4 + P5 manual smoke tests (browser + live internet required) | P5.5 | — | 45m |
-| **CRITICAL** — pLDDT coloring is inverted: `theming.ts` maps `plddt` to Mol\*'s `uncertainty` theme (0=blue, 100=red), correct for B-factor but backwards for pLDDT. Confident core renders red on every AlphaFold import. Fix via `domain: [100, 0]`. | fix | — | 30m |
-| Organism is `None` on every RCSB mmCIF import — `parser._extract_header_strings` reads PDB-header keys only, and MMCIFParser's header has no `source`. UI shows "Organism: Unknown" right after the search card showed it correctly. | fix | — | 1h |
-| `has_plddt` never reaches the UI — pLDDT coloring is offered unconditionally, even on X-ray entries | fix | — | 45m |
-| `frontend/app/search/search-view.tsx` is 226 LOC, over the 200 limit in AGENTS.md section 3 | fix | — | 30m |
-| Landing page + README still deny shipped features ("P2" badge, "arrives in P4", disabled Upload button) | fix | — | 30m |
-| Add a smoke step that clicks a residue on an IMPORTED RCSB mmCIF — only uploaded 1CRN.pdb is covered today | fix | — | 20m |
 | `tests/fixtures/1CRN.cif` is `_atom_site`-only, single-chain, 1-based — exercises none of the mmCIF shape that could break the residue seam | test | — | 45m |
 | Dedupe backend constants: 50 MB ceiling defined twice, `_ALLOWED_EXTS` twice with different members, store->parse->register->unlink flow duplicated | cleanup | — | 1h |
 | `viewer-slice` representation/coloring never reset across proteins (selection is) | fix | — | 20m |
