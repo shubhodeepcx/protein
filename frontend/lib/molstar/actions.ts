@@ -22,23 +22,35 @@ export type MolstarFormat = "pdb" | "mmcif";
 /**
  * Downloads, parses and renders a structure, returning the resulting
  * `Structure` (or `null` if the hierarchy came back empty).
+ *
+ * `isStale` is checked after every await. Each step here is a network or state
+ * transaction, so navigating away mid-load would otherwise let the continuation
+ * parse and apply a preset against a disposed plugin. Callers supply a check
+ * that covers both disposal and a newer load having superseded this one.
  */
 export async function loadStructureInto(
   plugin: PluginContext,
   url: string,
   format: MolstarFormat,
+  isStale: () => boolean = () => false,
 ): Promise<Structure | null> {
   await plugin.clear();
+  if (isStale()) return null;
 
   const data = await plugin.builders.data.download(
     { url, isBinary: false },
     { state: { isGhost: true } },
   );
+  if (isStale()) return null;
+
   const trajectory = await plugin.builders.structure.parseTrajectory(
     data,
     format === "mmcif" ? "mmcif" : "pdb",
   );
+  if (isStale()) return null;
+
   await plugin.builders.structure.hierarchy.applyPreset(trajectory, "default");
+  if (isStale()) return null;
 
   return (
     plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data ??

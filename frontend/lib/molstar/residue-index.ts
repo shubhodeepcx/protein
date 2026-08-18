@@ -1,6 +1,5 @@
 /**
- * Reconciles the sequence panel's 1-based ordinal numbering with Mol*'s
- * internal residue addressing.
+ * Mol*-facing adapter for the ordinal <-> residue-index mapping.
  *
  * ## Why this exists
  *
@@ -15,11 +14,14 @@
  * between the panel's ordinal key (`"A:12"`) and the **model residue index**
  * (Mol*'s exact internal residue handle). Using the residue index rather than
  * `auth_seq_id` also makes the mapping immune to insertion codes and to two
- * residues sharing a `auth_seq_id`.
+ * residues sharing an `auth_seq_id`.
  *
  * The residue filter here (`group_PDB === "ATOM"`, grouped by `auth_asym_id`,
  * in file order) mirrors `backend/app/services/parser.py`, which skips any
  * residue whose BioPython hetero-flag is set (waters, ligands, HETATM).
+ *
+ * All the numbering logic itself lives in `lib/residue-map.ts`, which is free
+ * of Mol* imports and unit-tested there.
  */
 
 import {
@@ -29,41 +31,67 @@ import {
 } from "molstar/lib/mol-model/structure";
 import { SortedArray } from "molstar/lib/mol-data/int";
 import { Loci } from "molstar/lib/mol-model/loci";
-import { residueKey } from "@/lib/residue";
+import {
+  indexResidueRecords,
+  residueIndicesForKeys,
+  resolveResidueIndex,
+  residueClickPayload,
+  EMPTY_RESIDUE_INDEX,
+  type LocusResolution,
+  type ResidueIndexMap,
+  type ResidueRecord,
+} from "@/lib/residue-map";
 
-export interface ResidueIndexMap {
-  /** `"A:12"` -> model residue index. */
-  readonly keyToResidue: ReadonlyMap<string, number>;
-  /** model residue index -> `"A:12"`. */
-  readonly residueToKey: ReadonlyMap<number, string>;
-  /** chain label -> number of polymer residues found for it. */
-  readonly chainCounts: ReadonlyMap<string, number>;
-}
-
-export const EMPTY_RESIDUE_INDEX: ResidueIndexMap = {
-  keyToResidue: new Map(),
-  residueToKey: new Map(),
-  chainCounts: new Map(),
+export {
+  residueClickPayload,
+  EMPTY_RESIDUE_INDEX,
+  type LocusResolution,
+  type ResidueIndexMap,
+  type ResidueRecord,
 };
 
 /**
- * Assigns every ATOM-record residue of the pivot model the next 1-based ordinal
- * within its `auth_asym_id`, walking residues in **input-file order**.
- *
- * File order matters: Mol* may re-sort atoms while building its hierarchy, so
- * the hierarchy's own residue order is not guaranteed to match the order
- * BioPython saw. `residueSourceIndex` is the row of the residue's first atom in
- * the source file, which is exactly the order the backend counted in.
+ * Re-exported here so callers of the index get the drift check from the same
+ * module. The implementation lives in `lib/residue.ts` because it needs no Mol*
+ * types and is therefore cheap to unit-test.
  */
-export function buildResidueIndex(structure: Structure): ResidueIndexMap {
+import { findIndexDrift, type QueryChain } from "@/lib/residue";
+
+export { findIndexDrift };
+
+/**
+ * Logs a warning when Mol*'s per-chain residue counts disagree with the API's,
+ * i.e. when the ordinal numbering the sequence panel renders would not line up
+ * with what this index resolves. A warning rather than a throw, so an odd file
+ * still renders — but the drift is never silent.
+ */
+export function warnOnResidueDrift(
+  index: ResidueIndexMap,
+  chains: readonly QueryChain[] | undefined,
+): void {
+  if (!chains) return;
+  const drift = findIndexDrift(index, chains);
+  if (drift.length === 0) return;
+  // eslint-disable-next-line no-console
+  console.warn(
+    "Residue numbering drift between Mol* and the API:",
+    drift.join("; "),
+  );
+}
+
+/**
+ * Reads every ATOM-record residue of the pivot model out of the atomic
+ * hierarchy, tagged with its chain label, source-file position, and
+ * `auth_seq_id`. Ordering and numbering are left to `indexResidueRecords`.
+ */
+export function extractResidueRecords(structure: Structure): ResidueRecord[] {
   const model = structure.models[0];
-  if (!model) return EMPTY_RESIDUE_INDEX;
+  if (!model) return [];
 
   const h = model.atomicHierarchy;
   const residueOfAtom = h.residueAtomSegments.index;
   const chainOffsets = h.chainAtomSegments.offsets;
-
-  const entries: { label: string; residue: number; source: number }[] = [];
+  const records: ResidueRecord[] = [];
 
   for (let cI = 0, chainCount = h.chains._rowCount; cI < chainCount; cI++) {
     const atomStart = chainOffsets[cI];
@@ -77,74 +105,59 @@ export function buildResidueIndex(structure: Structure): ResidueIndexMap {
     for (let rI = first; rI <= last; rI++) {
       // Mirrors the backend's `residue.id[0] != " "` skip (waters, ligands).
       if (h.residues.group_PDB.value(rI) !== "ATOM") continue;
-      entries.push({
+      records.push({
         label,
         residue: rI,
         source: h.residueSourceIndex.value(rI),
+        authSeqId: h.residues.auth_seq_id.value(rI),
       });
     }
   }
 
-  // Stable sort, so a model without source indices degrades to hierarchy order
-  // rather than scrambling.
-  entries.sort((a, b) => a.source - b.source);
+  return records;
+}
 
-  const keyToResidue = new Map<string, number>();
-  const residueToKey = new Map<number, string>();
-  const chainCounts = new Map<string, number>();
-
-  for (const entry of entries) {
-    const position = (chainCounts.get(entry.label) ?? 0) + 1;
-    chainCounts.set(entry.label, position);
-    const key = residueKey(entry.label, position);
-    keyToResidue.set(key, entry.residue);
-    residueToKey.set(entry.residue, key);
-  }
-
-  return { keyToResidue, residueToKey, chainCounts };
+/** Builds the ordinal <-> residue-index map for a loaded structure. */
+export function buildResidueIndex(structure: Structure): ResidueIndexMap {
+  return indexResidueRecords(extractResidueRecords(structure));
 }
 
 /**
- * Re-exported here so callers of the index get the drift check from the same
- * module. The implementation lives in `lib/residue.ts` because it needs no Mol*
- * types and is therefore cheap to unit-test.
+ * Resolves a clicked loci. Bond loci are normalised to their residue first so
+ * clicking a stick still lands on a residue.
+ *
+ * Returns `{ kind: "empty" }` only when the click produced no structural
+ * element — i.e. the user clicked background. Real geometry outside the indexed
+ * polymer (a ligand, a water) returns `{ kind: "unindexed" }` so callers can
+ * leave the current selection alone.
  */
-export { findIndexDrift } from "@/lib/residue";
-
-/**
- * Resolves a clicked loci to a residue key. Bond loci are normalised to their
- * residue first so clicking a stick still lands on a residue. Returns `null`
- * for empty space or for anything outside the indexed polymer.
- */
-export function lociToResidueKey(
+export function resolveResidueLocus(
   loci: Loci,
   index: ResidueIndexMap,
-): string | null {
+): LocusResolution {
   const normalized = Loci.normalize(loci, "residue", true);
-  if (!StructureElement.Loci.is(normalized)) return null;
+  if (!StructureElement.Loci.is(normalized)) {
+    return resolveResidueIndex(index, null);
+  }
 
   const location = StructureElement.Loci.getFirstLocation(normalized);
-  if (!location || !Unit.isAtomic(location.unit)) return null;
+  if (!location || !Unit.isAtomic(location.unit)) {
+    return resolveResidueIndex(index, null);
+  }
 
-  const residue = location.unit.residueIndex[location.element];
-  return index.residueToKey.get(residue) ?? null;
+  return resolveResidueIndex(index, location.unit.residueIndex[location.element]);
 }
 
 /**
  * Builds a `StructureElement.Loci` covering every atom of every residue named
- * by `keys`. Unknown keys are ignored rather than throwing — the store may
- * still hold keys from a previously loaded protein.
+ * by `keys`.
  */
 export function keysToLoci(
   structure: Structure,
   keys: readonly string[],
   index: ResidueIndexMap,
 ): StructureElement.Loci {
-  const wanted = new Set<number>();
-  for (const key of keys) {
-    const residue = index.keyToResidue.get(key);
-    if (residue !== undefined) wanted.add(residue);
-  }
+  const wanted = residueIndicesForKeys(index, keys);
   if (wanted.size === 0) return StructureElement.Loci.none(structure);
 
   const model = structure.models[0];

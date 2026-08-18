@@ -16,8 +16,9 @@ import {
 } from "@/lib/molstar/actions";
 import {
   buildResidueIndex,
-  findIndexDrift,
-  lociToResidueKey,
+  warnOnResidueDrift,
+  resolveResidueLocus,
+  residueClickPayload,
   EMPTY_RESIDUE_INDEX,
   type ResidueIndexMap,
 } from "@/lib/molstar/residue-index";
@@ -42,7 +43,10 @@ export interface MolstarViewerProps {
   className?: string;
   style?: React.CSSProperties;
   onReady?: () => void;
-  /** Fires with a residue key on click, or `null` when empty space is clicked. */
+  /**
+   * Residue key on click, `null` on empty space, and nothing at all for
+   * geometry outside the index (ligand, water) — see `residueClickPayload`.
+   */
   onResidueClick?: (key: string | null) => void;
   /** Optional: used only to warn when Mol*'s residue count drifts from the API's. */
   chains?: readonly QueryChain[];
@@ -60,6 +64,9 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
     const onReadyRef = useRef(onReady);
     const onResidueClickRef = useRef(onResidueClick);
     const chainsRef = useRef(chains);
+    // Monotonic token so a superseded or torn-down load cannot write its
+    // results over a newer one.
+    const loadSeqRef = useRef(0);
 
     // Keep refs in sync without re-running the init effect (which would tear
     // down and rebuild the WebGL context on every parent render).
@@ -105,18 +112,20 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
         pluginInstance = plugin;
         pluginRef.current = plugin;
 
-        // Direction 1 of the selection sync: 3D click -> store. `click` is a
-        // BehaviorSubject that replays an empty seed value on subscribe;
-        // swallowing it stops a spurious "clear selection" on mount.
+        // Direction 1: 3D click -> store. `click` is a BehaviorSubject whose
+        // replayed seed value is swallowed, else mounting clears the selection.
         let seeded = false;
         clickSub = plugin.behaviors.interaction.click.subscribe((e) => {
           if (!seeded) {
             seeded = true;
             return;
           }
-          onResidueClickRef.current?.(
-            lociToResidueKey(e.current.loci, indexRef.current),
+          // `undefined` means "say nothing": the user clicked a ligand or
+          // water, which must not be mistaken for a background click.
+          const payload = residueClickPayload(
+            resolveResidueLocus(e.current.loci, indexRef.current),
           );
+          if (payload !== undefined) onResidueClickRef.current?.(payload);
         });
 
         onReadyRef.current?.();
@@ -140,49 +149,41 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
         const plugin = pluginRef.current;
         if (!plugin) return;
 
+        // Stale once the plugin is disposed (pluginRef is nulled on cleanup)
+        // or once a newer loadStructure call has superseded this one.
+        const seq = ++loadSeqRef.current;
+        const isStale = () =>
+          pluginRef.current !== plugin || loadSeqRef.current !== seq;
+
         structureRef.current = null;
         indexRef.current = EMPTY_RESIDUE_INDEX;
 
-        const structure = await loadStructureInto(plugin, url, format);
+        const structure = await loadStructureInto(plugin, url, format, isStale);
+        if (isStale()) return;
         structureRef.current = structure;
         indexRef.current = structure
           ? buildResidueIndex(structure)
           : EMPTY_RESIDUE_INDEX;
-
-        const expected = chainsRef.current;
-        const drift = expected ? findIndexDrift(indexRef.current, expected) : [];
-        if (drift.length > 0) {
-          // eslint-disable-next-line no-console
-          console.warn(
-            "Residue numbering drift between Mol* and the API:",
-            drift.join("; "),
-          );
-        }
+        warnOnResidueDrift(indexRef.current, chainsRef.current);
       },
 
-      highlightResidues(keys: string[]) {
+      // The remaining entry points are one-liners over `lib/molstar/actions`,
+      // each guarding on the asynchronously created plugin.
+      highlightResidues: (keys) => {
         const plugin = pluginRef.current;
         const structure = structureRef.current;
-        if (!plugin || !structure) return;
-        applySelection(plugin, structure, keys, indexRef.current);
+        if (plugin && structure) {
+          applySelection(plugin, structure, keys, indexRef.current);
+        }
       },
-
-      setRepresentation(type: MolstarRepresentation) {
-        const plugin = pluginRef.current;
-        if (!plugin) return;
-        applyRepresentation(plugin, type);
+      setRepresentation: (type) => {
+        if (pluginRef.current) applyRepresentation(pluginRef.current, type);
       },
-
-      setColoring(scheme: MolstarColoring) {
-        const plugin = pluginRef.current;
-        if (!plugin) return;
-        applyColoring(plugin, scheme);
+      setColoring: (scheme) => {
+        if (pluginRef.current) applyColoring(pluginRef.current, scheme);
       },
-
-      resetCamera() {
-        const plugin = pluginRef.current;
-        if (!plugin) return;
-        PluginCommands.Camera.Reset(plugin, {});
+      resetCamera: () => {
+        if (pluginRef.current) PluginCommands.Camera.Reset(pluginRef.current, {});
       },
     }));
 
