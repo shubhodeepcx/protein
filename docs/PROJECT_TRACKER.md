@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (AlphaFold fallback file URL now derives its version from the payload's own `latestVersion` instead of a hard-coded v4; 84 backend + 79 frontend tests green, lint + build clean.)
+**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (merged the AlphaFold fallback-version follow-up — fallback file URL now derives its version from the payload's own `latestVersion` instead of a hard-coded v4 — on top of the final whole-branch review, which found the residue seam correct incl. mmCIF but filed 1 critical + 5 important findings, dispatched to cloud agents. 84 backend + 79 frontend tests green, lint + build clean.)
 
 ---
 
@@ -31,6 +31,16 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
 | Run the P4 + P5 manual smoke tests (browser + live internet required) | P5.5 | — | 45m |
+| **CRITICAL** — pLDDT coloring is inverted: `theming.ts` maps `plddt` to Mol\*'s `uncertainty` theme (0=blue, 100=red), correct for B-factor but backwards for pLDDT. Confident core renders red on every AlphaFold import. Fix via `domain: [100, 0]`. | fix | — | 30m |
+| Organism is `None` on every RCSB mmCIF import — `parser._extract_header_strings` reads PDB-header keys only, and MMCIFParser's header has no `source`. UI shows "Organism: Unknown" right after the search card showed it correctly. | fix | — | 1h |
+| `has_plddt` never reaches the UI — pLDDT coloring is offered unconditionally, even on X-ray entries | fix | — | 45m |
+| `frontend/app/search/search-view.tsx` is 226 LOC, over the 200 limit in AGENTS.md section 3 | fix | — | 30m |
+| Landing page + README still deny shipped features ("P2" badge, "arrives in P4", disabled Upload button) | fix | — | 30m |
+| Add a smoke step that clicks a residue on an IMPORTED RCSB mmCIF — only uploaded 1CRN.pdb is covered today | fix | — | 20m |
+| `tests/fixtures/1CRN.cif` is `_atom_site`-only, single-chain, 1-based — exercises none of the mmCIF shape that could break the residue seam | test | — | 45m |
+| Dedupe backend constants: 50 MB ceiling defined twice, `_ALLOWED_EXTS` twice with different members, store->parse->register->unlink flow duplicated | cleanup | — | 1h |
+| `viewer-slice` representation/coloring never reset across proteins (selection is) | fix | — | 20m |
+| `proteins.py:64` `detail=str(exc)` can leak the storage path from an OSError (pre-existing; the P5 import path is already generic) | fix | — | 20m |
 | Add a `"uniprot"` member to `ProteinSummary.source` so a UniProt-card import keeps its provenance | follow-up | shared model change | 45m |
 | Batch RCSB search enrichment via the GraphQL Data API (currently up to 50 REST calls per search) | follow-up | — | 2h |
 | Retries / backoff / rate limiting on the three outbound clients | follow-up | — | 2h |
