@@ -42,6 +42,31 @@ const RECORDS: ResidueRecord[] = [
   { source: 7, residue: 22, label: "B", authSeqId: 103 },
 ];
 
+/**
+ * A second fixture whose model residue indices INVERT file order.
+ *
+ * Mol* re-sorts atoms while building its hierarchy — that is precisely why
+ * `residueSourceIndex` exists — so the model residue index is NOT guaranteed to
+ * ascend with source-file position. `RECORDS` above cannot detect a sort keyed
+ * on the wrong field, because there `residue` happens to be monotonic in
+ * `source`. Here it is not, in both chains:
+ *
+ * | source | residue | chain | correct key | key if sorted by residue |
+ * |--------|---------|-------|-------------|--------------------------|
+ * | 0      | 50      | A     | A:1         | A:2                      |
+ * | 1      | 20      | A     | A:2         | A:1                      |
+ * | 2      | 90      | A     | A:3         | A:3                      |
+ * | 3      | 40      | B     | B:1         | B:2                      |
+ * | 4      | 30      | B     | B:2         | B:1                      |
+ */
+const INVERTED_RECORDS: ResidueRecord[] = [
+  { source: 0, residue: 50, label: "A", authSeqId: 10 },
+  { source: 1, residue: 20, label: "A", authSeqId: 11 },
+  { source: 2, residue: 90, label: "A", authSeqId: 12 },
+  { source: 3, residue: 40, label: "B", authSeqId: 10 },
+  { source: 4, residue: 30, label: "B", authSeqId: 11 },
+];
+
 const EXPECTED: ReadonlyArray<readonly [string, number]> = [
   ["A:1", 10],
   ["A:2", 11],
@@ -112,12 +137,39 @@ describe("indexResidueRecords — numbering convention", () => {
     ]);
   });
 
-  it("orders by source-file position, not by the order records arrive", () => {
+  it("re-orders records that arrive out of file order", () => {
     const shuffled = [3, 7, 0, 5, 2, 6, 4, 1].map((i) => RECORDS[i]);
     const fromShuffled = indexResidueRecords(shuffled);
     for (const [key, residue] of EXPECTED) {
       expect(fromShuffled.keyToResidue.get(key)).toBe(residue);
     }
+  });
+
+  it("sorts by source-file position, not by model residue index", () => {
+    // RECORDS alone cannot pin the sort KEY: its `residue` values happen to
+    // ascend with `source`, so sorting by either produces the same answer.
+    // INVERTED_RECORDS breaks that tie in both chains.
+    const index2 = indexResidueRecords(INVERTED_RECORDS);
+
+    // Correct (sort by source): A gets 50, 20, 90 in that order.
+    // Sorting by residue would instead yield A:1 -> 20, A:2 -> 50.
+    expect(index2.keyToResidue.get("A:1")).toBe(50);
+    expect(index2.keyToResidue.get("A:2")).toBe(20);
+    expect(index2.keyToResidue.get("A:3")).toBe(90);
+    expect(index2.residueToKey.get(50)).toBe("A:1");
+    expect(index2.residueToKey.get(20)).toBe("A:2");
+
+    // Correct (sort by source): B gets 40 then 30.
+    // Sorting by residue would instead yield B:1 -> 30, B:2 -> 40.
+    expect(index2.keyToResidue.get("B:1")).toBe(40);
+    expect(index2.keyToResidue.get("B:2")).toBe(30);
+    expect(index2.residueToKey.get(40)).toBe("B:1");
+    expect(index2.residueToKey.get(30)).toBe("B:2");
+
+    // Stated as an invariant: the numerically smallest residue index in a
+    // chain is not automatically that chain's first position.
+    expect(index2.residueToKey.get(20)).not.toBe("A:1");
+    expect(index2.residueToKey.get(30)).not.toBe("B:1");
   });
 
   it("handles interleaved chains by grouping on the chain label", () => {
