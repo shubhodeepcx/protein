@@ -1,17 +1,16 @@
 "use client";
 
 import React, { useEffect, useRef, useImperativeHandle } from "react";
-import { createPluginUI } from "molstar/lib/mol-plugin-ui";
-import { renderReact18 } from "molstar/lib/mol-plugin-ui/react18";
-import { DefaultPluginUISpec } from "molstar/lib/mol-plugin-ui/spec";
 import type { PluginUIContext } from "molstar/lib/mol-plugin-ui/context";
 import { PluginCommands } from "molstar/lib/mol-plugin/commands";
 import type { Structure } from "molstar/lib/mol-model/structure";
+import { createViewerPlugin } from "@/lib/molstar/plugin";
 import {
   applyColoring,
   applyRepresentation,
   applySelection,
   loadStructureInto,
+  type ColoringOptions,
   type MolstarFormat,
 } from "@/lib/molstar/actions";
 import {
@@ -28,14 +27,23 @@ import type {
 } from "@/lib/molstar/theming";
 import type { QueryChain } from "@/lib/residue";
 
-export type { MolstarFormat, MolstarRepresentation, MolstarColoring };
+export type {
+  ColoringOptions,
+  MolstarFormat,
+  MolstarRepresentation,
+  MolstarColoring,
+};
 
 export interface MolstarViewerRef {
   loadStructure(url: string, format?: MolstarFormat): Promise<void>;
   /** Keys are `"<chain>:<1-based position>"`, matching the sequence panel. */
   highlightResidues(keys: string[]): void;
   setRepresentation(type: MolstarRepresentation): void;
-  setColoring(scheme: MolstarColoring): void;
+  /**
+   * `options.hasPlddt` carries `ProteinSummary.has_plddt`; it is required
+   * because the `plddt` scheme renders backwards without it.
+   */
+  setColoring(scheme: MolstarColoring, options: ColoringOptions): void;
   resetCamera(): void;
 }
 
@@ -85,26 +93,7 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
       let clickSub: { unsubscribe(): void } | null = null;
 
       async function init() {
-        const spec = DefaultPluginUISpec();
-        const plugin = await createPluginUI({
-          target: target!,
-          render: renderReact18,
-          spec: {
-            ...spec,
-            layout: {
-              initial: {
-                isExpanded: false,
-                showControls: false,
-                regionState: {
-                  bottom: "hidden",
-                  left: "hidden",
-                  right: "hidden",
-                  top: "hidden",
-                },
-              },
-            },
-          },
-        });
+        const plugin = await createViewerPlugin(target!);
         if (disposed) {
           plugin.dispose();
           return;
@@ -179,8 +168,8 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
       setRepresentation: (type) => {
         if (pluginRef.current) applyRepresentation(pluginRef.current, type);
       },
-      setColoring: (scheme) => {
-        if (pluginRef.current) applyColoring(pluginRef.current, scheme);
+      setColoring: (scheme, options) => {
+        if (pluginRef.current) applyColoring(pluginRef.current, scheme, options);
       },
       resetCamera: () => {
         if (pluginRef.current) PluginCommands.Camera.Reset(pluginRef.current, {});

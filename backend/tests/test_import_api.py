@@ -200,3 +200,24 @@ def test_import_rejects_unknown_source() -> None:
 def test_import_rejects_blank_source_id() -> None:
     r = client.post("/api/proteins/import", json={"source": "rcsb", "source_id": ""})
     assert r.status_code == 422
+
+
+@respx.mock
+def test_import_from_rcsb_carries_the_organism_into_the_summary() -> None:
+    """The whole point of the mmCIF organism fallback, end to end.
+
+    RCSB serves mmCIF, and BioPython's mmCIF header has no source category, so
+    before the fallback this field was None on every single RCSB import — the
+    viewer showed "Organism: Unknown" seconds after the search card had shown
+    the organism correctly.
+    """
+    respx.get(f"{RCSB_FILES}1CRN.cif").mock(
+        return_value=httpx.Response(200, content=load_bytes("1CRN_header.cif"))
+    )
+
+    r = client.post("/api/proteins/import", json={"source": "rcsb", "source_id": "1CRN"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["file_format"] == "mmcif"
+    assert body["organism"] is not None, "RCSB mmCIF import lost the organism"
+    assert "CRAMBE" in body["organism"].upper()

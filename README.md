@@ -2,7 +2,7 @@
 
 A web-based workspace for protein 3D visualization, structural analysis, annotation, and reporting. Combines a Mol*-based molecular viewer with bioinformatics pipelines, public-database integration (RCSB PDB, AlphaFold DB, UniProt), and AI-assisted annotation.
 
-**Status:** MVP slice P0–P5 feature-complete — viewer, upload + parse, analytics dashboard, sequence panel with bidirectional 3D selection sync, and public-database search + import (RCSB PDB, AlphaFold DB, UniProt). 83 backend + 79 frontend tests green. See [docs/PROJECT_TRACKER.md](docs/PROJECT_TRACKER.md) for follow-ups and the next slice.
+**Status:** MVP slice P0–P5 feature-complete — viewer, upload + parse, analytics dashboard, sequence panel with bidirectional 3D selection sync, and public-database search + import (RCSB PDB, AlphaFold DB, UniProt). 90 backend + 98 frontend tests green. See [docs/PROJECT_TRACKER.md](docs/PROJECT_TRACKER.md) for follow-ups and the next slice.
 
 **Smoke tests:** After setup, run [docs/smoke-tests.md](docs/smoke-tests.md) to verify each phase end-to-end.
 
@@ -12,7 +12,7 @@ A web-based workspace for protein 3D visualization, structural analysis, annotat
 
 ```
 .
-├── frontend/   # Next.js 16 (App Router, TypeScript), Tailwind v4, shadcn/ui, Zustand, Mol* (coming P1)
+├── frontend/   # Next.js 16 (App Router, TypeScript), Tailwind v4, shadcn/ui, Zustand, Mol* 5
 ├── backend/    # FastAPI 0.110+, Python 3.11+, BioPython, httpx
 ├── docs/
 │   ├── spec.md                                  # Full 6-month product + technical spec

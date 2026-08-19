@@ -13,6 +13,7 @@ import { keysToLoci, type ResidueIndexMap } from "@/lib/molstar/residue-index";
 import {
   COLOR_THEME,
   REPRESENTATION_SPEC,
+  colorParamsFor,
   type MolstarColoring,
   type MolstarRepresentation,
 } from "@/lib/molstar/theming";
@@ -105,15 +106,36 @@ export function applyRepresentation(
   }
 }
 
+export interface ColoringOptions {
+  /**
+   * `ProteinSummary.has_plddt` — true when the B-factor column holds AlphaFold
+   * pLDDT rather than crystallographic temperature factors. It flips the
+   * `uncertainty` theme's domain so high confidence reads blue; see
+   * `PLDDT_COLOR_DOMAIN`.
+   *
+   * Required, and deliberately so: the shipped inversion bug was an *implicit*
+   * assumption that the B-factor column meant the same thing for every
+   * structure. Making every caller answer the question makes dropping the
+   * answer a type error rather than a silently wrong render.
+   */
+  readonly hasPlddt: boolean;
+}
+
 export function applyColoring(
   plugin: PluginContext,
   scheme: MolstarColoring,
+  options: ColoringOptions,
 ): void {
   const color = COLOR_THEME[scheme];
+  const colorParams = colorParamsFor(scheme, options.hasPlddt);
+  // Passing `colorParams: undefined` is not the same as omitting it — Mol*
+  // merges the key in and would clear any theme defaults — so build the two
+  // shapes separately.
+  const params = colorParams ? { color, colorParams } : { color };
   for (const s of plugin.managers.structure.hierarchy.current.structures) {
     void plugin.managers.structure.component.updateRepresentationsTheme(
       s.components,
-      { color },
+      params,
     );
   }
 }

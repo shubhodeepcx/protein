@@ -42,6 +42,9 @@ export default function DynamicViewerPage() {
   const clearSelection = useStore((s) => s.clearSelection);
   const representation = useStore((s) => s.representation);
   const coloring = useStore((s) => s.coloring);
+  /** Does this structure's B-factor column hold pLDDT? Drives both the
+   *  coloring domain and which coloring options the toolbar offers. */
+  const hasPlddt = summary?.has_plddt ?? false;
 
   // Mol*-specific load state stays local — it's not shareable across surfaces.
   const [structureLoading, setStructureLoading] = useState(false);
@@ -122,10 +125,13 @@ export default function DynamicViewerPage() {
     viewerRef.current?.setRepresentation(representation);
   }, [structureVersion, representation]);
 
+  // `hasPlddt` is part of this effect's input, not just a passenger: it decides
+  // whether the shared `uncertainty` theme runs its scale forwards (B-factor)
+  // or inverted (pLDDT), so the coloring must be re-applied when it changes.
   useEffect(() => {
     if (structureVersion === 0) return;
-    viewerRef.current?.setColoring(coloring);
-  }, [structureVersion, coloring]);
+    viewerRef.current?.setColoring(coloring, { hasPlddt });
+  }, [structureVersion, coloring, hasPlddt]);
 
   // Mol* -> store: a 3D click toggles the residue, empty space clears.
   const onResidueClick = useCallback(
@@ -160,6 +166,7 @@ export default function DynamicViewerPage() {
         <ViewerHeader
           title={title}
           source={summary?.source ?? null}
+          hasPlddt={hasPlddt}
           onResetCamera={() => viewerRef.current?.resetCamera()}
         />
 

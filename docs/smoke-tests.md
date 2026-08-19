@@ -284,6 +284,72 @@ banner instead of an error, import round-trips into a working viewer, and all te
 
 ---
 
+## P5.5 — Final-review fixes
+
+**Goal:** the three things the whole-branch review found that only a browser can confirm — pLDDT
+renders the right way round, an imported RCSB **mmCIF** round-trips its organism *and* its residue
+clicks, and the pLDDT coloring option only appears where pLDDT exists.
+
+> P5 is already at the 10-step cap, and every step here needs a real import, so these live in their
+> own section rather than growing that one.
+
+1. Start both servers as in P0, then visit `http://localhost:3000/search`.
+
+2. **Organism survives an mmCIF import.** Search `crambin`, note the organism printed on the RCSB
+   card (`Crambe hispanica subsp. abyssinica` for `1CRN`), then import that card. On `/viewer/{id}`
+   open the **Overview** tab: **Organism** must show that same value.
+   Before the fix it read `Unknown` on every RCSB import — RCSB serves mmCIF, and BioPython's mmCIF
+   header carries no source category at all, so the parser had nothing to read. Any RCSB entry works;
+   what matters is that the viewer agrees with the search card that produced it.
+
+3. **Residue click on an imported mmCIF.** Staying on that imported structure, repeat P4 steps 4 and
+   5 — sequence cell → 3D, and 3D → sequence cell — and confirm the *same* residue lights up in both
+   directions.
+   This is the step P4 could not cover: it only ever exercised an **uploaded** `1CRN.pdb`. mmCIF
+   reaches Mol\* through a different parser and carries `label_seq_id` alongside `auth_seq_id`, so
+   the ordinal ↔ residue-index seam is genuinely a different code path here. Pick a residue well
+   into the chain (not position 1) — an off-by-one seam looks correct at the start of a chain.
+   For a multi-chain entry (`4INS` has chains A–D), click a residue on chain **C** or **D**: a seam
+   that indexes across chains instead of within one only shows up past the first chain.
+
+4. **pLDDT is not inverted.** Import an AlphaFold model — UniProt `P69905` (haemoglobin α) is the
+   reference case — and pick **pLDDT confidence** from the coloring select.
+   The confident core must render **blue** and the disordered tails **orange/red**. If the core is
+   red, the domain inversion has been lost and the viewer is showing users the exact inverse of the
+   AlphaFold convention. Cross-check one residue against the AlphaFold DB entry page for `P69905`,
+   which uses the same blue-to-orange banding.
+
+5. **pLDDT is offered only where it exists.** On that same AlphaFold structure the coloring select
+   lists **pLDDT confidence**, and the Overview tab's **B-factors** field reads
+   `pLDDT confidence (0–100)`. Now open the imported RCSB entry from step 2: the select must **not**
+   list pLDDT at all, and **B-factors** must read `Temperature factors`.
+
+6. **A stale pLDDT selection cannot survive the trip.** With the AlphaFold structure still on pLDDT
+   coloring, navigate straight to the RCSB entry (browser Back, or the search page and re-import).
+   The select must land on **Chain** and the viewport must repaint accordingly — never a select
+   showing one scheme while Mol\* renders another.
+
+7. Probe the import directly, to separate a parser problem from a UI one:
+   ```
+   curl -X POST http://localhost:8000/api/proteins/import \
+        -H "Content-Type: application/json" -d '{"source":"rcsb","source_id":"1CRN"}' \
+     | jq '{organism, has_plddt, file_format}'
+   ```
+   - Expect: `organism` non-null, `has_plddt: false`, `file_format: "mmcif"`.
+
+8. Tests:
+   ```
+   cd backend && pytest
+   cd frontend && npm run lint && npm test && npm run build
+   ```
+   - Expect: 90 backend, 103 frontend, lint and build clean.
+
+**Pass criteria:** an imported mmCIF shows its organism and round-trips residue clicks in both
+directions; high pLDDT reads blue; the pLDDT option and the Overview B-factors field both follow
+`has_plddt`; and a stale pLDDT selection falls back rather than desynchronising.
+
+---
+
 ## How to add a smoke test
 
 When you start a phase, replace the placeholder for that phase with the concrete steps. The steps should be the minimum sequence a fresh agent or human needs to verify the phase works end-to-end, including:
