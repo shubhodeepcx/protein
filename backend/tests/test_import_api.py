@@ -120,12 +120,12 @@ def test_import_alphafold_without_a_model_returns_404() -> None:
 
 @respx.mock
 def test_import_alphafold_file_outage_returns_502_not_404() -> None:
-    """pdbUrl 503 + obsolete v4 fallback 404 is an outage, not a missing model."""
-    respx.get(url__startswith=AF_PREDICTION).mock(
-        return_value=httpx.Response(200, json=load_json("alphafold_prediction_P69905.json"))
-    )
-    respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(return_value=httpx.Response(503))
-    respx.get(f"{AF_FILES}AF-P69905-F1-model_v4.pdb").mock(return_value=httpx.Response(404))
+    """pdbUrl 503 + version-derived fallback 404 is an outage, not a missing model."""
+    prediction = load_json("alphafold_prediction_P69905.json")
+    prediction[0]["pdbUrl"] = f"{AF_FILES}AF-P69905-F1-model_v5.pdb"
+    respx.get(url__startswith=AF_PREDICTION).mock(return_value=httpx.Response(200, json=prediction))
+    respx.get(f"{AF_FILES}AF-P69905-F1-model_v5.pdb").mock(return_value=httpx.Response(503))
+    respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(return_value=httpx.Response(404))
 
     r = client.post(
         "/api/proteins/import", json={"source": "alphafold", "source_id": "P69905"}
