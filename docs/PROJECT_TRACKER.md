@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-18 by Shubhodeep Chatterjee (final whole-branch review done — residue seam verified correct incl. mmCIF; 1 critical + 5 important findings filed below and dispatched to cloud agents. P4 + P5 built in parallel, each through two review + fix rounds, both merged to main; 83 backend + 79 frontend tests green, lint + build clean. MVP slice P0-P5 feature-complete pending manual smoke tests.)
+**Last updated:** 2026-08-19 by Shubhodeep Chatterjee (added retry/backoff/rate-limit transport for the three outbound clients; 91 backend + 79 frontend tests green, lint + build clean. Several other cloud agents are concurrently working this same backlog — see the multi-agent note under Ready to claim.)
 
 ---
 
@@ -17,15 +17,18 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
+_Nothing in flight._
+
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
-| Retries / backoff / rate limiting on the three outbound clients | shubhodeep | `feature/backend-retry-backoff-rate-limit` | wip | Single-point fix in `services/external.py#new_client` (a wrapping `httpx.AsyncBaseTransport`) so all three clients get it for free — no changes to rcsb.py/alphafold.py/uniprot.py themselves. NOTE: as of this claim, PRs #1-14 are already open on GitHub for most of the rest of this list (including 4 duplicate PRs for the pLDDT fix) — check open PRs before claiming anything else here until they merge and this list is refreshed. |
 
 ---
 
 ## Ready to claim
 
 Follow-ups discovered during P4/P5. None block the slice; each was deliberately deferred with a reason.
+
+**Multi-agent note (2026-08-19):** this list is being worked concurrently by several cloud agent runs. As of this update, PRs #1-14 are open on GitHub covering most of the items below (including 4 duplicate PRs for the pLDDT fix alone) — none merged yet. **Check open PRs on the repo before claiming anything here**, since this list itself won't reflect a claim until that PR merges to `main`.
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
@@ -43,7 +46,6 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | Add a `"uniprot"` member to `ProteinSummary.source` so a UniProt-card import keeps its provenance | follow-up | shared model change | 45m |
 | Derive the AlphaFold fallback file URL from `latestVersion` instead of the hard-coded `-model_v4.pdb` | follow-up | — | 30m |
 | Batch RCSB search enrichment via the GraphQL Data API (currently up to 50 REST calls per search) | follow-up | — | 2h |
-| Retries / backoff / rate limiting on the three outbound clients | follow-up | — | 2h |
 | Virtualise the sequence panel (one `<button>` per residue gets heavy above ~2,000 residues) | follow-up | — | 2h |
 | Make HETATM amino acids (e.g. MSE) selectable — currently skipped consistently by both parser and panel | follow-up | — | 1h |
 | Browser-level coverage for `extractResidueRecords` (the Mol\*-facing half of residue indexing, untestable in jsdom) | follow-up | a browser test runner | 3h |
@@ -99,6 +101,7 @@ _No blocked tasks._
 | P5: `/search` page (source filter, result cards, per-card import state, failed-source banner) + 43 backend / 10 frontend tests, all external HTTP mocked | P5 | 2026-08-18 | `819167f` |
 | P5 review rounds 1-2: cache scope split, AlphaFold status classification reworked so a transport error can never read as "no model", search request sequencing | P5 | 2026-08-18 | `a8c1cd8`, `11301a7`, `ffab9cc`, `42f4b64` |
 | P4 + P5 smoke tests written in `docs/smoke-tests.md`; decisions log extended with 7 entries | P4/P5 | 2026-08-18 | `005bea1`, `d04beb6` |
+| Retries / backoff / rate limiting on the three outbound clients — new `services/resilience.py#RetryingTransport` wraps the shared `httpx` transport installed by `external.new_client()`: exponential backoff (0.5s/1s/2s, 3 retries) on transport errors and 429/502/503/504, plus a per-host `asyncio.Semaphore` (cap 6) on concurrent in-flight requests. No changes needed to rcsb.py/alphafold.py/uniprot.py — all three get both behaviours through the shared client factory. 8 new pytest tests (scripted-transport unit tests + one respx end-to-end wiring test); mutation-verified twice (dropping the retryable-status check, bypassing the semaphore) | follow-up | 2026-08-19 | PR (this branch) |
 
 ---
 
@@ -129,6 +132,7 @@ Append-only. Never edit past entries — supersede with a new entry referencing 
 | 2026-08-18 | UniProt imports are stored as `source: "alphafold"` | `ProteinSummary.source` has no `"uniprot"` member (spec 5.1) and a UniProt import literally downloads the cross-referenced AlphaFold model. Truthful, and keeps `has_plddt` correct. Cost: the viewer cannot show that the user arrived via a UniProt card. | yes — add a `"uniprot"` member if provenance matters |
 | 2026-08-18 | Residue keys are `chain:ordinal` (1-based within chain), NOT `auth_seq_id` | PDB files can start at any residue number and contain gaps and insertion codes. The frontend mirrors the backend parser's filter and maps ordinal to Mol*'s model residue index. Pinned by tests against a non-1-based, gapped, multi-chain fixture. | hard — changing it breaks selection sync in both directions |
 | 2026-08-18 | A click on unindexed 3D geometry (ligand, water) preserves the selection | A cofactor is real geometry that simply has no sequence cell; only genuinely empty space clears the selection. These were previously conflated as `null`. | yes |
+| 2026-08-19 | Retry/backoff/rate-limiting implemented once as an `httpx` transport wrapper (`services/resilience.py`), not inside each client | All three outbound clients already funnel every call through `external.new_client()`. Wrapping the transport there means one change gives all three retries + a per-host concurrency cap, with zero edits to rcsb.py/alphafold.py/uniprot.py and zero risk to their existing tests. Only 429/502/503/504 and transport errors retry (exponential backoff, 3 attempts); other 4xx/5xx are treated as real answers, not blips. Retry delay is routed through a module-level `_sleep` indirection so tests can zero it out without patching real `asyncio.sleep` (which would also stall pytest-asyncio). | yes — swap the transport or its constants without touching any client |
 
 ---
 

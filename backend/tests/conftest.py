@@ -24,6 +24,20 @@ def isolate_storage_and_cache(tmp_path, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def no_retry_backoff_delay(monkeypatch):
+    """Retry backoff sleeps for real in production; tests shouldn't wait for it.
+
+    Patches the indirection in `services/resilience.py`, not `asyncio.sleep`
+    itself, so this can't also stall pytest-asyncio's own scheduling.
+    """
+
+    async def instant(_seconds: float) -> None:
+        return None
+
+    monkeypatch.setattr("app.services.resilience._sleep", instant)
+
+
+@pytest.fixture(autouse=True)
 def fresh_search_clients(monkeypatch):
     """Per-test: swap in fresh external clients so metadata caches never leak.
 
