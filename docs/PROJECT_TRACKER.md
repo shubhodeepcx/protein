@@ -17,10 +17,9 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in flight. P4 and P5 both merged; the slice is feature-complete._
-
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
+| Retries / backoff / rate limiting on the three outbound clients | shubhodeep | `feature/backend-retry-backoff-rate-limit` | wip | Single-point fix in `services/external.py#new_client` (a wrapping `httpx.AsyncBaseTransport`) so all three clients get it for free — no changes to rcsb.py/alphafold.py/uniprot.py themselves. NOTE: as of this claim, PRs #1-14 are already open on GitHub for most of the rest of this list (including 4 duplicate PRs for the pLDDT fix) — check open PRs before claiming anything else here until they merge and this list is refreshed. |
 
 ---
 
