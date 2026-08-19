@@ -63,6 +63,17 @@ export function OverviewPanel() {
             }
           />
           <Field label="Format" value={summary.file_format.toUpperCase()} />
+          {/* What the B-factor column actually holds. This is the same flag
+              that gates the pLDDT coloring option and flips its scale, so
+              showing it here explains why that option is or isn't offered. */}
+          <Field
+            label="B-factors"
+            value={
+              summary.has_plddt
+                ? "pLDDT confidence (0–100)"
+                : "Temperature factors"
+            }
+          />
         </div>
       </div>
 

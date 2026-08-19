@@ -83,7 +83,7 @@ def test_import_from_alphafold_sets_has_plddt_and_registers() -> None:
 
 
 @respx.mock
-def test_import_from_uniprot_stores_the_alphafold_model() -> None:
+def test_import_from_uniprot_keeps_uniprot_provenance_but_stores_the_alphafold_model() -> None:
     respx.get(f"{UNIPROT_ENTRY}P01308.json").mock(
         return_value=httpx.Response(200, json=load_json("uniprot_entry_P01308.json"))
     )
@@ -98,10 +98,14 @@ def test_import_from_uniprot_stores_the_alphafold_model() -> None:
     assert r.status_code == 200, r.text
     body = r.json()
 
-    # UniProt has no coordinates of its own, so the stored structure is the
-    # AlphaFold model and the summary is labelled accordingly.
-    assert body["source"] == "alphafold"
+    # UniProt has no coordinates of its own, so the file on disk is the
+    # cross-referenced AlphaFold model — but the summary still records where
+    # the user actually clicked, so the viewer can distinguish "found via
+    # UniProt" from "found via an AlphaFold DB search".
+    assert body["source"] == "uniprot"
     assert body["source_id"] == "P01308"
+    # has_plddt must still be true: the downloaded file is an AlphaFold
+    # model regardless of which source label it's stored under.
     assert body["has_plddt"] is True
     assert client.get(f"/api/proteins/{body['id']}").status_code == 200
 
@@ -120,12 +124,12 @@ def test_import_alphafold_without_a_model_returns_404() -> None:
 
 @respx.mock
 def test_import_alphafold_file_outage_returns_502_not_404() -> None:
-    """pdbUrl 503 + obsolete v4 fallback 404 is an outage, not a missing model."""
-    respx.get(url__startswith=AF_PREDICTION).mock(
-        return_value=httpx.Response(200, json=load_json("alphafold_prediction_P69905.json"))
-    )
-    respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(return_value=httpx.Response(503))
-    respx.get(f"{AF_FILES}AF-P69905-F1-model_v4.pdb").mock(return_value=httpx.Response(404))
+    """pdbUrl 503 + version-derived fallback 404 is an outage, not a missing model."""
+    prediction = load_json("alphafold_prediction_P69905.json")
+    prediction[0]["pdbUrl"] = f"{AF_FILES}AF-P69905-F1-model_v5.pdb"
+    respx.get(url__startswith=AF_PREDICTION).mock(return_value=httpx.Response(200, json=prediction))
+    respx.get(f"{AF_FILES}AF-P69905-F1-model_v5.pdb").mock(return_value=httpx.Response(503))
+    respx.get(f"{AF_FILES}AF-P69905-F1-model_v6.pdb").mock(return_value=httpx.Response(404))
 
     r = client.post(
         "/api/proteins/import", json={"source": "alphafold", "source_id": "P69905"}
@@ -200,3 +204,24 @@ def test_import_rejects_unknown_source() -> None:
 def test_import_rejects_blank_source_id() -> None:
     r = client.post("/api/proteins/import", json={"source": "rcsb", "source_id": ""})
     assert r.status_code == 422
+
+
+@respx.mock
+def test_import_from_rcsb_carries_the_organism_into_the_summary() -> None:
+    """The whole point of the mmCIF organism fallback, end to end.
+
+    RCSB serves mmCIF, and BioPython's mmCIF header has no source category, so
+    before the fallback this field was None on every single RCSB import — the
+    viewer showed "Organism: Unknown" seconds after the search card had shown
+    the organism correctly.
+    """
+    respx.get(f"{RCSB_FILES}1CRN.cif").mock(
+        return_value=httpx.Response(200, content=load_bytes("1CRN_header.cif"))
+    )
+
+    r = client.post("/api/proteins/import", json={"source": "rcsb", "source_id": "1CRN"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["file_format"] == "mmcif"
+    assert body["organism"] is not None, "RCSB mmCIF import lost the organism"
+    assert "CRAMBE" in body["organism"].upper()

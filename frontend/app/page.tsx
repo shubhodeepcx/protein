@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Upload, Search, Atom, Database } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -31,7 +31,7 @@ export default function HomePage() {
             ProteoLens
           </span>
           <Badge variant="outline" className="ml-1 text-[10px] uppercase">
-            P2
+            MVP
           </Badge>
         </div>
 
@@ -60,10 +60,13 @@ export default function HomePage() {
             <Database aria-hidden />
             Databases
           </Link>
-          <Button size="sm" disabled>
+          <Link
+            href="#upload"
+            className={buttonVariants({ size: "sm" })}
+          >
             <Upload aria-hidden />
             Upload
-          </Button>
+          </Link>
         </div>
       </header>
 
@@ -90,9 +93,8 @@ export default function HomePage() {
                 is loaded.
               </p>
               <p className="leading-relaxed">
-                Upload a PDB / mmCIF or import from RCSB, AlphaFold, or UniProt
-                in <span className="font-medium text-foreground">P2</span> and{" "}
-                <span className="font-medium text-foreground">P5</span>.
+                Upload a PDB / mmCIF file, or import a structure from RCSB PDB,
+                AlphaFold DB, or UniProt.
               </p>
             </div>
           </ScrollArea>
@@ -105,7 +107,10 @@ export default function HomePage() {
             <Separator orientation="vertical" className="h-4" />
             <span>No protein loaded &mdash; drop a file to start</span>
           </div>
-          <div className="flex flex-1 items-center justify-center p-6">
+          <div
+            id="upload"
+            className="flex flex-1 items-center justify-center p-6"
+          >
             <DropZone />
           </div>
         </section>
@@ -123,19 +128,19 @@ export default function HomePage() {
               <TabsContent value="overview" className="m-0 p-4">
                 <PanelPlaceholder
                   title="Overview"
-                  body="Metric cards (MW, residues, atoms, chains) arrive in P3."
+                  body="Metric cards — MW, residues, atoms, chains — appear here once a protein is loaded."
                 />
               </TabsContent>
               <TabsContent value="sequence" className="m-0 p-4">
                 <PanelPlaceholder
                   title="Sequence"
-                  body="Per-chain sequence panel with click-to-highlight sync arrives in P4."
+                  body="The per-chain sequence panel, with click-to-highlight sync to the 3D view, appears here once a protein is loaded."
                 />
               </TabsContent>
               <TabsContent value="analytics" className="m-0 p-4">
                 <PanelPlaceholder
                   title="Analytics"
-                  body="Composition, secondary structure, and hydrophobicity charts arrive in P3."
+                  body="Composition, secondary-structure, and hydrophobicity charts appear here once a protein is loaded."
                 />
               </TabsContent>
             </ScrollArea>
@@ -151,7 +156,7 @@ function PanelPlaceholder({ title, body }: { title: string; body: string }) {
     <Card className="border-dashed">
       <CardHeader>
         <CardTitle className="text-sm">{title}</CardTitle>
-        <CardDescription>Coming in P3 / P4</CardDescription>
+        <CardDescription>No protein loaded</CardDescription>
       </CardHeader>
       <CardContent className="text-xs leading-relaxed text-muted-foreground">
         {body}

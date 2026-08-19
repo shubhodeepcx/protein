@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from Bio.PDB import MMCIFParser, PDBParser
@@ -16,8 +17,10 @@ from app.models.analytics import (
     SecondaryStructurePercentages,
 )
 from app.models.protein import ProteinSummary
-from app.services import analytics, parser, registry
+from app.services import analytics, ingest, registry
 from app.storage import local as storage
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/proteins", tags=["proteins"])
 
@@ -25,9 +28,6 @@ _STATIC = Path(__file__).parent.parent / "static"
 
 # Parsed summaries live in `services/registry` so the import router (P5) can
 # register into the same store this router reads from.
-
-MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
-_ALLOWED_EXTS = {"pdb", "cif", "mmcif"}
 
 
 @router.get("/demo/file")
@@ -42,7 +42,7 @@ def get_demo_file() -> FileResponse:
 async def upload_protein(file: UploadFile = File(...)) -> ProteinSummary:
     filename = file.filename or ""
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
-    if ext not in _ALLOWED_EXTS:
+    if ext not in storage.ALLOWED_UPLOAD_EXTS:
         raise HTTPException(
             status_code=400,
             detail="Unsupported file extension. Allowed: pdb, cif, mmcif",
@@ -51,7 +51,7 @@ async def upload_protein(file: UploadFile = File(...)) -> ProteinSummary:
     content = await file.read()
     if len(content) == 0:
         raise HTTPException(status_code=400, detail="Empty file")
-    if len(content) > MAX_UPLOAD_BYTES:
+    if len(content) > storage.MAX_STRUCTURE_BYTES:
         raise HTTPException(
             status_code=413,
             detail=f"File too large ({len(content) // 1024} KB). Max 50 MB.",
@@ -59,34 +59,30 @@ async def upload_protein(file: UploadFile = File(...)) -> ProteinSummary:
 
     try:
         uid, stored_path = storage.store_upload(content, ext)
-    except (ValueError, OSError) as exc:
+    except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except OSError as exc:
+        logger.exception("Failed to write uploaded file to storage")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to store uploaded file.",
+        ) from exc
 
     try:
-        summary = await run_in_threadpool(parser.parse, stored_path, uid=uid, source="uploaded")
-    except Exception as exc:  # noqa: BLE001
-        try:
-            stored_path.unlink(missing_ok=True)
-        except OSError:
-            pass
+        summary = await ingest.parse_and_register(stored_path, uid, source="uploaded")
+    except ingest.StructureParseFailed as exc:
         # Don't leak internal path from exc — use a generic message.
         raise HTTPException(
             status_code=400,
             detail="Failed to parse structure file. Check the file is a valid PDB or mmCIF.",
         ) from exc
-
-    if not summary.chains:
+    except ingest.EmptyStructureError as exc:
         # Parser returned empty structure (likely non-PDB content).
-        try:
-            stored_path.unlink(missing_ok=True)
-        except OSError:
-            pass
         raise HTTPException(
             status_code=400,
             detail="Could not parse any protein chains from the file. Check the file is a valid PDB or mmCIF structure.",
-        )
+        ) from exc
 
-    registry.put(uid, summary)
     return summary
 
 

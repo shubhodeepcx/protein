@@ -5,6 +5,7 @@ from typing import Any
 import httpx
 
 from app.models.search import SearchResult
+from app.services.resilience import RetryingTransport
 
 # AGENTS.md section 3 / spec 5.4: every external call gets an explicit 10s timeout.
 EXTERNAL_TIMEOUT_SECONDS = 10.0
@@ -36,12 +37,16 @@ class SourceUnavailableError(ExternalSourceError):
 
 
 def new_client(**kwargs: Any) -> httpx.AsyncClient:
-    """An httpx.AsyncClient preconfigured with the project's timeout and UA."""
+    """An httpx.AsyncClient preconfigured with the project's timeout, UA, and
+    a transport that retries transient failures with backoff and caps
+    per-host concurrency (see `services/resilience.py`)."""
     headers = {"User-Agent": USER_AGENT, **kwargs.pop("headers", {})}
+    transport = kwargs.pop("transport", None) or RetryingTransport()
     return httpx.AsyncClient(
         timeout=EXTERNAL_TIMEOUT_SECONDS,
         follow_redirects=True,
         headers=headers,
+        transport=transport,
         **kwargs,
     )
 

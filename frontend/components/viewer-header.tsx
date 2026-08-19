@@ -11,6 +11,8 @@ interface ViewerHeaderProps {
   title: string;
   /** Null until protein metadata has loaded; disables the tools. */
   source: string | null;
+  /** `ProteinSummary.has_plddt` — gates the pLDDT coloring option. */
+  hasPlddt?: boolean;
   onResetCamera: () => void;
 }
 
@@ -18,6 +20,7 @@ interface ViewerHeaderProps {
 export function ViewerHeader({
   title,
   source,
+  hasPlddt = false,
   onResetCamera,
 }: ViewerHeaderProps) {
   const selectedCount = useStore((s) => s.selected.size);
@@ -52,7 +55,7 @@ export function ViewerHeader({
         >
           {selectedCount} selected
         </span>
-        <ViewerControls disabled={!ready} />
+        <ViewerControls disabled={!ready} hasPlddt={hasPlddt} />
         <Button
           size="sm"
           variant="ghost"
