@@ -42,6 +42,7 @@ export default function DynamicViewerPage() {
   const clearSelection = useStore((s) => s.clearSelection);
   const representation = useStore((s) => s.representation);
   const coloring = useStore((s) => s.coloring);
+  const resetView = useStore((s) => s.resetView);
   /** Does this structure's B-factor column hold pLDDT? Drives both the
    *  coloring domain and which coloring options the toolbar offers. */
   const hasPlddt = summary?.has_plddt ?? false;
@@ -74,6 +75,7 @@ export default function DynamicViewerPage() {
     return () => {
       clearProtein();
       clearSelection();
+      resetView();
     };
     // loadProtein/clearProtein are stable Zustand actions; depending only on id.
     // eslint-disable-next-line react-hooks/exhaustive-deps
