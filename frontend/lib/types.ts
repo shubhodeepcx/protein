@@ -5,7 +5,7 @@
  * the wire-format types the frontend sees from the API. See spec section 5.1.
  */
 
-export type ProteinSource = "uploaded" | "rcsb" | "alphafold";
+export type ProteinSource = "uploaded" | "rcsb" | "alphafold" | "uniprot";
 export type ProteinFileFormat = "pdb" | "mmcif";
 
 export interface ChainInfo {

@@ -83,7 +83,7 @@ def test_import_from_alphafold_sets_has_plddt_and_registers() -> None:
 
 
 @respx.mock
-def test_import_from_uniprot_stores_the_alphafold_model() -> None:
+def test_import_from_uniprot_keeps_uniprot_provenance_but_stores_the_alphafold_model() -> None:
     respx.get(f"{UNIPROT_ENTRY}P01308.json").mock(
         return_value=httpx.Response(200, json=load_json("uniprot_entry_P01308.json"))
     )
@@ -98,10 +98,14 @@ def test_import_from_uniprot_stores_the_alphafold_model() -> None:
     assert r.status_code == 200, r.text
     body = r.json()
 
-    # UniProt has no coordinates of its own, so the stored structure is the
-    # AlphaFold model and the summary is labelled accordingly.
-    assert body["source"] == "alphafold"
+    # UniProt has no coordinates of its own, so the file on disk is the
+    # cross-referenced AlphaFold model — but the summary still records where
+    # the user actually clicked, so the viewer can distinguish "found via
+    # UniProt" from "found via an AlphaFold DB search".
+    assert body["source"] == "uniprot"
     assert body["source_id"] == "P01308"
+    # has_plddt must still be true: the downloaded file is an AlphaFold
+    # model regardless of which source label it's stored under.
     assert body["has_plddt"] is True
     assert client.get(f"/api/proteins/{body['id']}").status_code == 200
 

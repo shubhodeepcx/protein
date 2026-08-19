@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 
@@ -16,15 +15,6 @@ from app.storage import local as storage
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/proteins/import", tags=["import"])
-
-# UniProt hosts no coordinates of its own: importing from UniProt downloads the
-# entry's AlphaFold model, so the stored summary is an AlphaFold structure.
-# (`ProteinSummary.source` is Literal["uploaded", "rcsb", "alphafold"].)
-_PARSER_SOURCE: dict[SourceName, Literal["rcsb", "alphafold"]] = {
-    "rcsb": "rcsb",
-    "alphafold": "alphafold",
-    "uniprot": "alphafold",
-}
 
 _NOT_FOUND_MESSAGE: dict[SourceName, str] = {
     "rcsb": "RCSB PDB has no entry {id}.",
@@ -85,8 +75,14 @@ async def import_protein(payload: ImportRequest) -> ProteinSummary:
         ) from exc
 
     try:
+        # UniProt hosts no coordinates of its own: importing from UniProt
+        # downloads the entry's AlphaFold model, so the file on disk is an
+        # AlphaFold structure. The summary still records "uniprot" as its own
+        # source (rather than folding it into "alphafold") so the viewer can
+        # show the user arrived via a UniProt card; `parser.parse` treats
+        # "uniprot" as pLDDT-bearing exactly like "alphafold" for that reason.
         summary = await ingest.parse_and_register(
-            stored_path, uid, source=_PARSER_SOURCE[source], source_id=source_id
+            stored_path, uid, source=source, source_id=source_id
         )
     except ingest.StructureParseFailed as exc:
         logger.warning("Import parse failure for %s:%s — %r", source, source_id, exc)
