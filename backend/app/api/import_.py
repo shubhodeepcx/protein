@@ -5,22 +5,17 @@ import re
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException
-from fastapi.concurrency import run_in_threadpool
 
 from app.api.search import get_client
 from app.models.protein import ProteinSummary
 from app.models.search import ImportRequest, SourceName
-from app.services import parser, registry
+from app.services import ingest
 from app.services.external import SourceNotFoundError, SourceUnavailableError
 from app.storage import local as storage
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/proteins/import", tags=["import"])
-
-# Same ceiling the upload path enforces — an external source should not be able
-# to hand us something we would have rejected from a browser.
-MAX_IMPORT_BYTES = 50 * 1024 * 1024
 
 # UniProt hosts no coordinates of its own: importing from UniProt downloads the
 # entry's AlphaFold model, so the stored summary is an AlphaFold structure.
@@ -75,7 +70,7 @@ async def import_protein(payload: ImportRequest) -> ProteinSummary:
             detail=f"Could not reach {source.upper()} to download this structure. Try again.",
         ) from exc
 
-    if len(content) > MAX_IMPORT_BYTES:
+    if len(content) > storage.MAX_STRUCTURE_BYTES:
         raise HTTPException(
             status_code=413,
             detail=f"Structure is too large ({len(content) // 1024} KB). Max 50 MB.",
@@ -89,36 +84,22 @@ async def import_protein(payload: ImportRequest) -> ProteinSummary:
             status_code=500, detail="Could not store the downloaded structure."
         ) from exc
 
-    def _unlink() -> None:
-        try:
-            stored_path.unlink(missing_ok=True)
-        except OSError:
-            logger.warning("Could not clean up %s after a failed import", stored_path.name)
-
     try:
-        summary = await run_in_threadpool(
-            parser.parse,
-            stored_path,
-            uid=uid,
-            source=_PARSER_SOURCE[source],
-            source_id=source_id,
+        summary = await ingest.parse_and_register(
+            stored_path, uid, source=_PARSER_SOURCE[source], source_id=source_id
         )
-    except Exception as exc:
-        _unlink()
+    except ingest.StructureParseFailed as exc:
         logger.warning("Import parse failure for %s:%s — %r", source, source_id, exc)
         # Generic message: never leak the stored path or the raw exception text.
         raise HTTPException(
             status_code=400,
             detail="Failed to parse the downloaded structure file.",
         ) from exc
-
-    if not summary.chains:
-        _unlink()
+    except ingest.EmptyStructureError as exc:
         raise HTTPException(
             status_code=400,
             detail="The downloaded structure contained no protein chains.",
-        )
+        ) from exc
 
-    registry.put(uid, summary)
     logger.info("Imported %s:%s as %s", source, source_id, uid)
     return summary
