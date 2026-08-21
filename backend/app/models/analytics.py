@@ -16,6 +16,18 @@ class SecondaryStructurePercentages(BaseModel):
     helix: float = Field(..., description="Fraction in helix (0-1).")
     sheet: float = Field(..., description="Fraction in sheet (0-1).")
     coil: float = Field(..., description="Fraction in coil (0-1).")
+    # Optional with a `True` default on purpose: every existing consumer keeps
+    # working unchanged, and only a client that looks for the flag learns that
+    # the numbers are a placeholder.
+    available: bool = Field(
+        True,
+        description=(
+            "Whether the structure file declared any secondary structure. False "
+            "means none was annotated (an AlphaFold prediction, for example, has "
+            "no assigned secondary structure), so the helix/sheet/coil split "
+            "above is an all-coil placeholder rather than a measurement."
+        ),
+    )
 
 
 class HydrophobicityProfile(BaseModel):

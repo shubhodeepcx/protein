@@ -131,8 +131,12 @@ def _compute_analytics(
     full_seq = "".join(c.sequence for c in summary.chains)
 
     comp_entries = [CompositionEntry(**e) for e in analytics.composition(full_seq)]
+    ss_result = analytics.secondary_structure(structure, path=file_path)
     ss = SecondaryStructurePercentages(
-        **analytics.secondary_structure_percentages(structure, pdb_path=file_path)
+        helix=ss_result.helix,
+        sheet=ss_result.sheet,
+        coil=ss_result.coil,
+        available=ss_result.available,
     )
     prop = PropertyDistribution(**analytics.property_distribution(full_seq))
 

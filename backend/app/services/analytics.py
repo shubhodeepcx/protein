@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+import logging
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
+
+from Bio.PDB.MMCIF2Dict import MMCIF2Dict
+
+logger = logging.getLogger(__name__)
 
 # Average residue masses (monoisotopic would be different; use average for MW
 # reporting). Values are residue masses (NOT free amino acid masses), i.e. the
@@ -151,6 +157,241 @@ def _parse_ss_records_from_pdb(pdb_path: Path | str) -> dict[str, list[dict]]:
     return {"helix": helix_records, "sheet": sheet_records}
 
 
+_MMCIF_EXTS = frozenset({".cif", ".mmcif"})
+
+# mmCIF spells "no value" as `?` and "not applicable" as `.`; MMCIF2Dict hands
+# both through verbatim, so neither may be read as a chain id or a residue number.
+_MMCIF_NULL_TOKENS = frozenset({"?", "."})
+
+# `_struct_conf.conf_type_id` values. Every helix flavour is spelled with a
+# `HELX` prefix (HELX_P, HELX_RH_AL_P, HELX_LH_PP_P, ...) and every extended
+# strand with `STRN`. TURN_P / BEND / OTHER are neither, and correctly fall
+# through to coil.
+_MMCIF_HELIX_TYPE_PREFIX = "HELX"
+_MMCIF_STRAND_TYPE_PREFIX = "STRN"
+
+# Presence of ANY key under these categories means the file has a
+# secondary-structure section, even if it turns out to hold only turns and
+# bends. The trailing dot matters: it keeps `_struct_conf_type.*` — a different
+# category, present in files that carry no `_struct_conf` rows — from counting.
+_MMCIF_SS_CATEGORY_PREFIXES = ("_struct_conf.", "_struct_sheet_range.")
+
+
+@dataclass(frozen=True)
+class _ResidueRange:
+    """One inclusive residue span on one chain, in one numbering scheme."""
+
+    chain_id: str
+    start: int
+    end: int
+
+
+@dataclass(frozen=True)
+class _MMCIFSecondaryStructure:
+    """Helix/strand spans read off an mmCIF, in both numbering schemes.
+
+    mmCIF carries two parallel numberings: `label_*` (the canonical entity
+    numbering) and `auth_*` (the depositor's, which is what the PDB records
+    used). BioPython's ``MMCIFParser`` builds chains and residue ids from the
+    `auth_*` columns by default, so those are tried first — but a hand-written
+    or minimal mmCIF may only carry `label_*`, hence both are kept.
+    """
+
+    helix_auth: list[_ResidueRange]
+    sheet_auth: list[_ResidueRange]
+    helix_label: list[_ResidueRange]
+    sheet_label: list[_ResidueRange]
+    declared: bool
+
+
+def _is_mmcif_path(path: Path | str) -> bool:
+    return Path(path).suffix.lower() in _MMCIF_EXTS
+
+
+def _cif_column(mmcif: dict[str, object], key: str) -> list[str]:
+    """One mmCIF column as a list of raw string cells, row order preserved.
+
+    ``MMCIF2Dict`` returns a list per key — one element per row of a looped
+    category, and still a one-element list for a single-row category. A bare
+    string is tolerated so a hand-written fixture cannot silently read as empty.
+    Non-string cells become `""` rather than being dropped, because dropping
+    would shift every later row against the other columns.
+    """
+    raw = mmcif.get(key)
+    if raw is None:
+        return []
+    if isinstance(raw, str):
+        return [raw]
+    try:
+        cells = list(raw)  # type: ignore[call-overload]
+    except TypeError:
+        return []
+    return [cell if isinstance(cell, str) else "" for cell in cells]
+
+
+def _cif_int(value: str) -> int | None:
+    """A residue number from an mmCIF cell, or None when it is null/malformed."""
+    token = value.strip()
+    if not token or token in _MMCIF_NULL_TOKENS:
+        return None
+    try:
+        return int(token)
+    except ValueError:
+        return None
+
+
+def _mmcif_ranges(
+    mmcif: dict[str, object],
+    category: str,
+    scheme: str,
+    keep: list[bool] | None = None,
+) -> list[_ResidueRange]:
+    """Residue spans from one mmCIF category in one numbering scheme.
+
+    `keep` masks rows by index (used to split `_struct_conf` into helices and
+    strands). Rows with a null chain id or an unparseable residue number are
+    skipped rather than guessed at.
+    """
+    chains = _cif_column(mmcif, f"{category}.beg_{scheme}_asym_id")
+    starts = _cif_column(mmcif, f"{category}.beg_{scheme}_seq_id")
+    ends = _cif_column(mmcif, f"{category}.end_{scheme}_seq_id")
+    rows = min(len(chains), len(starts), len(ends))
+
+    ranges: list[_ResidueRange] = []
+    for i in range(rows):
+        if keep is not None and not (i < len(keep) and keep[i]):
+            continue
+        chain_id = chains[i].strip()
+        if not chain_id or chain_id in _MMCIF_NULL_TOKENS:
+            continue
+        start = _cif_int(starts[i])
+        end = _cif_int(ends[i])
+        if start is None or end is None:
+            continue
+        if end < start:
+            start, end = end, start
+        ranges.append(_ResidueRange(chain_id=chain_id, start=start, end=end))
+    return ranges
+
+
+def _parse_ss_ranges_from_mmcif(cif_path: Path | str) -> _MMCIFSecondaryStructure:
+    """Read helix and strand spans from an mmCIF's SS categories.
+
+    mmCIF has no HELIX/SHEET text records — the same information lives in
+    `_struct_conf` (helices, plus turns and bends, discriminated by
+    `conf_type_id`) and `_struct_sheet_range` (strands). Every structure RCSB
+    serves as `.cif` annotates SS this way, so scanning for `HELIX `/`SHEET `
+    lines finds nothing and reports the entry as 100% coil.
+    """
+    empty = _MMCIFSecondaryStructure([], [], [], [], declared=False)
+    p = Path(cif_path)
+    if not p.exists():
+        return empty
+    try:
+        mmcif: dict[str, object] = MMCIF2Dict(str(p))
+    except (OSError, ValueError, KeyError, IndexError) as exc:
+        logger.warning("Could not read mmCIF secondary structure from %s: %s", p.name, exc)
+        return empty
+
+    declared = any(
+        key.startswith(prefix)
+        for key in mmcif
+        for prefix in _MMCIF_SS_CATEGORY_PREFIXES
+    )
+
+    conf_types = [t.strip().upper() for t in _cif_column(mmcif, "_struct_conf.conf_type_id")]
+    helix_rows = [t.startswith(_MMCIF_HELIX_TYPE_PREFIX) for t in conf_types]
+    # Some depositors put strands in `_struct_conf` as STRN as well as (or
+    # instead of) in `_struct_sheet_range`; both are collected and the residue
+    # counting below de-duplicates any overlap.
+    strand_rows = [t.startswith(_MMCIF_STRAND_TYPE_PREFIX) for t in conf_types]
+
+    return _MMCIFSecondaryStructure(
+        helix_auth=_mmcif_ranges(mmcif, "_struct_conf", "auth", helix_rows),
+        sheet_auth=(
+            _mmcif_ranges(mmcif, "_struct_conf", "auth", strand_rows)
+            + _mmcif_ranges(mmcif, "_struct_sheet_range", "auth")
+        ),
+        helix_label=_mmcif_ranges(mmcif, "_struct_conf", "label", helix_rows),
+        sheet_label=(
+            _mmcif_ranges(mmcif, "_struct_conf", "label", strand_rows)
+            + _mmcif_ranges(mmcif, "_struct_sheet_range", "label")
+        ),
+        declared=declared,
+    )
+
+
+def _chain_ids(structure) -> set[str]:
+    """Chain labels present in model 1 of the structure."""
+    try:
+        model = next(structure.get_models())
+    except StopIteration:
+        return set()
+    return {chain.id for chain in model.get_chains()}
+
+
+def _select_numbering(
+    parsed: _MMCIFSecondaryStructure, chain_ids: set[str]
+) -> tuple[list[_ResidueRange], list[_ResidueRange]]:
+    """Pick the numbering scheme whose chain ids actually exist in the structure.
+
+    `auth_*` is what BioPython builds chains from by default, so it wins when it
+    matches. Falling back to `label_*` keeps minimal mmCIFs that only carry the
+    canonical numbering working instead of silently counting zero residues.
+    """
+    auth = (parsed.helix_auth, parsed.sheet_auth)
+    label = (parsed.helix_label, parsed.sheet_label)
+    for helix, sheet in (auth, label):
+        if any(r.chain_id in chain_ids for r in (*helix, *sheet)):
+            return helix, sheet
+    return auth
+
+
+def _count_residues_in_ranges(structure, ranges: list[_ResidueRange]) -> int:
+    """Standard residues of model 1 that fall inside any of `ranges`.
+
+    Counting real residues (rather than trusting a declared span length) keeps
+    the total honest when a range covers residues missing from the coordinates,
+    and de-duplicates overlapping spans.
+    """
+    if not ranges:
+        return 0
+    try:
+        model = next(structure.get_models())
+    except StopIteration:
+        return 0
+
+    by_chain: dict[str, list[_ResidueRange]] = {}
+    for r in ranges:
+        by_chain.setdefault(r.chain_id, []).append(r)
+
+    total = 0
+    for chain in model.get_chains():
+        spans = by_chain.get(chain.id)
+        if not spans:
+            continue
+        for residue in chain.get_residues():
+            if residue.id[0] != " ":  # skip waters, ligands, other heteroatoms
+                continue
+            seq_id = residue.id[1]
+            if not isinstance(seq_id, int):
+                continue
+            if any(span.start <= seq_id <= span.end for span in spans):
+                total += 1
+    return total
+
+
+def _sum_record_lengths(records: list[dict]) -> int:
+    """Total residues declared by a list of {"length": int} SS records."""
+    total = 0
+    for rec in records:
+        try:
+            total += int(rec.get("length", 0))
+        except (TypeError, ValueError, AttributeError):
+            continue
+    return total
+
+
 def _count_polymer_residues(structure) -> int:
     """Total standard-residue count across model 1 of the structure."""
     try:
@@ -165,52 +406,30 @@ def _count_polymer_residues(structure) -> int:
     return total
 
 
-def secondary_structure_percentages(
-    structure, pdb_path: Path | str | None = None
-) -> dict[str, float]:
-    """Helix / sheet / coil fractions, summing to 1.0.
+@dataclass(frozen=True)
+class SecondaryStructureResult:
+    """Helix / sheet / coil fractions, plus whether the file declared any SS.
 
-    Reads HELIX/SHEET records to count residues annotated in helices and
-    sheets, and treats the remainder as coil.
-
-    BioPython does NOT populate ``structure.header['helix']`` or
-    ``['sheet']`` for PDB files — they are ``None``. So this function:
-      1. Tries ``structure.header['helix']`` / ``['sheet']`` first (in case a
-         future BioPython version or alternate parser exposes them).
-      2. Falls back to scanning the PDB file at ``pdb_path`` for HELIX/SHEET
-         records.
-
-    If neither source has any SS data, returns all-coil.
+    ``available`` is False when the structure file carries no secondary-structure
+    annotation at all — an AlphaFold prediction, for instance, has neither
+    HELIX/SHEET records nor `_struct_conf`, because a predicted model has no
+    assigned secondary structure. The fractions are then an all-coil
+    *placeholder*, not a measurement, and callers should say so rather than draw
+    a fully-coil chart as if it were a finding.
     """
-    header = getattr(structure, "header", {}) or {}
-    helix_records = header.get("helix") or []
-    sheet_records = header.get("sheet") or []
 
-    # If header lacks SS records but we have a file path, parse it directly.
-    if (not helix_records and not sheet_records) and pdb_path is not None:
-        parsed = _parse_ss_records_from_pdb(pdb_path)
-        helix_records = parsed["helix"]
-        sheet_records = parsed["sheet"]
+    helix: float
+    sheet: float
+    coil: float
+    available: bool
 
-    helix_residues = 0
-    sheet_residues = 0
-    for rec in helix_records:
-        try:
-            length = int(rec.get("length", 0))
-        except (TypeError, ValueError, AttributeError):
-            length = 0
-        helix_residues += length
-    for rec in sheet_records:
-        try:
-            length = int(rec.get("length", 0))
-        except (TypeError, ValueError, AttributeError):
-            length = 0
-        sheet_residues += length
 
-    total = _count_polymer_residues(structure)
+def _ss_fractions(
+    helix_residues: int, sheet_residues: int, total: int
+) -> tuple[float, float, float]:
+    """Normalise annotated residue counts into fractions summing to 1.0."""
     if total == 0:
-        return {"helix": 0.0, "sheet": 0.0, "coil": 1.0}
-
+        return 0.0, 0.0, 1.0
     helix_frac = min(helix_residues / total, 1.0)
     sheet_frac = min(sheet_residues / total, 1.0)
     if helix_frac + sheet_frac > 1.0:
@@ -218,11 +437,81 @@ def secondary_structure_percentages(
         helix_frac *= scale
         sheet_frac *= scale
     coil_frac = max(0.0, 1.0 - helix_frac - sheet_frac)
-    return {
-        "helix": round(helix_frac, 4),
-        "sheet": round(sheet_frac, 4),
-        "coil": round(coil_frac, 4),
-    }
+    return round(helix_frac, 4), round(sheet_frac, 4), round(coil_frac, 4)
+
+
+def secondary_structure(
+    structure, path: Path | str | None = None
+) -> SecondaryStructureResult:
+    """Helix / sheet / coil fractions for a parsed structure, plus availability.
+
+    Where the annotation comes from, in order:
+
+      1. ``structure.header['helix'] / ['sheet']`` — BioPython does NOT populate
+         these today (they are ``None``), but an alternate or future parser
+         might, so they win when present.
+      2. mmCIF (`.cif` / `.mmcif`): the `_struct_conf` and `_struct_sheet_range`
+         categories, mapped onto the chains and residue numbers of `structure`.
+      3. PDB: the `HELIX ` / `SHEET ` text records, which exist only in the
+         legacy format.
+
+    Nothing is *computed* here — DSSP-style assignment from coordinates is
+    deliberately out of scope (it needs a native binary). This reads the
+    secondary structure the file already declares.
+
+    ``available`` reports whether the file declared anything at all. For mmCIF
+    that is the presence of the SS categories, so a file whose `_struct_conf`
+    holds only turns and bends still counts as annotated (it genuinely has no
+    helices or strands). For PDB it is the presence of usable HELIX/SHEET
+    records, since the format has no way to say "assigned, and there are none".
+    """
+    header = getattr(structure, "header", {}) or {}
+    helix_records = header.get("helix") or []
+    sheet_records = header.get("sheet") or []
+
+    if helix_records or sheet_records:
+        helix_residues = _sum_record_lengths(helix_records)
+        sheet_residues = _sum_record_lengths(sheet_records)
+        declared = True
+    elif path is None:
+        helix_residues = sheet_residues = 0
+        declared = False
+    elif _is_mmcif_path(path):
+        parsed = _parse_ss_ranges_from_mmcif(path)
+        helix_ranges, sheet_ranges = _select_numbering(parsed, _chain_ids(structure))
+        helix_residues = _count_residues_in_ranges(structure, helix_ranges)
+        sheet_residues = _count_residues_in_ranges(structure, sheet_ranges)
+        declared = parsed.declared
+    else:
+        from_records = _parse_ss_records_from_pdb(path)
+        helix_residues = _sum_record_lengths(from_records["helix"])
+        sheet_residues = _sum_record_lengths(from_records["sheet"])
+        declared = bool(from_records["helix"] or from_records["sheet"])
+
+    helix_frac, sheet_frac, coil_frac = _ss_fractions(
+        helix_residues, sheet_residues, _count_polymer_residues(structure)
+    )
+    if not declared:
+        logger.info(
+            "No secondary-structure annotation in %s; reporting all-coil as unavailable",
+            Path(path).name if path is not None else "<no file>",
+        )
+    return SecondaryStructureResult(
+        helix=helix_frac, sheet=sheet_frac, coil=coil_frac, available=declared
+    )
+
+
+def secondary_structure_percentages(
+    structure, pdb_path: Path | str | None = None
+) -> dict[str, float]:
+    """Helix / sheet / coil fractions only, summing to 1.0.
+
+    Thin view over :func:`secondary_structure` for callers that only want the
+    three numbers. Prefer :func:`secondary_structure` — it also reports whether
+    the file declared any secondary structure in the first place.
+    """
+    result = secondary_structure(structure, path=pdb_path)
+    return {"helix": result.helix, "sheet": result.sheet, "coil": result.coil}
 
 
 def property_distribution(sequence: str) -> dict[str, int]:

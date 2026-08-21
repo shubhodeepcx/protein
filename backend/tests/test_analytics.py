@@ -3,13 +3,30 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from Bio.PDB import PDBParser
+from Bio.PDB import MMCIFParser, PDBParser
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.services import analytics
 
 PDB_PATH = Path(__file__).resolve().parents[1] / "app" / "static" / "1CRN.pdb"
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+
+# `1CRN_ss.cif` is `1CRN.cif` (coordinates only) with the mmCIF spelling of the
+# four HELIX/SHEET records real 1CRN carries — `_struct_conf` for the two
+# helices, `_struct_sheet_range` for the two strands — spliced in ahead of the
+# `_atom_site` loop. Both numbering schemes (`label_*` and `auth_*`) are present,
+# as in an RCSB-served file. Built offline; nothing here is downloaded.
+CIF_WITH_SS = FIXTURES / "1CRN_ss.cif"
+# Same coordinates, no SS categories at all — the genuinely-unannotated case.
+CIF_WITHOUT_SS = FIXTURES / "1CRN.cif"
+# A PDB with no HELIX/SHEET records, like an AlphaFold prediction.
+PDB_WITHOUT_SS = FIXTURES / "parity_multichain.pdb"
+
+# Crambin's SS split, pinned so any change to the counting is loud:
+# helices 7-19 (13 residues) + 23-30 (8) = 21/46; strands 1-4 (4) + 32-35 (4) = 8/46.
+CRAMBIN_SS = {"helix": 0.4565, "sheet": 0.1739, "coil": 0.3696}
+
 client = TestClient(app)
 
 # 1CRN sequence (46 residues)
@@ -119,6 +136,103 @@ def test_secondary_structure_all_coil_when_no_records() -> None:
     # Without the file path the BioPython header has helix=None / sheet=None,
     # so the function should report 100% coil.
     assert ss == {"helix": 0.0, "sheet": 0.0, "coil": 1.0}
+
+
+def test_secondary_structure_pdb_percentages_are_pinned() -> None:
+    """The legacy PDB path must keep producing exactly today's numbers."""
+    structure = PDBParser(QUIET=True).get_structure("1crn", str(PDB_PATH))
+    result = analytics.secondary_structure(structure, path=PDB_PATH)
+    assert result.helix == CRAMBIN_SS["helix"]
+    assert result.sheet == CRAMBIN_SS["sheet"]
+    assert result.coil == CRAMBIN_SS["coil"]
+    assert result.available is True
+
+
+def test_secondary_structure_from_mmcif_struct_conf() -> None:
+    """mmCIF `_struct_conf` / `_struct_sheet_range` yield real helix and sheet.
+
+    Regression guard for the format bug: an mmCIF has no `HELIX `/`SHEET ` text
+    records, so scanning for them reported every RCSB import as 100% coil.
+    """
+    structure = MMCIFParser(QUIET=True).get_structure("1crn", str(CIF_WITH_SS))
+    result = analytics.secondary_structure(structure, path=CIF_WITH_SS)
+    assert result.helix > 0.0, "mmCIF helices must be counted, not read as coil"
+    assert result.sheet > 0.0, "mmCIF strands must be counted, not read as coil"
+    assert result.helix == CRAMBIN_SS["helix"]
+    assert result.sheet == CRAMBIN_SS["sheet"]
+    assert result.coil == CRAMBIN_SS["coil"]
+    assert result.available is True
+
+
+def test_secondary_structure_mmcif_matches_pdb_for_same_entry() -> None:
+    """Same protein, same annotations, two formats -> identical percentages."""
+    from_pdb = analytics.secondary_structure_percentages(
+        PDBParser(QUIET=True).get_structure("1crn", str(PDB_PATH)), pdb_path=PDB_PATH
+    )
+    from_cif = analytics.secondary_structure_percentages(
+        MMCIFParser(QUIET=True).get_structure("1crn", str(CIF_WITH_SS)),
+        pdb_path=CIF_WITH_SS,
+    )
+    assert from_cif == from_pdb
+
+
+def test_secondary_structure_percentages_view_returns_only_fractions() -> None:
+    """The float-only view keeps its three-key shape for existing callers."""
+    structure = MMCIFParser(QUIET=True).get_structure("1crn", str(CIF_WITH_SS))
+    ss = analytics.secondary_structure_percentages(structure, pdb_path=CIF_WITH_SS)
+    assert set(ss) == {"helix", "sheet", "coil"}
+
+
+def test_secondary_structure_unavailable_for_mmcif_without_categories() -> None:
+    """An mmCIF that annotates no SS is reported as unavailable, not as coil."""
+    structure = MMCIFParser(QUIET=True).get_structure("1crn", str(CIF_WITHOUT_SS))
+    result = analytics.secondary_structure(structure, path=CIF_WITHOUT_SS)
+    assert result.available is False
+    assert (result.helix, result.sheet, result.coil) == (0.0, 0.0, 1.0)
+
+
+def test_secondary_structure_unavailable_for_pdb_without_records() -> None:
+    """A PDB with no HELIX/SHEET records (e.g. AlphaFold) is unavailable too."""
+    structure = PDBParser(QUIET=True).get_structure("multi", str(PDB_WITHOUT_SS))
+    result = analytics.secondary_structure(structure, path=PDB_WITHOUT_SS)
+    assert result.available is False
+    assert (result.helix, result.sheet, result.coil) == (0.0, 0.0, 1.0)
+
+
+def test_analytics_endpoint_reports_mmcif_secondary_structure() -> None:
+    """The flagship import flow: an mmCIF upload must not render as all coil."""
+    with CIF_WITH_SS.open("rb") as f:
+        r = client.post(
+            "/api/proteins/upload",
+            files={"file": ("1crn_ss.cif", f, "chemical/x-mmcif")},
+        )
+    assert r.status_code == 200, r.text
+    uid = r.json()["id"]
+
+    r2 = client.get(f"/api/proteins/{uid}/analytics")
+    assert r2.status_code == 200, r2.text
+    ss = r2.json()["secondary_structure"]
+    assert ss["helix"] == CRAMBIN_SS["helix"]
+    assert ss["sheet"] == CRAMBIN_SS["sheet"]
+    assert ss["coil"] == CRAMBIN_SS["coil"]
+    assert ss["available"] is True
+
+
+def test_analytics_endpoint_flags_missing_secondary_structure() -> None:
+    """An unannotated structure still returns coil=1.0, but flagged as such."""
+    with CIF_WITHOUT_SS.open("rb") as f:
+        r = client.post(
+            "/api/proteins/upload",
+            files={"file": ("1crn.cif", f, "chemical/x-mmcif")},
+        )
+    assert r.status_code == 200, r.text
+    uid = r.json()["id"]
+
+    r2 = client.get(f"/api/proteins/{uid}/analytics")
+    assert r2.status_code == 200, r2.text
+    ss = r2.json()["secondary_structure"]
+    assert ss["available"] is False
+    assert ss["coil"] == 1.0
 
 
 def test_analytics_endpoint_round_trip() -> None:
