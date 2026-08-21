@@ -75,6 +75,13 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
     // Monotonic token so a superseded or torn-down load cannot write its
     // results over a newer one.
     const loadSeqRef = useRef(0);
+    // Serialises mount/teardown cycles on the same container. `createViewerPlugin`
+    // is async and owns a React root on `target`, but cleanup runs synchronously
+    // — so under StrictMode's double-invoke (or any fast remount) the teardown
+    // fires while the first plugin is still constructing, disposes nothing, and
+    // the next mount calls createRoot() on a container that already has one.
+    // Chaining each init behind the previous teardown makes the cycles ordered.
+    const teardownRef = useRef<Promise<void>>(Promise.resolve());
 
     // Keep refs in sync without re-running the init effect (which would tear
     // down and rebuild the WebGL context on every parent render).
@@ -93,6 +100,9 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
       let clickSub: { unsubscribe(): void } | null = null;
 
       async function init() {
+        // Wait for any previous cycle's plugin to be fully disposed first.
+        await teardownRef.current;
+        if (disposed) return;
         const plugin = await createViewerPlugin(target!);
         if (disposed) {
           plugin.dispose();
@@ -121,15 +131,19 @@ const MolstarViewer = React.forwardRef<MolstarViewerRef, MolstarViewerProps>(
       }
 
       // eslint-disable-next-line no-console
-      init().catch((err) => console.error("Mol* init failed:", err));
+      const started = init().catch((err) => console.error("Mol* init failed:", err));
 
       return () => {
         disposed = true;
-        clickSub?.unsubscribe();
-        pluginInstance?.dispose();
-        pluginRef.current = null;
-        structureRef.current = null;
-        indexRef.current = EMPTY_RESIDUE_INDEX;
+        // Only settles once this cycle's plugin — which may still be mid-construction
+        // — has actually been torn down, so the next mount cannot race it.
+        teardownRef.current = started.then(() => {
+          clickSub?.unsubscribe();
+          pluginInstance?.dispose();
+          pluginRef.current = null;
+          structureRef.current = null;
+          indexRef.current = EMPTY_RESIDUE_INDEX;
+        });
       };
     }, []);
 
