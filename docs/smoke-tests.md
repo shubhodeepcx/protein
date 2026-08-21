@@ -6,6 +6,34 @@ Run from the repo root (`g:\protein`) unless noted.
 
 ---
 
+## Last verified run — 2026-08-21
+
+P0–P5.5 executed end-to-end in a real Chromium (driven by Playwright) against both servers running
+locally and against the **live** public APIs. Results:
+
+| Check | Result |
+|---|---|
+| Landing page, `Backend OK` pill, Databases link, Upload enabled | pass |
+| Mol\* WebGL renders 1CRN at `/viewer/demo` | pass — cartoon, helices and sheets resolved |
+| Upload `1CRN.pdb` → `/viewer/{uuid}` | pass |
+| Overview metrics | pass — chains 1, residues 46, atoms 327, MW 4736 Da |
+| Sequence panel | pass — 46 cells, `TTCCPSIVARSN`, labels A:1–A:46, legend + ruler |
+| Sequence → 3D click sync | pass — A:23 boxed as `E`, highlight visible in the viewport |
+| Residue search | pass — `a:7` → `I`; `A:999` → "No residue A:999 — chain A has 46 residues" |
+| `has_plddt` gating | pass — pLDDT option **absent** on uploaded PDB, **present** on AlphaFold import |
+| Live search `insulin` | pass — 75 results, 25 each from RCSB / AlphaFold / UniProt, `failed_sources` empty |
+| Import 4INS (multi-chain **mmCIF**) from live RCSB | pass — A21/B30/C21/D30, organism `Sus scrofa` |
+| **Residue seam on imported mmCIF** | pass — ordinals restart per chain; B:25 boxed as `F` with 3D highlight |
+| Import AlphaFold P01308 | pass — `has_plddt: true`, 110 residues |
+| **pLDDT coloring direction** | pass — confident helix renders **blue**, disordered loop pink (correct convention) |
+| AlphaFold 404 path | pass — `Q0Q0Q0` → 404 "AlphaFold DB has no model for accession 'Q0Q0Q0'." |
+
+Not covered by this run: mouse-driven rotate/zoom, the 3D→sequence direction (clicking geometry in
+the viewport, including the 1HHO cofactor case in P4 step 6), and the offline-source degradation
+banner in P5 step 9. Those still want a human at the mouse.
+
+---
+
 ## P0 — Scaffold
 
 **Goal:** both servers start and the frontend successfully calls the backend.

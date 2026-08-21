@@ -3,13 +3,13 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-19 by Shubhodeep Chatterjee (P5.5 integration complete — all 8 distinct follow-up PRs merged, 7 duplicates closed. 123 backend + 119 frontend tests, lint + build clean. Only manual browser smoke tests and genuinely-deferred items remain.)
+**Last updated:** 2026-08-21 by Shubhodeep Chatterjee (MVP slice COMPLETE — manual smoke tests executed in a real browser via Playwright. Mol* WebGL, upload, sequence click-sync, live RCSB/AlphaFold/UniProt search, mmCIF import, and the pLDDT fix all verified against running servers.)
 
 ---
 
 ## Current phase
 
-**Slice complete (P0–P5)** — all six phases merged. Remaining work is the manual smoke tests in [docs/smoke-tests.md](smoke-tests.md), which need a browser and live internet.
+**Slice complete and verified (P0–P5).** All six phases merged, and the manual smoke tests have now been executed end-to-end in a real Chromium against live servers and live public APIs. Every acceptance criterion in spec section 12 that needs a browser has been demonstrated. Remaining items are enhancements, not gaps.
 
 Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](superpowers/specs/2026-05-23-protein-mvp-slice-design.md)
 
@@ -17,7 +17,7 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in flight. All follow-up PRs are merged; the scheduled cloud agents are disabled. Remaining work is the manual smoke tests, which need a browser._
+_Nothing in flight. All follow-up PRs are merged, the scheduled cloud agents are disabled, and the manual smoke tests have been run. The slice is done._
 
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
@@ -30,13 +30,12 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
-| Run the P4 + P5 + **P5.5** manual smoke tests (browser + live internet required) | P5.5 | — | 1h |
 | B-factor coloring of experimental structures is no longer reachable — the one toolbar option that drove it is now gated on `has_plddt`. Wants its own `bfactor` scheme (same `uncertainty` theme, default domain) rather than sharing the pLDDT entry. | follow-up | — | 45m |
 | `_extract_mmcif_organism` takes the first source category that has a value; a multi-entity mmCIF with different organisms per entity reports only the first. Fine for the single-protein viewer, wrong for a future complex/assembly view. | follow-up | — | 1h |
 | Batch RCSB search enrichment via the GraphQL Data API (currently up to 50 REST calls per search) | follow-up | — | 2h |
 | Virtualise the sequence panel (one `<button>` per residue gets heavy above ~2,000 residues) | follow-up | — | 2h |
 | Make HETATM amino acids (e.g. MSE) selectable — currently skipped consistently by both parser and panel | follow-up | — | 1h |
-| Browser-level coverage for `extractResidueRecords` (the Mol\*-facing half of residue indexing, untestable in jsdom) | follow-up | a browser test runner | 3h |
+| Automated browser-level coverage for `extractResidueRecords` — manually verified 2026-08-21 on both a PDB upload and a 4-chain RCSB mmCIF, so this is now regression protection rather than an unknown | follow-up | a browser test runner | 3h |
 | Persistence slice — the in-memory registry resets on restart, so `/viewer/{id}` 404s afterwards though the file survives on disk | separate slice | Postgres decision | — |
 
 ---
@@ -101,6 +100,12 @@ _No blocked tasks._
 | P5.5: UniProt imports keep their own `source` provenance (`"uniprot"` is now a real `ProteinSummary.source`) | P5.5 | 2026-08-19 | PR #11 |
 | P5.5: viewer representation/coloring reset on route change | P5.5 | 2026-08-19 | PR #8 |
 | P5.5: retry with backoff + per-host concurrency cap on outbound HTTP | P5.5 | 2026-08-19 | PR #15 |
+| **Manual smoke tests executed** (Playwright + live servers): landing page, Mol\* WebGL render of 1CRN, upload -> viewer, tabbed rail, metrics 46/327/4736 Da | P5.5 | 2026-08-21 | this commit |
+| Verified P4 click-sync in-browser: clicking A:23 highlights in 3D and boxes the correct `E`; `a:7` lowercase search resolves to `I`; `A:999` errors with "chain A has 46 residues" | P5.5 | 2026-08-21 | this commit |
+| Verified P5 live search: 75 results for "insulin", 25 from each of RCSB / AlphaFold / UniProt, `failed_sources` empty — AlphaFold's UniProt-crossref strategy works against the real API | P5.5 | 2026-08-21 | this commit |
+| **Verified the P4/P5 seam on real data**: imported 4INS (4-chain mmCIF) from live RCSB; chains A21/B30/C21/D30 match the API, ordinals restart per chain, and clicking B:25 boxes `F` and highlights in 3D | P5.5 | 2026-08-21 | this commit |
+| Verified the CRITICAL pLDDT fix visually: imported AlphaFold P01308, confident helix renders BLUE and the disordered loop pink — correct AlphaFold convention. pLDDT option correctly absent on uploaded PDB, present here | P5.5 | 2026-08-21 | this commit |
+| Verified mmCIF organism extraction on live data (4INS -> "Sus scrofa") and the AlphaFold 404 path (`Q0Q0Q0` -> source-specific 404) | P5.5 | 2026-08-21 | this commit |
 | **CRITICAL** — pLDDT color inversion fixed: `colorParams { domain: [100, 0] }` on the shared `uncertainty` theme, so high confidence reads blue. Orientation pinned against Mol\*'s real `ColorScale`; `ColoringOptions.hasPlddt` made required so a dropped call-site argument is a type error | review | 2026-08-18 | `61648dc` |
 | Organism now read from the mmCIF source categories (`_entity_src_gen` / `_entity_src_nat` / `_pdbx_entity_src_syn` / `_ma_target_ref_db_details`), skipping the `?` and `.` null tokens — every RCSB import used to parse to `organism=None` | review | 2026-08-18 | `fb6ff33` |
 | `has_plddt` surfaced in the UI: pLDDT coloring offered only when true, explicit fallback for a stale selection carried across navigation, and a "B-factors" field in the Overview panel | review | 2026-08-18 | `712d8b2` |
