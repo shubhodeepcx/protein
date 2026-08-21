@@ -89,8 +89,8 @@ export default function HomePage() {
           <ScrollArea className="flex-1">
             <div className="space-y-3 p-4 text-xs text-muted-foreground">
               <p>
-                The chain tree and residue filters render here once a protein
-                is loaded.
+                Load a protein to explore its chains, sequence, and analytics
+                side by side with the 3D structure.
               </p>
               <p className="leading-relaxed">
                 Upload a PDB / mmCIF file, or import a structure from RCSB PDB,

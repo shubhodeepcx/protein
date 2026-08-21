@@ -2,7 +2,7 @@
 
 A web-based workspace for protein 3D visualization, structural analysis, annotation, and reporting. Combines a Mol*-based molecular viewer with bioinformatics pipelines, public-database integration (RCSB PDB, AlphaFold DB, UniProt), and AI-assisted annotation.
 
-**Status:** MVP slice P0–P5 complete and verified. Viewer, upload + parse, analytics dashboard, sequence panel with bidirectional 3D selection sync, and public-database search + import (RCSB PDB, AlphaFold DB, UniProt). 123 backend + 119 frontend tests green, and the manual smoke tests have been executed in a real browser against the live public APIs — see [docs/smoke-tests.md](docs/smoke-tests.md). Follow-ups are tracked in [docs/PROJECT_TRACKER.md](docs/PROJECT_TRACKER.md).
+**Status:** MVP slice P0–P5 complete and verified. Viewer, upload + parse, analytics dashboard, sequence panel with bidirectional 3D selection sync, and public-database search + import (RCSB PDB, AlphaFold DB, UniProt). 127 backend + 133 frontend tests green, and the manual smoke tests have been executed in a real browser against the live public APIs — see [docs/smoke-tests.md](docs/smoke-tests.md). Follow-ups are tracked in [docs/PROJECT_TRACKER.md](docs/PROJECT_TRACKER.md).
 
 **Smoke tests:** After setup, run [docs/smoke-tests.md](docs/smoke-tests.md) to verify each phase end-to-end.
 
@@ -92,8 +92,15 @@ Two terminals — one for each service.
 ```powershell
 cd backend
 .\.venv\Scripts\Activate.ps1
+$env:CORS_ORIGINS = "http://localhost:3000"   # required — see below
 uvicorn app.main:app --reload --port 8000
 ```
+
+> **`CORS_ORIGINS` is required.** It has no default: when unset the API denies *every*
+> origin, so the frontend loads but every request fails browser preflight and the health
+> pill reads "Backend unreachable". That is deliberate — an unset value fails loudly at
+> deploy time rather than silently allowing everything. See `backend/.env.example`.
+> On bash: `export CORS_ORIGINS=http://localhost:3000`. (`start.cmd` sets it for you.)
 
 - Swagger UI at `http://localhost:8000/docs`
 - Health check at `http://localhost:8000/health`

@@ -75,7 +75,7 @@ export default function DemoViewerPage() {
             variant="outline"
             className="ml-1 border-zinc-700 text-[10px] text-zinc-400 uppercase"
           >
-            P1
+            demo
           </Badge>
 
           <div className="ml-auto flex items-center gap-1.5">

@@ -35,6 +35,15 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | Make HETATM amino acids (e.g. MSE) selectable — currently skipped consistently by both parser and panel | follow-up | — | 1h |
 | Automated browser-level coverage for `extractResidueRecords` — manually verified 2026-08-21 on both a PDB upload and a 4-chain RCSB mmCIF, so this is now regression protection rather than an unknown | follow-up | a browser test runner | 3h |
 | Persistence slice — the in-memory registry resets on restart, so `/viewer/{id}` 404s afterwards though the file survives on disk | separate slice | Postgres decision | — |
+| **A5 Binding-pocket / functional-region detection — UNPLANNED GAP.** A spec-compliance audit found this is the only feature promised in `spec.md` that is neither built nor listed in any out-of-scope note. Every other unbuilt feature is a deliberate deferral. Decide explicitly: defer it or build it. | spec gap | — | — |
+| A1: PAE heatmap and low-confidence-region warnings are in `spec.md` but in no deferral list (pLDDT coloring + mean-pLDDT are built) | spec gap | — | — |
+| Slice section 7 specifies `400 { error, suggestion }`; no `suggestion` field is implemented anywhere in the backend | spec drift | — | 45m |
+| Slice section 6.1 specifies a content sniff (first line is `HEADER`/`data_`); only extension/size/empty checks exist | spec drift | — | 30m |
+| Slice section 5.2 promises parser warnings for missing atoms, multiple models, and chain breaks; none are emitted (only non-standard residues / no chains) | spec drift | — | 1h |
+| F3: `SelectionMode` / `setMode` exist in `selection-slice.ts` but no UI calls them — select-by-type / chain / range / property, and the left-sidebar filter panel from slice section 4.1, were never built | spec drift | — | 3h |
+| Three files exceed AGENTS.md's 200-LOC cap: `app/viewer/[id]/page.tsx` (207), `components/molstar-viewer.tsx` (203), `lib/residue.ts` (202) | cleanup | — | 45m |
+| Type drift: `ingest.parse_and_register`'s `source` Literal omits `"uniprot"`, which `import_.py` passes. Runtime-fine leftover from PR #11 | cleanup | — | 15m |
+| Per-phase test counts in `docs/smoke-tests.md` (P2 "14 passed", P3 "31 passed", P5.5 "90/103") are stale against the current 127/133 | docs | — | 20m |
 
 ---
 
