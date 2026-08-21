@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal
 
@@ -59,24 +60,85 @@ _MMCIF_ORGANISM_KEYS: tuple[str, ...] = (
 # both through verbatim, so they must not be mistaken for an organism name.
 _MMCIF_NULL_TOKENS = frozenset({"?", "."})
 
+# How several organisms are rendered into the single `ProteinSummary.organism`
+# string. A multi-entity mmCIF (a complex, or an assembly) names one organism per
+# entity, and taking only the first one reports a chimeric structure as if it
+# came from a single species.
+_MMCIF_ORGANISM_JOINER = ", "
 
-def _extract_mmcif_organism(mmcif_dict: dict[str, object]) -> str | None:
-    """First non-null organism across the mmCIF source categories, else None."""
+# Budget for the joined names, in characters. The guard is on the *rendered
+# length* rather than on a count of names, because that is the actual symptom:
+# `organism` is one line in the UI, and one line is a width, not a number of
+# entities. So three long names and eight short ones are both allowed to fill
+# it. Whatever does not fit is counted into a trailing "and N more" — the line
+# stays short, but it never claims to be the whole list when it is not.
+_MMCIF_ORGANISM_MAX_CHARS = 120
+
+
+def _collect_mmcif_organisms(mmcif_dict: dict[str, object]) -> list[str]:
+    """Every distinct organism named by the mmCIF source categories, in order.
+
+    Deduplicated case-insensitively (an entry may spell the same species
+    differently in two categories); the first spelling seen is the one kept.
+    Empty when the file names no organism at all.
+    """
+    seen: set[str] = set()
+    names: list[str] = []
     for key in _MMCIF_ORGANISM_KEYS:
         raw = mmcif_dict.get(key)
         if raw is None:
             continue
-        # MMCIF2Dict returns a list per key for looped categories and, for
-        # single-row categories, still a one-element list — but be tolerant of
-        # a bare string so a hand-written fixture cannot silently read as empty.
+        # MMCIF2Dict returns a list per key: one element per row of a looped
+        # category — which is one row per entity, the multi-organism case — and
+        # still a one-element list for a single-row category. Be tolerant of a
+        # bare string so a hand-written fixture cannot silently read as empty.
         values = [raw] if isinstance(raw, str) else list(raw)  # type: ignore[arg-type]
         for value in values:
             if not isinstance(value, str):
                 continue
             cleaned = value.strip()
-            if cleaned and cleaned not in _MMCIF_NULL_TOKENS:
-                return cleaned
-    return None
+            if not cleaned or cleaned in _MMCIF_NULL_TOKENS:
+                continue
+            fingerprint = cleaned.casefold()
+            if fingerprint in seen:
+                continue
+            seen.add(fingerprint)
+            names.append(cleaned)
+    return names
+
+
+def _join_organisms(names: Sequence[str]) -> str | None:
+    """Render distinct organism names as one line, or None when there are none.
+
+    A single name renders as exactly itself — no separator, no suffix — so a
+    single-organism entry is unchanged. Several are joined in first-seen order
+    until the line would exceed `_MMCIF_ORGANISM_MAX_CHARS`; the rest are
+    reported as a trailing "and N more" so a capped line says that it is capped
+    instead of silently dropping entities. The first name is always kept whole,
+    even if it alone is over budget: truncating a species name would invent one.
+    """
+    if not names:
+        return None
+
+    kept: list[str] = [names[0]]
+    length = len(names[0])
+    for name in names[1:]:
+        grown = length + len(_MMCIF_ORGANISM_JOINER) + len(name)
+        if grown > _MMCIF_ORGANISM_MAX_CHARS:
+            break
+        kept.append(name)
+        length = grown
+
+    joined = _MMCIF_ORGANISM_JOINER.join(kept)
+    remaining = len(names) - len(kept)
+    if remaining:
+        joined = f"{joined} and {remaining} more"
+    return joined
+
+
+def _extract_mmcif_organism(mmcif_dict: dict[str, object]) -> str | None:
+    """Every distinct organism the mmCIF names, as one line, else None."""
+    return _join_organisms(_collect_mmcif_organisms(mmcif_dict))
 
 
 def _mmcif_dict_for(struct_parser: MMCIFParser, path: Path) -> dict[str, object]:
