@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-21 by Shubhodeep Chatterjee (FINAL. Slice complete + signed off, B-factor coloring restored, multi-entity mmCIF organisms fixed, one-click launcher added. 127 backend + 133 frontend tests green.)
+**Last updated:** 2026-08-21 by Shubhodeep Chatterjee (FINAL. Spec audit run; mmCIF secondary structure fixed — every RCSB import used to report 100% coil. 135 backend + 133 frontend tests green.)
 
 ---
 
@@ -35,6 +35,7 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | Make HETATM amino acids (e.g. MSE) selectable — currently skipped consistently by both parser and panel | follow-up | — | 1h |
 | Automated browser-level coverage for `extractResidueRecords` — manually verified 2026-08-21 on both a PDB upload and a 4-chain RCSB mmCIF, so this is now regression protection rather than an unknown | follow-up | a browser test runner | 3h |
 | Persistence slice — the in-memory registry resets on restart, so `/viewer/{id}` 404s afterwards though the file survives on disk | separate slice | Postgres decision | — |
+| Surface `secondary_structure.available === false` in the UI. The API now says honestly when a file carries no SS assignment (e.g. AlphaFold models), but the donut still draws a full coil ring — the frontend ignores the flag | follow-up | — | 30m |
 | **A5 Binding-pocket / functional-region detection — UNPLANNED GAP.** A spec-compliance audit found this is the only feature promised in `spec.md` that is neither built nor listed in any out-of-scope note. Every other unbuilt feature is a deliberate deferral. Decide explicitly: defer it or build it. | spec gap | — | — |
 | A1: PAE heatmap and low-confidence-region warnings are in `spec.md` but in no deferral list (pLDDT coloring + mean-pLDDT are built) | spec gap | — | — |
 | Slice section 7 specifies `400 { error, suggestion }`; no `suggestion` field is implemented anywhere in the backend | spec drift | — | 45m |
@@ -118,6 +119,10 @@ _No blocked tasks._
 | B-factor coloring restored as its own scheme, so experimental structures can be coloured by B-factor again while pLDDT keeps its reversed domain | P5.5 | 2026-08-21 | `d9e81af` |
 | Multi-entity mmCIF now reports every distinct organism (case-insensitive dedupe, length-capped with an explicit "and N more" rather than silent truncation) | P5.5 | 2026-08-21 | `54cba2d` |
 | One-click launcher (`start.cmd` + `scripts/launch.ps1`) serving a production build — no dev-tools bubble, self-healing setup | P5.5 | 2026-08-21 | this commit |
+| Full spec-compliance audit against `spec.md` and the slice design (9 acceptance criteria + F1-F9 / A1-A6 / S1-S4 inventory + doc drift) | P5.5 | 2026-08-21 | audit agent |
+| **Fixed: secondary structure was 100% coil for every mmCIF and AlphaFold structure.** SS was read from `HELIX`/`SHEET` text records, which mmCIF does not have; now also reads `_struct_conf` / `_struct_sheet_range`. Verified live: 4INS went from 100% coil to 54.9% helix / 5.9% sheet, crambin's PDB numbers byte-identical | P5.5 | 2026-08-21 | `c17ba8e` |
+| Production build switched to webpack — the Turbopack bundle was broken for the Mol\* route and rendered a dead page | P5.5 | 2026-08-21 | `415d20b` |
+| Doc/UI drift corrected: README `CORS_ORIGINS` (its absence broke setup), stale test counts, landing page promising an unbuilt chain tree, stale P1 badge | P5.5 | 2026-08-21 | `217fc40` |
 | **CRITICAL** — pLDDT color inversion fixed: `colorParams { domain: [100, 0] }` on the shared `uncertainty` theme, so high confidence reads blue. Orientation pinned against Mol\*'s real `ColorScale`; `ColoringOptions.hasPlddt` made required so a dropped call-site argument is a type error | review | 2026-08-18 | `61648dc` |
 | Organism now read from the mmCIF source categories (`_entity_src_gen` / `_entity_src_nat` / `_pdbx_entity_src_syn` / `_ma_target_ref_db_details`), skipping the `?` and `.` null tokens — every RCSB import used to parse to `organism=None` | review | 2026-08-18 | `fb6ff33` |
 | `has_plddt` surfaced in the UI: pLDDT coloring offered only when true, explicit fallback for a stale selection carried across navigation, and a "B-factors" field in the Overview panel | review | 2026-08-18 | `712d8b2` |
@@ -151,6 +156,9 @@ Append-only. Never edit past entries — supersede with a new entry referencing 
 | 2026-08-21 | Launcher is idempotent and self-healing (creates venv, installs npm, builds only when missing) | A grader or new contributor should not have to read setup docs to run the thing; later runs still start in seconds | yes |
 | 2026-08-21 | `organism` stays a single string even for multi-entity mmCIF, joined when entities genuinely differ | Changing `ProteinSummary`'s shape on the final day would break the frontend with no time to coordinate; truthfulness is achievable without a schema change | yes — a future assembly view wants a per-entity list |
 | 2026-08-21 | B-factor gets its own coloring scheme rather than sharing the pLDDT toolbar entry | Gating the single entry on `has_plddt` silently removed B-factor coloring for every experimental structure. Two schemes over one shared entry, since they need opposite color domains | yes |
+| 2026-08-21 | Read mmCIF secondary structure inside `services/analytics.py`, accepting the file I/O there | AGENTS.md says analytics is pure, but `_parse_ss_records_from_pdb` already read the file; adding a second I/O site beside it on ship day was lower risk than restructuring the module. Revisit if analytics grows | yes |
+| 2026-08-21 | `SecondaryStructurePercentages.available` added as an optional field defaulting to `True` | Lets the API state "this file declares no SS" without changing the response shape the frozen frontend consumes. Chosen over a `warnings` entry because warnings live on `ProteinSummary` at parse time, while SS is determined at analytics time | yes |
+| 2026-08-21 | Production build uses webpack (`next build --webpack`), not Turbopack | The Turbopack production bundle throws "module factory is not available" on the Mol\* route and renders a dead page. Dev is unaffected, so it only appears in the built app. `build:turbopack` kept for re-checking upstream | yes — revert when upstream is fixed |
 | 2026-08-18 | In-memory summary registry extracted to `services/registry.py` | Import and upload must register into the SAME store the viewer reads, or an imported protein 404s. A router importing another router's private dict is fragile. | yes |
 | 2026-08-18 | AlphaFold search resolves via UniProt with a `(database:alphafolddb)` filter | AlphaFold DB has no full-text search endpoint at all — it is keyed strictly by UniProt accession. Filtering at UniProt is 1 request and guarantees every hit has a model; probing 25 accessions costs 25 round trips for one display field. Trade-off: mean pLDDT is null on search results, populated on fetch_metadata. | yes |
 | 2026-08-18 | Metadata TTL cache split: `download_structure` bypasses it, search enrichment keeps it | Spec 5.4 says search and download bypass the cache. A stale cached `pdbUrl` is a real failure, so download must bypass. But each search enrichment IS a `fetch_metadata` call, and bypassing would mean up to 50 uncached upstream calls per RCSB search. | yes |
