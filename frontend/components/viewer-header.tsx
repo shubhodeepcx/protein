@@ -11,7 +11,7 @@ interface ViewerHeaderProps {
   title: string;
   /** Null until protein metadata has loaded; disables the tools. */
   source: string | null;
-  /** `ProteinSummary.has_plddt` — gates the pLDDT coloring option. */
+  /** `ProteinSummary.has_plddt` — picks pLDDT vs B-factor coloring. */
   hasPlddt?: boolean;
   onResetCamera: () => void;
 }

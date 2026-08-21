@@ -28,6 +28,7 @@ import {
   COLORING_OPTIONS,
   COLOR_THEME,
   PLDDT_COLOR_DOMAIN,
+  bfactorColumnSchemeFor,
   colorParamsFor,
   coloringOptionsFor,
 } from "@/lib/molstar/theming";
@@ -98,6 +99,23 @@ describe("colorParamsFor", () => {
       expect(colorParamsFor(scheme, false)).toBeUndefined();
     }
   });
+
+  it("never gives `bfactor` the inverted domain", () => {
+    // `bfactor` is the plain temperature-factor reading of the same theme, so
+    // it must take Mol*'s default domain — low B = well ordered = blue. It
+    // shares `uncertainty` with `plddt`, so the only thing keeping the two
+    // apart is this branch; `hasPlddt` must not leak across it.
+    expect(colorParamsFor("bfactor", false)).toBeUndefined();
+    expect(colorParamsFor("bfactor", true)).toBeUndefined();
+  });
+});
+
+describe("COLOR_THEME", () => {
+  it("drives `bfactor` and `plddt` from the same uncertainty theme", () => {
+    // One theme, two schemes: the difference is the domain, not the theme.
+    expect(COLOR_THEME.bfactor).toBe("uncertainty");
+    expect(COLOR_THEME.bfactor).toBe(COLOR_THEME.plddt);
+  });
 });
 
 describe("coloringOptionsFor", () => {
@@ -111,6 +129,32 @@ describe("coloringOptionsFor", () => {
     expect(values).toEqual(
       COLORING_OPTIONS.map(([v]) => v).filter((v) => v !== "plddt"),
     );
+  });
+
+  it("offers plain B-factor on an experimental structure", () => {
+    // The regression this pins: gating the single shared option on `has_plddt`
+    // left X-ray/NMR entries with no way to colour by B-factor at all.
+    expect(coloringOptionsFor(false).map(([v]) => v)).toContain("bfactor");
+  });
+
+  it("hides plain B-factor on a predicted model", () => {
+    // There the column is pLDDT, and "B-factor" would mislabel it.
+    expect(coloringOptionsFor(true).map(([v]) => v)).not.toContain("bfactor");
+  });
+
+  it("offers exactly one of pLDDT / B-factor, never both and never neither", () => {
+    for (const hasPlddt of [true, false]) {
+      const values = coloringOptionsFor(hasPlddt).map(([v]) => v);
+      const columnSchemes = values.filter(
+        (v) => v === "plddt" || v === "bfactor",
+      );
+      expect(columnSchemes).toEqual([bfactorColumnSchemeFor(hasPlddt)]);
+    }
+  });
+
+  it("drops exactly one option from the full menu", () => {
+    expect(coloringOptionsFor(true)).toHaveLength(COLORING_OPTIONS.length - 1);
+    expect(coloringOptionsFor(false)).toHaveLength(COLORING_OPTIONS.length - 1);
   });
 });
 
@@ -156,6 +200,27 @@ describe("applyColoring", () => {
     const params = updateRepresentationsTheme.mock.calls[0][1] as ThemeCall;
     // Not `colorParams: undefined` — Mol* merges the key in and would clear
     // the theme's own defaults.
+    expect("colorParams" in params).toBe(false);
+  });
+
+  it("renders `bfactor` on the theme's own domain, forwards", () => {
+    const { plugin, updateRepresentationsTheme } = fakePlugin();
+    applyColoring(plugin, "bfactor", { hasPlddt: false });
+
+    const params = updateRepresentationsTheme.mock.calls[0][1] as ThemeCall;
+    expect(params.color).toBe(COLOR_THEME.bfactor);
+    // No domain override at all — anything else would paint a well-ordered
+    // (low-B) atom red, the mirror image of the pLDDT bug.
+    expect("colorParams" in params).toBe(false);
+  });
+
+  it("keeps `bfactor` on the default domain even if hasPlddt is true", () => {
+    // The two schemes share `uncertainty`; only the scheme name may decide the
+    // domain, so `hasPlddt` must not reach the `bfactor` branch.
+    const { plugin, updateRepresentationsTheme } = fakePlugin();
+    applyColoring(plugin, "bfactor", { hasPlddt: true });
+
+    const params = updateRepresentationsTheme.mock.calls[0][1] as ThemeCall;
     expect("colorParams" in params).toBe(false);
   });
 

@@ -7,11 +7,20 @@ export type Representation =
   | "ball-stick"
   | "spacefill";
 
+/**
+ * Mirrors `MolstarColoring` in `lib/molstar/theming.ts` (the store must not
+ * import from the Mol* layer). `plddt` and `bfactor` both drive Mol*'s
+ * `uncertainty` theme but differ in domain, and only one of the two is valid
+ * for any given structure — `ViewerControls` resolves that from
+ * `ProteinSummary.has_plddt`, since this slice has no idea which protein is
+ * open.
+ */
 export type ColoringScheme =
   | "chain"
   | "ss"
   | "hydrophobicity"
   | "plddt"
+  | "bfactor"
   | "residueType";
 
 export interface ViewerSlice {

@@ -20,7 +20,11 @@ export function ViewerControls({
   hasPlddt = false,
 }: {
   disabled?: boolean;
-  /** `ProteinSummary.has_plddt` — false hides the pLDDT option. */
+  /**
+   * `ProteinSummary.has_plddt` — picks which of the two B-factor-column
+   * schemes the coloring menu offers: `pLDDT confidence` when true, plain
+   * `B-factor` when false.
+   */
   hasPlddt?: boolean;
 }) {
   const representation = useStore((s) => s.representation);
@@ -34,6 +38,8 @@ export function ViewerControls({
   // AlphaFold model on pLDDT and opening an X-ray entry would leave the select
   // bound to a value it no longer lists — the browser then shows the first
   // option while Mol* still renders the old scheme. Fall back explicitly.
+  // Symmetric by construction: `bfactor` carried onto an AlphaFold model is
+  // just as unlisted, and resets the same way.
   useEffect(() => {
     if (!coloringOptions.some(([value]) => value === coloring)) {
       setColoring("chain");

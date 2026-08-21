@@ -21,6 +21,7 @@ export type MolstarColoring =
   | "ss"
   | "hydrophobicity"
   | "plddt"
+  | "bfactor"
   | "residueType";
 
 export interface RepresentationSpec {
@@ -50,12 +51,19 @@ export const REPRESENTATION_SPEC: Readonly<
  *
  * That reuse comes with one catch the domain below exists to undo — see
  * `PLDDT_COLOR_DOMAIN`.
+ *
+ * `bfactor` maps to the same theme, and deliberately stops there: it is the
+ * *unmodified* reading of `uncertainty`, for experimental structures whose
+ * B-factor column really is a temperature factor. Two schemes over one theme is
+ * what keeps the domain question ("is this column pLDDT?") answered by the
+ * scheme name instead of by an implicit assumption — see `colorParamsFor`.
  */
 export const COLOR_THEME: Readonly<Record<MolstarColoring, ColorTheme.BuiltIn>> = {
   chain: "chain-id",
   ss: "secondary-structure",
   hydrophobicity: "hydrophobicity",
   plddt: "uncertainty",
+  bfactor: "uncertainty",
   residueType: "residue-name",
 };
 
@@ -97,6 +105,10 @@ export interface ColorThemeParams {
  * shared `uncertainty` theme, so the domain must only be inverted when the
  * B-factor column really holds pLDDT. Inverting it for an experimental
  * structure would break B-factor coloring in exactly the same way.
+ *
+ * `bfactor` shares that theme but never the domain — it is the plain
+ * temperature-factor reading, so it takes Mol*'s defaults (0 = blue = well
+ * ordered) and returns `undefined` whatever `hasPlddt` says.
  */
 export function colorParamsFor(
   scheme: MolstarColoring,
@@ -122,8 +134,18 @@ export const COLORING_OPTIONS: ReadonlyArray<readonly [MolstarColoring, string]>
     ["ss", "Secondary structure"],
     ["hydrophobicity", "Hydrophobicity"],
     ["plddt", "pLDDT confidence"],
+    ["bfactor", "B-factor"],
     ["residueType", "Residue type"],
   ];
+
+/**
+ * The scheme that reads the B-factor column for a structure: `plddt` when that
+ * column holds pLDDT, `bfactor` when it holds a temperature factor. The other
+ * one is the one to hide — see `coloringOptionsFor`.
+ */
+export function bfactorColumnSchemeFor(hasPlddt: boolean): MolstarColoring {
+  return hasPlddt ? "plddt" : "bfactor";
+}
 
 /**
  * The coloring options offered for a given structure.
@@ -134,11 +156,16 @@ export const COLORING_OPTIONS: ReadonlyArray<readonly [MolstarColoring, string]>
  * factors on a scale labelled "pLDDT confidence". `has_plddt` on
  * `ProteinSummary` is the backend's answer to "is the B-factor column pLDDT?",
  * so it decides.
+ *
+ * The converse holds too, and cost us a capability once: hiding `plddt` alone
+ * left experimental structures with no way to colour by B-factor at all. The
+ * column is always there and always worth seeing, so the two schemes swap
+ * rather than one of them dropping out — every structure is offered exactly one
+ * of `plddt` / `bfactor`, never both and never neither.
  */
 export function coloringOptionsFor(
   hasPlddt: boolean,
 ): ReadonlyArray<readonly [MolstarColoring, string]> {
-  return hasPlddt
-    ? COLORING_OPTIONS
-    : COLORING_OPTIONS.filter(([value]) => value !== "plddt");
+  const hidden = bfactorColumnSchemeFor(!hasPlddt);
+  return COLORING_OPTIONS.filter(([value]) => value !== hidden);
 }
