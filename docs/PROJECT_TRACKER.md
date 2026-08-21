@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-21 by Shubhodeep Chatterjee (MVP slice P0-P5 COMPLETE AND SIGNED OFF. Automated smoke run plus human confirmation of the three mouse-driven 3D checks. 123 backend + 121 frontend tests green.)
+**Last updated:** 2026-08-21 by Shubhodeep Chatterjee (FINAL. Slice complete + signed off, B-factor coloring restored, multi-entity mmCIF organisms fixed, one-click launcher added. 127 backend + 133 frontend tests green.)
 
 ---
 
@@ -30,8 +30,6 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 
 | Task | Phase | Dependencies | Estimate |
 |---|---|---|---|
-| B-factor coloring of experimental structures is no longer reachable — the one toolbar option that drove it is now gated on `has_plddt`. Wants its own `bfactor` scheme (same `uncertainty` theme, default domain) rather than sharing the pLDDT entry. | follow-up | — | 45m |
-| `_extract_mmcif_organism` takes the first source category that has a value; a multi-entity mmCIF with different organisms per entity reports only the first. Fine for the single-protein viewer, wrong for a future complex/assembly view. | follow-up | — | 1h |
 | Batch RCSB search enrichment via the GraphQL Data API (currently up to 50 REST calls per search) | follow-up | — | 2h |
 | Virtualise the sequence panel (one `<button>` per residue gets heavy above ~2,000 residues) | follow-up | — | 2h |
 | Make HETATM amino acids (e.g. MSE) selectable — currently skipped consistently by both parser and panel | follow-up | — | 1h |
@@ -108,6 +106,9 @@ _No blocked tasks._
 | Verified mmCIF organism extraction on live data (4INS -> "Sus scrofa") and the AlphaFold 404 path (`Q0Q0Q0` -> source-specific 404) | P5.5 | 2026-08-21 | this commit |
 | **Human-confirmed the 3 mouse-driven checks**: 3D->sequence click direction, cofactor click preserves selection while background clears it, and rotate/zoom. Completes both directions of the P4 click-sync | P5.5 | 2026-08-21 | user confirmation |
 | Fixed the Mol\* duplicate-`createRoot` race (async plugin construction vs synchronous React cleanup); regression test pinned by mutation | P5.5 | 2026-08-21 | `b7990dd` |
+| B-factor coloring restored as its own scheme, so experimental structures can be coloured by B-factor again while pLDDT keeps its reversed domain | P5.5 | 2026-08-21 | `d9e81af` |
+| Multi-entity mmCIF now reports every distinct organism (case-insensitive dedupe, length-capped with an explicit "and N more" rather than silent truncation) | P5.5 | 2026-08-21 | `54cba2d` |
+| One-click launcher (`start.cmd` + `scripts/launch.ps1`) serving a production build — no dev-tools bubble, self-healing setup | P5.5 | 2026-08-21 | this commit |
 | **CRITICAL** — pLDDT color inversion fixed: `colorParams { domain: [100, 0] }` on the shared `uncertainty` theme, so high confidence reads blue. Orientation pinned against Mol\*'s real `ColorScale`; `ColoringOptions.hasPlddt` made required so a dropped call-site argument is a type error | review | 2026-08-18 | `61648dc` |
 | Organism now read from the mmCIF source categories (`_entity_src_gen` / `_entity_src_nat` / `_pdbx_entity_src_syn` / `_ma_target_ref_db_details`), skipping the `?` and `.` null tokens — every RCSB import used to parse to `organism=None` | review | 2026-08-18 | `fb6ff33` |
 | `has_plddt` surfaced in the UI: pLDDT coloring offered only when true, explicit fallback for a stale selection carried across navigation, and a "B-factors" field in the Overview panel | review | 2026-08-18 | `712d8b2` |
@@ -137,6 +138,10 @@ Append-only. Never edit past entries — supersede with a new entry referencing 
 | 2026-05-23 | Zustand v5 (not v4) | npm latest; slice composition pattern unchanged | yes |
 | 2026-05-23 | Tailwind v4 (default from create-next-app) | Modern PostCSS-based; CSS variables on; works cleanly with shadcn | yes |
 | 2026-05-23 | next-themes for theme provider; dark mode default | Canonical shadcn integration; sci tool reads better dark | yes |
+| 2026-08-21 | Ship a `start.cmd` / `scripts/launch.ps1` launcher that serves a **production** build | One double-click runs the whole app. Production rather than `next dev` specifically because the dev server paints a floating dev-tools bubble over every page, which has no place in a demo or submission | yes |
+| 2026-08-21 | Launcher is idempotent and self-healing (creates venv, installs npm, builds only when missing) | A grader or new contributor should not have to read setup docs to run the thing; later runs still start in seconds | yes |
+| 2026-08-21 | `organism` stays a single string even for multi-entity mmCIF, joined when entities genuinely differ | Changing `ProteinSummary`'s shape on the final day would break the frontend with no time to coordinate; truthfulness is achievable without a schema change | yes — a future assembly view wants a per-entity list |
+| 2026-08-21 | B-factor gets its own coloring scheme rather than sharing the pLDDT toolbar entry | Gating the single entry on `has_plddt` silently removed B-factor coloring for every experimental structure. Two schemes over one shared entry, since they need opposite color domains | yes |
 | 2026-08-18 | In-memory summary registry extracted to `services/registry.py` | Import and upload must register into the SAME store the viewer reads, or an imported protein 404s. A router importing another router's private dict is fragile. | yes |
 | 2026-08-18 | AlphaFold search resolves via UniProt with a `(database:alphafolddb)` filter | AlphaFold DB has no full-text search endpoint at all — it is keyed strictly by UniProt accession. Filtering at UniProt is 1 request and guarantees every hit has a model; probing 25 accessions costs 25 round trips for one display field. Trade-off: mean pLDDT is null on search results, populated on fetch_metadata. | yes |
 | 2026-08-18 | Metadata TTL cache split: `download_structure` bypasses it, search enrichment keeps it | Spec 5.4 says search and download bypass the cache. A stale cached `pdbUrl` is a real failure, so download must bypass. But each search enrichment IS a `fetch_metadata` call, and bypassing would mean up to 50 uncached upstream calls per RCSB search. | yes |

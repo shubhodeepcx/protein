@@ -28,6 +28,28 @@ The full 6-month roadmap is in [docs/spec.md](docs/spec.md). The **active slice*
 
 ---
 
+## Quick start
+
+**Double-click `start.cmd`** (or run it from a terminal).
+
+That is the whole thing. It installs anything missing, builds the frontend, starts both
+services, and opens the app in your browser. Press <kbd>Ctrl</kbd>+<kbd>C</kbd> to stop both.
+
+```powershell
+.\start.cmd              # run it
+.\start.cmd -Rebuild     # force a fresh frontend build after changing source
+.\start.cmd -NoBrowser   # start the servers without opening a browser
+```
+
+The first run takes a few minutes (virtualenv + npm install + production build). Every run
+after that starts in seconds.
+
+The launcher serves a **production build** rather than the dev server. That is deliberate:
+`next dev` paints a floating dev-tools bubble over every page, and `next start` does not.
+For active development with hot reload, use the two-terminal flow under [Run](#run) below.
+
+---
+
 ## Prerequisites
 
 - **Node.js** 20+ and **npm** 10+
@@ -39,6 +61,8 @@ No Docker required at this stage; both services run from your shell.
 ---
 
 ## Setup
+
+Only needed if you are not using `start.cmd`, which does all of this for you.
 
 ### Backend
 
