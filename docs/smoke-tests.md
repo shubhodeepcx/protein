@@ -28,9 +28,21 @@ locally and against the **live** public APIs. Results:
 | **pLDDT coloring direction** | pass — confident helix renders **blue**, disordered loop pink (correct convention) |
 | AlphaFold 404 path | pass — `Q0Q0Q0` → 404 "AlphaFold DB has no model for accession 'Q0Q0Q0'." |
 
-Not covered by this run: mouse-driven rotate/zoom, the 3D→sequence direction (clicking geometry in
-the viewport, including the 1HHO cofactor case in P4 step 6), and the offline-source degradation
-banner in P5 step 9. Those still want a human at the mouse.
+**Human-confirmed the same day** (the three checks that need a mouse on a 3D canvas, which the
+automated pass could not aim at):
+
+| Check | Result |
+|---|---|
+| 3D → sequence direction: clicking the ribbon boxes a letter, and a different click boxes a different letter | pass |
+| 1HHO cofactor: selection **survives** a click on a HEM group; a background click **clears** it | pass |
+| Mouse rotate + scroll zoom | pass |
+
+That completes both directions of the P4 click-sync and the ligand-vs-background distinction, which
+were the last behaviours resting only on static review.
+
+Still not covered: the offline-source degradation banner in P5 step 9 — it needs a host blocked at
+the firewall/hosts level. The equivalent path is covered by an automated backend test (a raising
+source returns 200 with that source in `failed_sources`), so this is UI confirmation only.
 
 ---
 

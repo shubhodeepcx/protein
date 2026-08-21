@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-21 by Shubhodeep Chatterjee (MVP slice COMPLETE — manual smoke tests executed in a real browser via Playwright. Mol* WebGL, upload, sequence click-sync, live RCSB/AlphaFold/UniProt search, mmCIF import, and the pLDDT fix all verified against running servers.)
+**Last updated:** 2026-08-21 by Shubhodeep Chatterjee (MVP slice P0-P5 COMPLETE AND SIGNED OFF. Automated smoke run plus human confirmation of the three mouse-driven 3D checks. 123 backend + 121 frontend tests green.)
 
 ---
 
@@ -106,6 +106,8 @@ _No blocked tasks._
 | **Verified the P4/P5 seam on real data**: imported 4INS (4-chain mmCIF) from live RCSB; chains A21/B30/C21/D30 match the API, ordinals restart per chain, and clicking B:25 boxes `F` and highlights in 3D | P5.5 | 2026-08-21 | this commit |
 | Verified the CRITICAL pLDDT fix visually: imported AlphaFold P01308, confident helix renders BLUE and the disordered loop pink — correct AlphaFold convention. pLDDT option correctly absent on uploaded PDB, present here | P5.5 | 2026-08-21 | this commit |
 | Verified mmCIF organism extraction on live data (4INS -> "Sus scrofa") and the AlphaFold 404 path (`Q0Q0Q0` -> source-specific 404) | P5.5 | 2026-08-21 | this commit |
+| **Human-confirmed the 3 mouse-driven checks**: 3D->sequence click direction, cofactor click preserves selection while background clears it, and rotate/zoom. Completes both directions of the P4 click-sync | P5.5 | 2026-08-21 | user confirmation |
+| Fixed the Mol\* duplicate-`createRoot` race (async plugin construction vs synchronous React cleanup); regression test pinned by mutation | P5.5 | 2026-08-21 | `b7990dd` |
 | **CRITICAL** — pLDDT color inversion fixed: `colorParams { domain: [100, 0] }` on the shared `uncertainty` theme, so high confidence reads blue. Orientation pinned against Mol\*'s real `ColorScale`; `ColoringOptions.hasPlddt` made required so a dropped call-site argument is a type error | review | 2026-08-18 | `61648dc` |
 | Organism now read from the mmCIF source categories (`_entity_src_gen` / `_entity_src_nat` / `_pdbx_entity_src_syn` / `_ma_target_ref_db_details`), skipping the `?` and `.` null tokens — every RCSB import used to parse to `organism=None` | review | 2026-08-18 | `fb6ff33` |
 | `has_plddt` surfaced in the UI: pLDDT coloring offered only when true, explicit fallback for a stale selection carried across navigation, and a "B-factors" field in the Overview panel | review | 2026-08-18 | `712d8b2` |
