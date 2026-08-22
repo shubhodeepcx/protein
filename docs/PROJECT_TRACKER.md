@@ -22,6 +22,7 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
 | **P6 — Annotation panel.** Enriched UniProt field set, `GET /api/proteins/{id}/annotations`, Annotations tab | shubhodeep | `feature/p6-annotations` | PR open | Backend + tab both shipped. 166 backend / 155 frontend tests green, lint + webpack build clean. 43 mutations applied, all caught. Manual smoke test (docs/smoke-tests.md P6) still needs a human with a browser |
+| **P7 — Comparison view (spec A3).** `/compare?a=&b=`, two Mol\* viewers, metric/composition/SS diff table, `POST /api/compare` pairwise alignment, superposition RMSD | shubhodeep | `feature/p7-comparison` | wip | Branched from `main` at `d4d58c7` (P6 merged). Stands alone — touches no P6 file. Does NOT touch the residue-ordinal seam |
 
 ---
 
