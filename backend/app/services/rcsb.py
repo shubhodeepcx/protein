@@ -271,7 +271,42 @@ def _normalise(pdb_id: str, entry: Metadata, entity: Metadata) -> Metadata:
         "sequence_length": length,
         "confidence": None,
         "file_url": FILE_URL.format(pdb_id=pdb_id),
+        # P6: the seam that lets an RCSB import reach UniProt annotations.
+        # Rides the existing polymer-entity fetch and the existing metadata
+        # cache, so resolving an accession costs no extra round trip.
+        "uniprot_accession": _uniprot_accession(entity),
     }
+
+
+def _uniprot_accession(entity: Metadata) -> str | None:
+    """Pull the UniProt accession for a polymer entity, or None.
+
+    RCSB publishes it two ways and not always both: a flat `uniprot_ids` list
+    on the container identifiers, and a `reference_sequence_identifiers` list
+    that names its database. Read the flat list first, fall back to the
+    self-describing one.
+    """
+    identifiers = entity.get("rcsb_polymer_entity_container_identifiers") or {}
+    if not isinstance(identifiers, dict):
+        return None
+
+    uniprot_ids = identifiers.get("uniprot_ids")
+    if isinstance(uniprot_ids, list):
+        for value in uniprot_ids:
+            if isinstance(value, str) and value.strip():
+                return value.strip().upper()
+
+    references = identifiers.get("reference_sequence_identifiers")
+    if isinstance(references, list):
+        for reference in references:
+            if not isinstance(reference, dict):
+                continue
+            if reference.get("database_name") != "UniProt":
+                continue
+            accession = reference.get("database_accession")
+            if isinstance(accession, str) and accession.strip():
+                return accession.strip().upper()
+    return None
 
 
 def _clean(value: object) -> str | None:

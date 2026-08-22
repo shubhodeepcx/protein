@@ -1,0 +1,229 @@
+{
+  "_fixture_note": "UniProtKB entry P01308 (INS_HUMAN) as returned by https://rest.uniprot.org/uniprotkb/P01308.json?fields=<ANNOTATION_FIELDS>, trimmed to a representative slice of each annotation category. Insulin deliberately carries NO catalytic activity, NO transmembrane feature and NO BioCyc cross-reference — that is what pins the hide-empty-sections rule. See uniprot_annotations_P00533.json for the enzyme/membrane case.",
+  "entryType": "UniProtKB reviewed (Swiss-Prot)",
+  "primaryAccession": "P01308",
+  "uniProtkbId": "INS_HUMAN",
+  "organism": {
+    "scientificName": "Homo sapiens",
+    "commonName": "Human",
+    "taxonId": 9606,
+    "lineage": [
+      "Eukaryota",
+      "Metazoa",
+      "Chordata",
+      "Craniata",
+      "Vertebrata",
+      "Euteleostomi",
+      "Mammalia",
+      "Eutheria",
+      "Euarchontoglires",
+      "Primates",
+      "Haplorrhini",
+      "Catarrhini",
+      "Hominidae",
+      "Homo"
+    ]
+  },
+  "proteinDescription": {
+    "recommendedName": { "fullName": { "value": "Insulin" } },
+    "contains": [
+      { "recommendedName": { "fullName": { "value": "Insulin B chain" } } },
+      { "recommendedName": { "fullName": { "value": "Insulin A chain" } } }
+    ],
+    "flag": "Precursor"
+  },
+  "genes": [{ "geneName": { "value": "INS" } }],
+  "comments": [
+    {
+      "commentType": "FUNCTION",
+      "texts": [
+        {
+          "value": "Insulin decreases blood glucose concentration. It increases cell permeability to monosaccharides, amino acids and fatty acids. It accelerates glycolysis, the pentose phosphate cycle, and glycogen synthesis in liver"
+        }
+      ]
+    },
+    {
+      "commentType": "SUBCELLULAR LOCATION",
+      "subcellularLocations": [
+        { "location": { "value": "Secreted", "id": "SL-0243" } }
+      ],
+      "note": {
+        "texts": [
+          { "value": "Stored in secretory granules of pancreatic beta cells and released into the bloodstream" }
+        ]
+      }
+    },
+    {
+      "commentType": "DISEASE",
+      "disease": {
+        "diseaseId": "Diabetes mellitus, insulin-dependent, 2",
+        "diseaseAccession": "DI-00542",
+        "acronym": "IDDM2",
+        "description": "A multifactorial disorder of glucose homeostasis that is characterized by susceptibility to ketoacidosis in the absence of insulin therapy.",
+        "diseaseCrossReference": { "database": "MIM", "id": "125852" }
+      }
+    },
+    {
+      "commentType": "DISEASE",
+      "disease": {
+        "diseaseId": "Maturity-onset diabetes of the young 10",
+        "diseaseAccession": "DI-02749",
+        "acronym": "MODY10",
+        "description": "A form of diabetes that is characterized by an autosomal dominant mode of inheritance, onset in childhood or early adulthood, and a primary defect in insulin secretion.",
+        "diseaseCrossReference": { "database": "MIM", "id": "613370" }
+      }
+    },
+    {
+      "commentType": "DISEASE",
+      "disease": {
+        "diseaseId": "Hyperproinsulinemia",
+        "diseaseAccession": "DI-00543",
+        "acronym": "HPRI",
+        "description": "A condition characterized by elevated levels of circulating proinsulin.",
+        "diseaseCrossReference": { "database": "MIM", "id": "176730" }
+      }
+    }
+  ],
+  "features": [
+    {
+      "type": "Signal",
+      "location": {
+        "start": { "value": 1, "modifier": "EXACT" },
+        "end": { "value": 24, "modifier": "EXACT" }
+      },
+      "description": ""
+    },
+    {
+      "type": "Chain",
+      "location": {
+        "start": { "value": 25, "modifier": "EXACT" },
+        "end": { "value": 54, "modifier": "EXACT" }
+      },
+      "description": "Insulin B chain",
+      "featureId": "PRO_0000015819"
+    },
+    {
+      "type": "Chain",
+      "location": {
+        "start": { "value": 90, "modifier": "EXACT" },
+        "end": { "value": 110, "modifier": "EXACT" }
+      },
+      "description": "Insulin A chain",
+      "featureId": "PRO_0000015821"
+    },
+    {
+      "type": "Disulfide bond",
+      "location": {
+        "start": { "value": 31, "modifier": "EXACT" },
+        "end": { "value": 96, "modifier": "EXACT" }
+      },
+      "description": "Interchain (between B and A chains)"
+    },
+    {
+      "type": "Disulfide bond",
+      "location": {
+        "start": { "value": 43, "modifier": "EXACT" },
+        "end": { "value": 109, "modifier": "EXACT" }
+      },
+      "description": "Interchain (between B and A chains)"
+    },
+    {
+      "type": "Disulfide bond",
+      "location": {
+        "start": { "value": 95, "modifier": "EXACT" },
+        "end": { "value": 100, "modifier": "EXACT" }
+      },
+      "description": ""
+    }
+  ],
+  "keywords": [
+    { "id": "KW-0165", "category": "PTM", "name": "Cleavage on pair of basic residues" },
+    { "id": "KW-0219", "category": "Disease", "name": "Diabetes mellitus" },
+    { "id": "KW-0225", "category": "Disease", "name": "Disease variant" },
+    { "id": "KW-1015", "category": "PTM", "name": "Disulfide bond" },
+    { "id": "KW-0372", "category": "Molecular function", "name": "Hormone" },
+    { "id": "KW-1185", "category": "Technical term", "name": "Reference proteome" },
+    { "id": "KW-0964", "category": "Cellular component", "name": "Secreted" },
+    { "id": "KW-0732", "category": "Domain", "name": "Signal" }
+  ],
+  "uniProtKBCrossReferences": [
+    {
+      "database": "GO",
+      "id": "GO:0005615",
+      "properties": [
+        { "key": "GoTerm", "value": "C:extracellular space" },
+        { "key": "GoEvidenceType", "value": "IDA:UniProtKB" }
+      ]
+    },
+    {
+      "database": "GO",
+      "id": "GO:0030141",
+      "properties": [
+        { "key": "GoTerm", "value": "C:secretory granule" },
+        { "key": "GoEvidenceType", "value": "IEA:Ensembl" }
+      ]
+    },
+    {
+      "database": "GO",
+      "id": "GO:0005179",
+      "properties": [
+        { "key": "GoTerm", "value": "F:hormone activity" },
+        { "key": "GoEvidenceType", "value": "IDA:UniProtKB" }
+      ]
+    },
+    {
+      "database": "GO",
+      "id": "GO:0005158",
+      "properties": [
+        { "key": "GoTerm", "value": "F:insulin receptor binding" },
+        { "key": "GoEvidenceType", "value": "IPI:IntAct" }
+      ]
+    },
+    {
+      "database": "GO",
+      "id": "GO:0008286",
+      "properties": [
+        { "key": "GoTerm", "value": "P:insulin receptor signaling pathway" },
+        { "key": "GoEvidenceType", "value": "IDA:UniProtKB" }
+      ]
+    },
+    {
+      "database": "GO",
+      "id": "GO:0006006",
+      "properties": [
+        { "key": "GoTerm", "value": "P:glucose metabolic process" },
+        { "key": "GoEvidenceType", "value": "TAS:ProtInc" }
+      ]
+    },
+    {
+      "database": "Reactome",
+      "id": "R-HSA-264876",
+      "properties": [{ "key": "PathwayName", "value": "Insulin processing" }]
+    },
+    {
+      "database": "Reactome",
+      "id": "R-HSA-74749",
+      "properties": [{ "key": "PathwayName", "value": "Signal attenuation" }]
+    },
+    {
+      "database": "SIGNOR",
+      "id": "P01308",
+      "properties": [{ "key": "Description", "value": "-" }]
+    },
+    {
+      "database": "Proteomes",
+      "id": "UP000005640",
+      "properties": [{ "key": "Component", "value": "Chromosome 11" }]
+    },
+    {
+      "database": "AlphaFoldDB",
+      "id": "P01308",
+      "properties": [{ "key": "Description", "value": "-" }]
+    }
+  ],
+  "sequence": {
+    "value": "MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKTRREAEDLQVGQVELGGGPGAGSLQPLALEGSLQKRGIVEQCCTSICSLYQLENYCN",
+    "length": 110,
+    "molWeight": 11981
+  }
+}

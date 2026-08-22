@@ -16,8 +16,10 @@ from app.models.analytics import (
     PropertyDistribution,
     SecondaryStructurePercentages,
 )
+from app.models.annotations import ProteinAnnotations
 from app.models.protein import ProteinSummary
-from app.services import analytics, ingest, registry
+from app.services import analytics, annotations, ingest, registry
+from app.services.external import SourceNotFoundError, SourceUnavailableError
 from app.storage import local as storage
 
 logger = logging.getLogger(__name__)
@@ -166,6 +168,55 @@ def _compute_analytics(
         property_distribution=prop,
         chain_lengths=chain_lengths,
     )
+
+
+@router.get("/{uid}/annotations", response_model=ProteinAnnotations)
+async def get_protein_annotations(uid: str) -> ProteinAnnotations:
+    """Biological annotation for a stored protein, from UniProtKB (P6).
+
+    A protein with no resolvable UniProt accession — the normal case for a
+    plain upload — is not an error. It returns 200 with every section empty
+    and `accession_resolved: false`, so the panel can say *why* it is empty
+    instead of showing a failure the user cannot act on.
+
+    502 is reserved for the one case where we know the accession and UniProt
+    itself could not be reached: there, retrying is worth offering.
+    """
+    # Imported inside the handler: `api.search` owns the client singletons, and
+    # importing it at module scope would make the two routers import-cyclic.
+    from app.api.search import get_rcsb_client, get_uniprot_client
+
+    try:
+        storage.validate_uid(uid)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="Protein not found") from exc
+    summary = registry.get(uid)
+    if not summary:
+        raise HTTPException(status_code=404, detail="Protein not found")
+
+    uniprot = get_uniprot_client()
+    accession, note = await annotations.resolve_accession(
+        summary, uniprot=uniprot, rcsb=get_rcsb_client()
+    )
+    if accession is None:
+        logger.info("No UniProt accession for %s: %s", uid, note)
+        return annotations.empty_annotations(uid, note)
+
+    try:
+        entry = await uniprot.fetch_annotations(accession)
+    except SourceNotFoundError as exc:
+        logger.info("UniProt has no entry for %s (protein %s): %s", accession, uid, exc)
+        return annotations.empty_annotations(
+            uid, f"UniProt has no entry for accession {accession}.", accession=accession
+        )
+    except SourceUnavailableError as exc:
+        logger.warning("UniProt annotations unavailable for %s: %s", accession, exc)
+        raise HTTPException(
+            status_code=502,
+            detail="Could not reach UniProt for this protein's annotations. Try again.",
+        ) from exc
+
+    return annotations.build_annotations(uid, entry, accession=accession, note=note)
 
 
 @router.get("/{uid}/analytics", response_model=AnalyticsResponse)

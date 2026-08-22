@@ -26,6 +26,57 @@ ENTRY_URL = "https://rest.uniprot.org/uniprotkb/{accession}.json"
 # Only ask for the fields we actually render — a bare UniProtKB entry is ~100 kB.
 SEARCH_FIELDS = "accession,id,protein_name,organism_name,length,xref_alphafolddb,cc_function"
 
+# P6: the annotation panel's field set. UniProtKB exposes ~370 return fields;
+# these are the ones the client's list maps onto (slice design section 2).
+#
+# Every name here was checked against UniProt's own result-fields column enum
+# (ebi-uniprot/uniprot-website `src/uniprotkb/types/columnTypes.ts`, which
+# documents itself as mirroring `/api/configure/uniprotkb/result-fields`).
+# Two corrections came out of that check, both recorded in the decisions log:
+#   * `xref_uniref` does NOT exist — UniRef is a separate dataset with its own
+#     endpoint, not a UniProtKB cross-reference field. Asking for it makes the
+#     whole request a 400, so "similar proteins" waits for P8.
+#   * `xref_ndex` DOES exist, though the slice design filed NDEx under
+#     "needs another source". It is included: it costs nothing here.
+ANNOTATION_FIELD_NAMES: tuple[str, ...] = (
+    # names, gene, origin
+    "accession",
+    "id",
+    "protein_name",
+    "gene_names",
+    "organism_name",
+    "organism_id",
+    "lineage",
+    "length",
+    # function + catalysis
+    "cc_function",
+    "cc_catalytic_activity",
+    # gene ontology, one field per aspect
+    "go_p",
+    "go_c",
+    "go_f",
+    "keyword",
+    # localisation + membrane topology
+    "cc_subcellular_location",
+    "ft_transmem",
+    "ft_topo_dom",
+    # disease + PTM/processing
+    "cc_disease",
+    "cc_ptm",
+    "ft_mod_res",
+    "ft_signal",
+    "ft_chain",
+    "ft_disulfid",
+    # pathway / network / proteome cross-references
+    "xref_proteomes",
+    "xref_reactome",
+    "xref_biocyc",
+    "xref_signor",
+    "xref_ndex",
+)
+
+ANNOTATION_FIELDS = ",".join(ANNOTATION_FIELD_NAMES)
+
 # UniProt's own accession pattern (see https://www.uniprot.org/help/accession_numbers),
 # optionally followed by an isoform suffix such as "-2".
 _ACCESSION_RE = re.compile(
@@ -45,8 +96,19 @@ class UniProtClient:
 
     source = "uniprot"
 
-    def __init__(self, cache: TTLCache[Metadata] | None = None) -> None:
+    def __init__(
+        self,
+        cache: TTLCache[Metadata] | None = None,
+        annotation_cache: TTLCache[Metadata] | None = None,
+    ) -> None:
         self._cache: TTLCache[Metadata] = cache if cache is not None else TTLCache()
+        # Annotations get their own cache: the payloads have a different shape
+        # (a whole UniProtKB entry, not our normalised metadata dict) and are
+        # an order of magnitude larger, so sharing one LRU would let one
+        # annotation lookup evict several search enrichments.
+        self._annotation_cache: TTLCache[Metadata] = (
+            annotation_cache if annotation_cache is not None else TTLCache()
+        )
 
     # ---------------------------------------------------------------- search
 
@@ -142,6 +204,101 @@ class UniProtClient:
         self._cache.put(accession, meta)
         return meta
 
+    # ----------------------------------------------------------- annotations
+
+    async def fetch_annotations(self, protein_id: str) -> Metadata:
+        """The raw UniProtKB entry, restricted to `ANNOTATION_FIELDS`.
+
+        Returned unflattened on purpose: `services/annotations.py` owns the
+        projection onto `ProteinAnnotations`, and keeping the transport here
+        means that projection is a pure function over recorded JSON.
+
+        Cached (LRU 256 / TTL 1h) — annotations change on UniProt's release
+        cadence, not per request, and the panel refetches on every tab open.
+        """
+        accession = normalise_accession(protein_id)
+        cached = self._annotation_cache.get(accession)
+        if cached is not None:
+            return cached
+
+        params = {"fields": ANNOTATION_FIELDS}
+        async with new_client() as client:
+            try:
+                response = await client.get(
+                    ENTRY_URL.format(accession=accession), params=params
+                )
+            except httpx.HTTPError as exc:
+                raise SourceUnavailableError(
+                    f"UniProt annotation request failed: {exc}"
+                ) from exc
+
+        if response.status_code in (400, 404):
+            # A 400 here is also how UniProt answers an unknown field name, so
+            # log the distinction rather than silently reading it as "no entry".
+            logger.info(
+                "UniProt annotations for %s returned HTTP %d",
+                accession,
+                response.status_code,
+            )
+            raise SourceNotFoundError(f"UniProt has no entry for accession {accession}")
+        if response.status_code >= 400:
+            raise SourceUnavailableError(
+                f"UniProt annotations for {accession} returned HTTP {response.status_code}"
+            )
+        try:
+            body = response.json()
+        except ValueError as exc:
+            raise SourceUnavailableError(
+                "UniProt annotations returned non-JSON body"
+            ) from exc
+        if not isinstance(body, dict):
+            raise SourceUnavailableError(
+                "UniProt annotations returned an unexpected payload"
+            )
+
+        self._annotation_cache.put(accession, body)
+        return body
+
+    async def find_accession_for_pdb(self, pdb_id: str) -> str | None:
+        """Resolve a PDB entry ID to a UniProt accession via UniProt's own index.
+
+        The fallback for RCSB imports whose polymer-entity metadata carries no
+        UniProt cross-reference. Returns None rather than raising when the
+        search finds nothing — a structure with no UniProt counterpart is a
+        normal outcome, not an error.
+        """
+        params: dict[str, Any] = {
+            "query": f"(xref:pdb-{pdb_id})",
+            "format": "json",
+            "size": 1,
+            "fields": "accession",
+        }
+        async with new_client() as client:
+            try:
+                response = await client.get(SEARCH_URL, params=params)
+            except httpx.HTTPError as exc:
+                raise SourceUnavailableError(
+                    f"UniProt PDB cross-reference search failed: {exc}"
+                ) from exc
+
+        if response.status_code >= 400:
+            raise SourceUnavailableError(
+                f"UniProt PDB cross-reference search returned HTTP {response.status_code}"
+            )
+        try:
+            body = response.json()
+        except ValueError as exc:
+            raise SourceUnavailableError(
+                "UniProt PDB cross-reference search returned non-JSON body"
+            ) from exc
+
+        results = body.get("results") if isinstance(body, dict) else None
+        if not isinstance(results, list) or not results:
+            return None
+        first = results[0]
+        accession = first.get("primaryAccession") if isinstance(first, dict) else None
+        return accession if isinstance(accession, str) and accession else None
+
     # ------------------------------------------------------------- structure
 
     async def download_structure(self, protein_id: str) -> tuple[bytes, str]:
@@ -197,7 +354,7 @@ def _normalise(entry: Metadata) -> Metadata:
     return {
         "source": "uniprot",
         "source_id": str(accession) if accession else "",
-        "title": _protein_name(entry),
+        "title": recommended_protein_name(entry),
         "organism": organism if isinstance(organism, str) else None,
         "description": _function_comment(entry),
         "resolution": None,
@@ -211,7 +368,12 @@ def _normalise(entry: Metadata) -> Metadata:
     }
 
 
-def _protein_name(entry: Metadata) -> str | None:
+def recommended_protein_name(entry: Metadata) -> str | None:
+    """The entry's recommended name, falling back to its first submitted name.
+
+    Public because `services/annotations.py` needs exactly this rule — the
+    annotation panel and a search card must not disagree about a protein's name.
+    """
     description = entry.get("proteinDescription") or {}
     recommended = description.get("recommendedName") or {}
     full = (recommended.get("fullName") or {}).get("value")
