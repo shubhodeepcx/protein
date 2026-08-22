@@ -1,0 +1,9 @@
+HEADER    SUPERPOSITION FIXTURE                   01-JAN-00   0SUP
+TITLE     TRANSFORMED REFERENCE WITH RESIDUES 4-5 DELETED
+ATOM      1  CA  ALA A   1       8.992  -1.850  11.000  1.00 10.00           C
+ATOM      2  CA  CYS A   2       5.522  -1.238  12.500  1.00 10.00           C
+ATOM      3  CA  ASP A   3       5.522  -4.762  14.000  1.00 10.00           C
+ATOM      4  CA  GLY A   4       4.735  -2.601  18.500  1.00 10.00           C
+ATOM      5  CA  HIS A   5       7.000  -5.300  20.000  1.00 10.00           C
+ATOM      6  CA  ILE A   6       9.265  -2.601  21.500  1.00 10.00           C
+END
