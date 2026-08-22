@@ -1,0 +1,208 @@
+{
+  "_fixture_note": "UniProtKB entry P00533 (EGFR_HUMAN) in the same shape, trimmed. This is the enzyme + membrane counterpart to the insulin fixture: it is the one that exercises cc_catalytic_activity (Rhea + EC + ChEBI), ft_transmem, ft_topo_dom, cc_ptm, ft_mod_res, and the BioCyc / NDEx cross-references insulin has none of.",
+  "entryType": "UniProtKB reviewed (Swiss-Prot)",
+  "primaryAccession": "P00533",
+  "uniProtkbId": "EGFR_HUMAN",
+  "organism": {
+    "scientificName": "Homo sapiens",
+    "commonName": "Human",
+    "taxonId": 9606,
+    "lineage": ["Eukaryota", "Metazoa", "Chordata", "Mammalia", "Primates", "Hominidae", "Homo"]
+  },
+  "proteinDescription": {
+    "recommendedName": {
+      "fullName": { "value": "Epidermal growth factor receptor" },
+      "ecNumbers": [{ "value": "2.7.10.1" }]
+    },
+    "flag": "Precursor"
+  },
+  "genes": [
+    {
+      "geneName": { "value": "EGFR" },
+      "synonyms": [{ "value": "ERBB" }, { "value": "ERBB1" }, { "value": "HER1" }]
+    }
+  ],
+  "comments": [
+    {
+      "commentType": "FUNCTION",
+      "texts": [
+        {
+          "value": "Receptor tyrosine kinase binding ligands of the EGF family and activating several signaling cascades to convert extracellular cues into appropriate cellular responses"
+        }
+      ]
+    },
+    {
+      "commentType": "CATALYTIC ACTIVITY",
+      "reaction": {
+        "name": "L-tyrosyl-[protein] + ATP = O-phospho-L-tyrosyl-[protein] + ADP + H(+)",
+        "reactionCrossReferences": [
+          { "database": "Rhea", "id": "RHEA:10596" },
+          { "database": "ChEBI", "id": "CHEBI:30616" },
+          { "database": "ChEBI", "id": "CHEBI:46858" },
+          { "database": "ChEBI", "id": "CHEBI:456216" }
+        ],
+        "ecNumber": "2.7.10.1"
+      }
+    },
+    {
+      "commentType": "SUBCELLULAR LOCATION",
+      "subcellularLocations": [
+        {
+          "location": { "value": "Cell membrane", "id": "SL-0039" },
+          "topology": { "value": "Single-pass type I membrane protein", "id": "SL-9905" }
+        },
+        { "location": { "value": "Endoplasmic reticulum membrane", "id": "SL-0095" } }
+      ]
+    },
+    {
+      "commentType": "PTM",
+      "texts": [
+        {
+          "value": "Phosphorylated on Tyr residues in response to ligand binding; autophosphorylation creates the docking sites downstream adapters bind"
+        }
+      ]
+    },
+    {
+      "commentType": "DISEASE",
+      "disease": {
+        "diseaseId": "Lung cancer",
+        "diseaseAccession": "DI-01352",
+        "acronym": "LNCR",
+        "description": "A common malignancy affecting tissues of the lung.",
+        "diseaseCrossReference": { "database": "MIM", "id": "211980" }
+      }
+    },
+    {
+      "commentType": "DISEASE",
+      "disease": {
+        "diseaseId": "Inflammatory skin and bowel disease, neonatal, 2",
+        "diseaseAccession": "DI-04568",
+        "acronym": "NISBD2",
+        "description": "An autosomal recessive disorder characterized by neonatal inflammatory skin and bowel disease.",
+        "diseaseCrossReference": { "database": "MIM", "id": "616069" }
+      }
+    }
+  ],
+  "features": [
+    {
+      "type": "Signal",
+      "location": {
+        "start": { "value": 1, "modifier": "EXACT" },
+        "end": { "value": 24, "modifier": "EXACT" }
+      },
+      "description": ""
+    },
+    {
+      "type": "Chain",
+      "location": {
+        "start": { "value": 25, "modifier": "EXACT" },
+        "end": { "value": 1210, "modifier": "EXACT" }
+      },
+      "description": "Epidermal growth factor receptor",
+      "featureId": "PRO_0000016665"
+    },
+    {
+      "type": "Topological domain",
+      "location": {
+        "start": { "value": 25, "modifier": "EXACT" },
+        "end": { "value": 645, "modifier": "EXACT" }
+      },
+      "description": "Extracellular"
+    },
+    {
+      "type": "Transmembrane",
+      "location": {
+        "start": { "value": 646, "modifier": "EXACT" },
+        "end": { "value": 668, "modifier": "EXACT" }
+      },
+      "description": "Helical"
+    },
+    {
+      "type": "Topological domain",
+      "location": {
+        "start": { "value": 669, "modifier": "EXACT" },
+        "end": { "value": 1210, "modifier": "EXACT" }
+      },
+      "description": "Cytoplasmic"
+    },
+    {
+      "type": "Modified residue",
+      "location": {
+        "start": { "value": 1068, "modifier": "EXACT" },
+        "end": { "value": 1068, "modifier": "EXACT" }
+      },
+      "description": "Phosphotyrosine; by autocatalysis"
+    },
+    {
+      "type": "Modified residue",
+      "location": {
+        "start": { "value": 1172, "modifier": "EXACT" },
+        "end": { "value": 1172, "modifier": "EXACT" }
+      },
+      "description": "Phosphotyrosine; by autocatalysis"
+    }
+  ],
+  "keywords": [
+    { "id": "KW-0067", "category": "Ligand", "name": "ATP-binding" },
+    { "id": "KW-1003", "category": "Cellular component", "name": "Cell membrane" },
+    { "id": "KW-0418", "category": "Molecular function", "name": "Kinase" },
+    { "id": "KW-0812", "category": "Cellular component", "name": "Transmembrane" },
+    { "id": "KW-0829", "category": "Molecular function", "name": "Tyrosine-protein kinase" }
+  ],
+  "uniProtKBCrossReferences": [
+    {
+      "database": "GO",
+      "id": "GO:0005886",
+      "properties": [
+        { "key": "GoTerm", "value": "C:plasma membrane" },
+        { "key": "GoEvidenceType", "value": "TAS:Reactome" }
+      ]
+    },
+    {
+      "database": "GO",
+      "id": "GO:0004714",
+      "properties": [
+        { "key": "GoTerm", "value": "F:transmembrane receptor protein tyrosine kinase activity" },
+        { "key": "GoEvidenceType", "value": "IDA:UniProtKB" }
+      ]
+    },
+    {
+      "database": "GO",
+      "id": "GO:0007173",
+      "properties": [
+        { "key": "GoTerm", "value": "P:epidermal growth factor receptor signaling pathway" },
+        { "key": "GoEvidenceType", "value": "IDA:UniProtKB" }
+      ]
+    },
+    {
+      "database": "Reactome",
+      "id": "R-HSA-177929",
+      "properties": [{ "key": "PathwayName", "value": "Signaling by EGFR" }]
+    },
+    {
+      "database": "BioCyc",
+      "id": "MetaCyc:HS08109-MONOMER",
+      "properties": [{ "key": "Description", "value": "-" }]
+    },
+    {
+      "database": "SIGNOR",
+      "id": "P00533",
+      "properties": [{ "key": "Description", "value": "-" }]
+    },
+    {
+      "database": "NDEx",
+      "id": "EBS3129",
+      "properties": [{ "key": "Description", "value": "-" }]
+    },
+    {
+      "database": "Proteomes",
+      "id": "UP000005640",
+      "properties": [{ "key": "Component", "value": "Chromosome 7" }]
+    }
+  ],
+  "sequence": {
+    "value": "MRPSGTAGAALLALLAALCPASRALEEKKVCQGTSNKLTQLGTFEDHFLSLQRMFNNCEVVLGNLEITYVQRNYDLSFLKTIQEVAGYVLIALNTVERIPLENLQIIRGNMYYENSYALAVLSNYDANKTGLKELPMRNLQEILHGAVRFSNNPALCNVESIQWRDIVSSDFLSNMSMDFQNHLGSCQKCDPSCPNGSCWGAGEENCQKLTKIICAQQCSGRCRGKSPSDCCHNQCAAGCTGPRESDCLVCRKFRDEATCKDTCPPLMLYNPTTYQMDVNPEGKYSFGATCVKKCPRNYVVTDHGSCVRACGADSYEMEEDGVRKCKKCEGPCRKVCNGIGIGEFKDSLSINATNIKHFKNCTSISGDLHILPVAFRGDSFTHTPPLDPQELDILKTVKEITGFLLIQAWPENRTDLHAFENLEIIRGRTKQHGQFSLAVVSLNITSLGLRSLKEISDGDVIISGNKNLCYANTINWKKLFGTSGQKTKIISNRGENSCKATGQVCHALCSPEGCWGPEPRDCVSCRNVSRGRECVDKCNLLEGEPREFVENSECIQCHPECLPQAMNITCTGRGPDNCIQCAHYIDGPHCVKTCPAGVMGENNTLVWKYADAGHVCHLCHPNCTYGCTGPGLEGCPTNGPKIPSIATGMVGALLLLLVVALGIGLFMRRRHIVRKRTLRRLLQERELVEPLTPSGEAPNQALLRILKETEFKKIKVLGSGAFGTVYKGLWIPEGEKVKIPVAIKELREATSPKANKEILDEAYVMASVDNPHVCRLLGICLTSTVQLITQLMPFGCLLDYVREHKDNIGSQYLLNWCVQIAKGMNYLEDRRLVHRDLAARNVLVKTPQHVKITDFGLAKLLGAEEKEYHAEGGKVPIKWMALESILHRIYTHQSDVWSYGVTVWELMTFGSKPYDGIPASEISSILEKGERLPQPPICTIDVYMIMVKCWMIDADSRPKFRELIIEFSKMARDPQRYLVIQGDERMHLPSPTDSNFYRALMDEEDMDDVVDADEYLIPQQGFFSSPSTSRTPLLSSLSATSNNSTVACIDRNGLQSCPIKEDSFLQRYSSDPTGALTEDSIDDTFLPVPEYINQSVPKRPAGSVQNPVYHNQPLNPAPSRDPHYQDPHSTAVGNPEYLNTVQPTCVNSTFDSPAHWAQKGSHQISLDNPDYQQDFFPKEAKPNGIFKGSTAENAEYLRVAPQSSEFIGA",
+    "length": 1210,
+    "molWeight": 134277
+  }
+}

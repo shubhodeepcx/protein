@@ -1,0 +1,9 @@
+{
+  "_fixture_note": "Response shape of https://rest.uniprot.org/uniprotkb/search?query=(xref:pdb-1CRN)&fields=accession&size=1 — the fallback that maps a PDB entry to a UniProt accession when RCSB's polymer entity carries no cross-reference. 1CRN is crambin, whose UniProt entry is P01542.",
+  "results": [
+    {
+      "entryType": "UniProtKB reviewed (Swiss-Prot)",
+      "primaryAccession": "P01542"
+    }
+  ]
+}

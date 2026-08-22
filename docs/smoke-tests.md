@@ -390,6 +390,46 @@ directions; high pLDDT reads blue; the pLDDT option and the Overview B-factors f
 
 ---
 
+## P6 — Annotation panel
+
+Goal: open a protein imported from UniProt, RCSB or AlphaFold and read real biological
+annotation in the rail; open an uploaded file and be told plainly why there is none.
+
+1. Start both servers (`start.cmd`, or the two dev commands).
+2. Go to `/search`, search `insulin`, import the **UniProt P01308** card.
+3. In the viewer rail, click the **Annotations** tab.
+   - Expect: sections **Names & Origin**, **Function**, **Gene Ontology**, **Keywords**,
+     **Subcellular Location**, **Disease**, **PTM / Processing**, **Cross-references**.
+   - Expect **no** Catalytic Activity and **no** Transmembrane heading — insulin is neither an
+     enzyme nor a membrane protein, and an empty section is the bug this phase fixes.
+   - Names & Origin reads `Insulin` / `INS` / `Homo sapiens` / `INS_HUMAN`.
+   - Gene Ontology is split under *Molecular function*, *Biological process*,
+     *Cellular component*.
+   - A Reactome id links out to `reactome.org/content/detail/...` in a new tab.
+4. Import an enzyme with a membrane span — search `EGFR`, import the UniProt **P00533** card.
+   - Expect: **Catalytic Activity** showing the reaction text with `EC 2.7.10.1` and a
+     `RHEA:` link, and **Transmembrane** listing the 646–668 helical span between two
+     topological domains.
+5. Import an **RCSB** entry (e.g. `4INS`) and open Annotations.
+   - Expect: annotations resolved, with the footer note naming how — "via its polymer entity"
+     or "via UniProt's index".
+6. Upload a plain local PDB (e.g. `backend/app/static/1CRN.pdb`) and open Annotations.
+   - Expect: HTTP 200, no red error, and the message
+     *"Uploaded structures carry no database identifier to map from."*
+   - Negative case: this must never be a 500 or an error state.
+7. Collapse and re-expand any section header — sections start expanded.
+8. Tests:
+   ```
+   cd backend && pytest
+   cd frontend && npm ci && npm run lint && npm test && npm run build
+   ```
+   - Expect: 166 backend, 155 frontend, lint and build clean.
+
+**Pass criteria:** an entry with rich annotation fills the rail from UniProt; an entry without a
+given category shows no heading for it; an upload explains itself instead of erroring.
+
+---
+
 ## How to add a smoke test
 
 When you start a phase, replace the placeholder for that phase with the concrete steps. The steps should be the minimum sequence a fresh agent or human needs to verify the phase works end-to-end, including:

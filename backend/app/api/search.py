@@ -43,6 +43,29 @@ def get_client(source: SourceName) -> SourceClient:
     return _CLIENTS[source]
 
 
+def get_uniprot_client() -> UniProtClient:
+    """The UniProt singleton, concretely typed.
+
+    The annotation route (P6) needs `fetch_annotations` and
+    `find_accession_for_pdb`, which are deliberately not part of the uniform
+    three-coroutine `SourceClient` contract every source has to satisfy.
+    Reading it out of `_CLIENTS` rather than holding a second module-level
+    reference keeps the tests' client swap effective.
+    """
+    client = _CLIENTS["uniprot"]
+    if not isinstance(client, UniProtClient):  # pragma: no cover — defensive
+        raise TypeError("The 'uniprot' client slot does not hold a UniProtClient")
+    return client
+
+
+def get_rcsb_client() -> RCSBClient:
+    """The RCSB singleton, concretely typed. See `get_uniprot_client`."""
+    client = _CLIENTS["rcsb"]
+    if not isinstance(client, RCSBClient):  # pragma: no cover — defensive
+        raise TypeError("The 'rcsb' client slot does not hold an RCSBClient")
+    return client
+
+
 @router.get("", response_model=SearchResponse)
 async def search_databases(
     q: str = Query(..., description="Free-text query."),

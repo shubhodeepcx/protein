@@ -129,3 +129,95 @@ export interface ImportRequest {
   source: SearchSource;
   source_id: string;
 }
+
+/* ------------------------------------------------------------------------ */
+/* P6 — UniProt annotations                                                   */
+/* Mirrors `backend/app/models/annotations.py`. Every list is always present  */
+/* (possibly empty), so the panel decides what to render by asking whether a  */
+/* list is empty — never by branching on a status code.                       */
+/* ------------------------------------------------------------------------ */
+
+export interface GoTerm {
+  /** e.g. "GO:0005615". */
+  id: string;
+  /** Term label with UniProt's aspect prefix already stripped. */
+  term: string;
+  /** GO evidence code, e.g. "IDA". */
+  evidence: string | null;
+}
+
+export interface GeneOntology {
+  biological_process: GoTerm[];
+  cellular_component: GoTerm[];
+  molecular_function: GoTerm[];
+}
+
+export interface CatalyticActivity {
+  reaction: string | null;
+  ec_number: string | null;
+  /** e.g. ["RHEA:10596"]. */
+  rhea_ids: string[];
+  /** ChEBI ids for the reaction participants. */
+  chebi_ids: string[];
+}
+
+export interface SubcellularLocation {
+  location: string;
+  topology: string | null;
+}
+
+export interface SequenceFeature {
+  /** UniProt feature type, e.g. "Transmembrane". */
+  type: string;
+  description: string | null;
+  /** 1-based, inclusive. */
+  start: number | null;
+  end: number | null;
+}
+
+export interface DiseaseAssociation {
+  name: string;
+  acronym: string | null;
+  description: string | null;
+  /** OMIM identifier when UniProt cross-references one. */
+  mim_id: string | null;
+}
+
+export interface KeywordEntry {
+  id: string | null;
+  name: string;
+  category: string | null;
+}
+
+export interface CrossReference {
+  database: string;
+  id: string;
+  description: string | null;
+  url: string | null;
+}
+
+export interface ProteinAnnotations {
+  id: string;
+  accession: string | null;
+  /** False for a protein with no UniProt counterpart — an upload, usually. */
+  accession_resolved: boolean;
+  /** How the accession was resolved, or why it could not be. Shown to the user. */
+  resolution_note: string;
+  entry_name: string | null;
+  protein_name: string | null;
+  gene_names: string[];
+  organism: string | null;
+  taxon_id: number | null;
+  lineage: string[];
+  function: string[];
+  catalytic_activity: CatalyticActivity[];
+  gene_ontology: GeneOntology;
+  keywords: KeywordEntry[];
+  subcellular_locations: SubcellularLocation[];
+  subcellular_location_notes: string[];
+  transmembrane: SequenceFeature[];
+  diseases: DiseaseAssociation[];
+  ptm: string[];
+  ptm_features: SequenceFeature[];
+  cross_references: CrossReference[];
+}
