@@ -3,13 +3,15 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-21 by Shubhodeep Chatterjee (FINAL. Spec audit run; mmCIF secondary structure fixed — every RCSB import used to report 100% coil. 135 backend + 133 frontend tests green.)
+**Last updated:** 2026-08-22 by Shubhodeep Chatterjee (New scope from client: P6-P10 annotation / comparison / BLAST / complexes. Design at docs/superpowers/specs/2026-08-22-annotation-comparison-slice-design.md; scheduled to cloud agents.)
 
 ---
 
 ## Current phase
 
-**Slice complete and verified (P0–P5).** All six phases merged, and the manual smoke tests have now been executed end-to-end in a real Chromium against live servers and live public APIs. Every acceptance criterion in spec section 12 that needs a browser has been demonstrated. Remaining items are enhancements, not gaps.
+**P6–P10 scheduled** — new client scope (annotations, comparison, BLAST, complexes) designed at [2026-08-22-annotation-comparison-slice-design.md](superpowers/specs/2026-08-22-annotation-comparison-slice-design.md) and dispatched to cloud agents.
+
+_Previously:_ **Slice complete and verified (P0–P5).** All six phases merged, and the manual smoke tests have now been executed end-to-end in a real Chromium against live servers and live public APIs. Every acceptance criterion in spec section 12 that needs a browser has been demonstrated. Remaining items are enhancements, not gaps.
 
 Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](superpowers/specs/2026-05-23-protein-mvp-slice-design.md)
 
@@ -34,6 +36,11 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | Virtualise the sequence panel (one `<button>` per residue gets heavy above ~2,000 residues) | follow-up | — | 2h |
 | Make HETATM amino acids (e.g. MSE) selectable — currently skipped consistently by both parser and panel | follow-up | — | 1h |
 | Automated browser-level coverage for `extractResidueRecords` — manually verified 2026-08-21 on both a PDB upload and a 4-chain RCSB mmCIF, so this is now regression protection rather than an unknown | follow-up | a browser test runner | 3h |
+| **P6 — Annotation panel.** Enrich the UniProt client from 7 fields to the full set; `GET /{id}/annotations`; Annotations tab (names, function, catalytic activity, GO x3 aspects, keywords, subcellular location, transmembrane, disease, PTM, cross-refs to Reactome/BioCyc/SIGNOR/NDEx/proteomes) | P6 | — | 1-2d |
+| **P7 — Comparison view (spec A3).** `/compare?a=&b=`, two synced viewers, metric/composition/SS diff, pairwise alignment + identity %, optional superposition + RMSD | P7 | — | 1-2d |
+| **P8 — Similarity & BLAST.** EBI NCBI BLAST REST (submit/poll/retrieve — the project's first async flow) + UniRef similar proteins | P8 | — | 1-2d |
+| **P9 — Complex viewer.** EBI Complex Portal: participants, stoichiometry, pulldown for multi-complex proteins; topology graph if time allows | P9 | — | 2-3d |
+| **P10 — Interface density + theme.** Populate the left rail (the chain tree promised on the landing page), denser professional layout, optional molecular background. Client ranked this BELOW functionality | P10 | P6 | 1-2d |
 | Persistence slice — the in-memory registry resets on restart, so `/viewer/{id}` 404s afterwards though the file survives on disk | separate slice | Postgres decision | — |
 | Surface `secondary_structure.available === false` in the UI. The API now says honestly when a file carries no SS assignment (e.g. AlphaFold models), but the donut still draws a full coil ring — the frontend ignores the flag | follow-up | — | 30m |
 | **A5 Binding-pocket / functional-region detection — UNPLANNED GAP.** A spec-compliance audit found this is the only feature promised in `spec.md` that is neither built nor listed in any out-of-scope note. Every other unbuilt feature is a deliberate deferral. Decide explicitly: defer it or build it. | spec gap | — | — |
