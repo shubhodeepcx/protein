@@ -3,13 +3,13 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-22 by Shubhodeep Chatterjee (P6 annotation panel built on `feature/p6-annotations`: enriched UniProt field set, `GET /api/proteins/{id}/annotations`, Annotations tab. PR open.)
+**Last updated:** 2026-08-22 by Shubhodeep Chatterjee (P7 comparison view built on `feature/p7-comparison`: `/compare?a=&b=`, `POST /api/compare`, two Mol\* viewers, diff tables, pairwise alignment, superposition RMSD. PR open.)
 
 ---
 
 ## Current phase
 
-**P6 in review, P7–P10 scheduled** — new client scope (annotations, comparison, BLAST, complexes) designed at [2026-08-22-annotation-comparison-slice-design.md](superpowers/specs/2026-08-22-annotation-comparison-slice-design.md) and dispatched to cloud agents.
+**P6 and P7 in review, P8–P10 scheduled** — new client scope (annotations, comparison, BLAST, complexes) designed at [2026-08-22-annotation-comparison-slice-design.md](superpowers/specs/2026-08-22-annotation-comparison-slice-design.md) and dispatched to cloud agents.
 
 _Previously:_ **Slice complete and verified (P0–P5).** All six phases merged, and the manual smoke tests have now been executed end-to-end in a real Chromium against live servers and live public APIs. Every acceptance criterion in spec section 12 that needs a browser has been demonstrated. Remaining items are enhancements, not gaps.
 
@@ -22,7 +22,7 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
 | **P6 — Annotation panel.** Enriched UniProt field set, `GET /api/proteins/{id}/annotations`, Annotations tab | shubhodeep | `feature/p6-annotations` | PR open | Backend + tab both shipped. 166 backend / 155 frontend tests green, lint + webpack build clean. 43 mutations applied, all caught. Manual smoke test (docs/smoke-tests.md P6) still needs a human with a browser |
-| **P7 — Comparison view (spec A3).** `/compare?a=&b=`, two Mol\* viewers, metric/composition/SS diff table, `POST /api/compare` pairwise alignment, superposition RMSD | shubhodeep | `feature/p7-comparison` | wip | Branched from `main` at `d4d58c7` (P6 merged). Stands alone — touches no P6 file. Does NOT touch the residue-ordinal seam |
+| **P7 — Comparison view (spec A3).** `/compare?a=&b=`, two Mol\* viewers, metric/composition/SS diff table, `POST /api/compare` pairwise alignment, superposition RMSD | shubhodeep | `feature/p7-comparison` | PR open | All four deliverables shipped, RMSD included. 200 backend / 213 frontend tests green, lint + webpack build clean. 53 mutations applied, all caught. Branched from `main` at `d4d58c7`; touches no P6 file and does NOT touch the residue-ordinal seam. Manual smoke test (docs/smoke-tests.md P7) still needs a human with a browser |
 
 ---
 
@@ -38,10 +38,12 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | Re-record `uniprot_annotations_P01308.json` / `P00533.json` from a live UniProt response. They were hand-authored against the UniProtKB JSON schema because this environment's egress policy blocks `rest.uniprot.org` entirely; a live capture would also re-confirm the 28 field names | follow-up | egress to rest.uniprot.org | 30m |
 | Similar proteins / homologs via UniRef — dropped from P6 because `xref_uniref` is not a UniProtKB return field. Needs its own client against `rest.uniprot.org/uniref` | P8 | — | 3h |
 | Automated browser-level coverage for `extractResidueRecords` — manually verified 2026-08-21 on both a PDB upload and a 4-chain RCSB mmCIF, so this is now regression protection rather than an unknown | follow-up | a browser test runner | 3h |
-| **P7 — Comparison view (spec A3).** `/compare?a=&b=`, two synced viewers, metric/composition/SS diff, pairwise alignment + identity %, optional superposition + RMSD | P7 | — | 1-2d |
 | **P8 — Similarity & BLAST.** EBI NCBI BLAST REST (submit/poll/retrieve — the project's first async flow) + UniRef similar proteins | P8 | — | 1-2d |
 | **P9 — Complex viewer.** EBI Complex Portal: participants, stoichiometry, pulldown for multi-complex proteins; topology graph if time allows | P9 | — | 2-3d |
 | **P10 — Interface density + theme.** Populate the left rail (the chain tree promised on the landing page), denser professional layout, optional molecular background. Client ranked this BELOW functionality | P10 | P6 | 1-2d |
+| **Superimpose the two structures in 3D on `/compare`.** P7 computes and reports the RMSD but does not overlay the coordinates — the panes stay independent. Needs the transform applied Mol\*-side (or a transformed copy served) and one shared canvas | follow-up | P7 | 4h |
+| **Compare affordance on the search page.** P7 ships one from the viewer header. A "compare these two" selection on `/search` would import both hits and land on `/compare` in one step — the predicted-vs-experimental pair is one query away | follow-up | P7 | 2h |
+| Export the comparison report (spec A3 asks for it; P7 ships the on-screen comparison only). Overlaps the deferred F9 export slice — decide there rather than adding a one-off | follow-up | P7 | — |
 | Persistence slice — the in-memory registry resets on restart, so `/viewer/{id}` 404s afterwards though the file survives on disk | separate slice | Postgres decision | — |
 | Surface `secondary_structure.available === false` in the UI. The API now says honestly when a file carries no SS assignment (e.g. AlphaFold models), but the donut still draws a full coil ring — the frontend ignores the flag | follow-up | — | 30m |
 | **A5 Binding-pocket / functional-region detection — UNPLANNED GAP.** A spec-compliance audit found this is the only feature promised in `spec.md` that is neither built nor listed in any out-of-scope note. Every other unbuilt feature is a deliberate deferral. Decide explicitly: defer it or build it. | spec gap | — | — |
@@ -146,6 +148,15 @@ Append-only. Never edit past entries — supersede with a new entry referencing 
 
 | Date | Decision | Rationale | Reversible? |
 |---|---|---|---|
+| 2026-08-22 | P7 aligns with BLOSUM62 + affine gaps (−11/−1) rather than a flat match/mismatch `globalms` | The brief said "globalms-style", which is the right *shape* — global, affine gaps — but flat match/mismatch scoring makes "percent similarity" meaningless: with no substitution matrix there is no notion of a conservative substitution, so similarity would just restate identity. BLOSUM62 is what blastp and EMBOSS use for proteins and gives the '+' column a definition. Same affine gap model either way | yes — one function builds the aligner |
+| 2026-08-22 | End gaps are FREE in the P7 alignment (EMBOSS `needle`'s default) | A3's headline case is an AlphaFold model covering a whole UniProt sequence against a crystal form covering a construct. Charging for that overhang pushes the aligner into shredding the matching core to shorten it, which is both a worse alignment and a worse residue pairing for the RMSD. Cost: `identity_percent` over the full alignment length reads low, which is why `identity_percent_aligned` is reported beside it | yes |
+| 2026-08-22 | P7 reports three identity denominators, not one | Identity-over-alignment-length and identity-over-overlap are both standard, differ by a lot on a fragment-vs-full-length pair, and are routinely confused. Publishing one and calling it "identity" would be picking a side silently. Cost: four stat tiles instead of three | yes |
+| 2026-08-22 | `X` never counts as an identity or a similarity, including `X` against `X` | `X` is the parser's placeholder for a non-standard residue. Counting two placeholders as a match inflates identity exactly for the heavily-modified structures where it is least justified | yes |
+| 2026-08-22 | RMSD is REFUSED, not approximated, when the residue pairing cannot be verified — fewer than 3 CA pairs, or a residue list that disagrees with the parsed sequence | A wrong RMSD is worse than no RMSD: it is confident, precise, and unfalsifiable by eye. The length check is the guard against `services/compare.py` and `parser.py` ever disagreeing about which residues are polymer, which would misalign every pair after the divergence | yes — but the refusals should not be loosened |
+| 2026-08-22 | A twilight-zone (<20%) identity is FLAGGED, not refused | A3 explicitly lists "similar folds with low sequence identity" as a use case, so refusing there would decline the feature's own use case. The caveat travels with the number and renders as prominently as it does | yes — one threshold |
+| 2026-08-22 | `/compare`'s representation/coloring select offers only schemes truthful for BOTH structures | `plddt` and `bfactor` read the same column and which is honest depends on `has_plddt`. When the pair disagrees — predicted vs experimental, the case the page exists for — one shared select cannot label it for both, so both drop out. Chosen over per-pane selects, because two panes rendered differently compare the rendering rather than the structures | yes |
+| 2026-08-22 | P7 reports RMSD numerically but does not overlay the two structures in 3D | The fit is computed and never applied: `Superimposer.apply()` is not called, so neither input is mutated. A real 3D overlay needs the transform pushed through Mol\* onto one shared canvas, which is its own piece of work — filed as a follow-up. Reporting the number is what spec A3 asks for ("compute RMSD where alignment is possible") | yes |
+| 2026-08-22 | `compute_analytics` / `parse_structure_for_analytics` made public in `api/proteins.py` rather than duplicated for compare | The comparison needs the same analytics for two proteins at once. A second parse path is a second place for format detection and SS reading to drift — the same reasoning that extracted `services/ingest.py` in P5.5. Cost: one api module imports another | yes — extract to `services/` if a third caller appears |
 | 2026-08-22 | UniProt return-field names verified against UniProt's own `result-fields` column enum (`ebi-uniprot/uniprot-website`, `src/uniprotkb/types/columnTypes.ts`), not the help page | `rest.uniprot.org` and `www.uniprot.org` are both blocked by this environment's egress policy, so neither the REST config endpoint nor the help page was reachable. The website repo's enum documents itself as mirroring `/api/configure/uniprotkb/result-fields` and is UniProt's own source — a better authority than the brief. Cost: it can lag a UniProt release; a 400 from the entry endpoint is the symptom | yes — re-verify against the live endpoint when egress allows |
 | 2026-08-22 | `xref_uniref` dropped from the P6 field set | It is not a UniProtKB return field. UniRef is a separate dataset with its own endpoint; asking for it makes the whole entry request a 400 and takes every other section down with it. "Similar proteins" therefore belongs to P8, where UniRef gets its own client | no — the field does not exist |
 | 2026-08-22 | `xref_ndex` included even though the slice design filed NDEx under "needs another source" | It exists as a UniProtKB cross-reference field, so the client's NDEx ask is answered for free inside the call we were already making. A dedicated NDEx client is still the route to network *contents* | yes |
@@ -269,6 +280,27 @@ Goal: open a protein and read real biological annotation beside the structure.
 - [x] P6 smoke test in `docs/smoke-tests.md`
 - [ ] Manual smoke test executed in a browser (needs a human)
 
+### P7 — Comparison view (spec A3)
+
+Goal: open two structures side by side and get a real answer to "how do these differ?"
+
+- [x] `models/compare.py` — `CompareRequest` / `CompareResponse` and their eight sub-models
+- [x] `services/compare.py` — pure alignment, diff, and superposition; no I/O
+- [x] `POST /api/compare` in `api/compare.py`, three independent response layers
+- [x] Global BLOSUM62 alignment with affine gaps and free end gaps (`Bio.Align.PairwiseAligner`)
+- [x] Identity / similarity / alignment length, plus identity over the overlap
+- [x] Superposition RMSD via `Bio.PDB.Superimposer`, residues paired through the alignment
+- [x] `polymer_residues` pinned against `parser.parse` on the adversarial parity fixture
+- [x] `/compare?a=&b=` route, two Mol\* viewers reusing `MolstarViewer` unchanged
+- [x] Metric / chain-length / secondary-structure / composition diff tables
+- [x] Alignment rendered in numbered 60-column blocks with a `|`/`+` match line
+- [x] Compare button in the viewer header
+- [x] Backend pytest: 34 tests, including five committed superposition fixtures
+- [x] Frontend vitest: 24 tests, including the two-instance Mol\* lifecycle
+- [x] P7 smoke test in `docs/smoke-tests.md`
+- [ ] Manual smoke test executed in a browser (needs a human)
+- [ ] 3D overlay of the superposed structures (filed as a follow-up)
+
 ### P5 — DB search + import
 
 Goal: search "insulin", click a result, see it in the viewer.
@@ -290,7 +322,7 @@ Tracked here so future agents don't accidentally pull them in:
 
 - AI annotation assistant (F8) — separate slice
 - Mutation impact visualizer (A2) — separate slice
-- Comparative protein view (A3) — separate slice
+- ~~Comparative protein view (A3)~~ — **built in P7**, 2026-08-22
 - Similarity search (A4) — separate slice
 - Contact map (A6) — separate slice
 - Export system (F9: PDF / PNG / JSON / CSV) — separate slice
