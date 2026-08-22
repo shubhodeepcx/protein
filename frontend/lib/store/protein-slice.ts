@@ -1,5 +1,9 @@
 import type { StateCreator } from "zustand";
-import type { ProteinSummary, AnalyticsResponse } from "@/lib/types";
+import type {
+  ProteinSummary,
+  AnalyticsResponse,
+  ProteinAnnotations,
+} from "@/lib/types";
 import { apiGet, ApiError } from "@/lib/api";
 
 export interface ProteinLoadError {
@@ -14,6 +18,9 @@ export interface ProteinSlice {
   analytics: AnalyticsResponse | null;
   analyticsLoading: boolean;
   analyticsError: ProteinLoadError | null;
+  annotations: ProteinAnnotations | null;
+  annotationsLoading: boolean;
+  annotationsError: ProteinLoadError | null;
   /**
    * Loads protein metadata by id from `GET /api/proteins/{id}`.
    *
@@ -36,12 +43,25 @@ export interface ProteinSlice {
    * the two requests can race without clobbering each other.
    */
   loadAnalytics: (id: string) => Promise<void>;
+  /**
+   * Loads UniProt annotations from `GET /api/proteins/{id}/annotations`.
+   *
+   * Third independent request token, for the same reason the other two have
+   * their own: the rail is mounted twice (side panel + stacked) and the three
+   * requests race freely.
+   *
+   * A protein with no resolvable accession is a *successful* load carrying an
+   * empty payload, not an error — the panel says why it is empty. Only a
+   * transport or 5xx failure lands in `annotationsError`.
+   */
+  loadAnnotations: (id: string) => Promise<void>;
   clearProtein: () => void;
 }
 
 // Module-level counters so stale responses can detect they were superseded.
 let metaSeq = 0;
 let analyticsSeq = 0;
+let annotationsSeq = 0;
 
 export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice> = (
   set,
@@ -52,6 +72,9 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
   analytics: null,
   analyticsLoading: false,
   analyticsError: null,
+  annotations: null,
+  annotationsLoading: false,
+  annotationsError: null,
   loadProtein: async (id: string) => {
     const myReq = ++metaSeq;
     // Clear stale data immediately so consumers don't see protein A while loading B.
@@ -62,6 +85,8 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       error: null,
       analytics: null,
       analyticsError: null,
+      annotations: null,
+      annotationsError: null,
     });
     try {
       const summary = await apiGet<ProteinSummary>(`/api/proteins/${id}`);
@@ -88,10 +113,27 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       set({ analyticsError: { status, message }, analyticsLoading: false });
     }
   },
+  loadAnnotations: async (id: string) => {
+    const myReq = ++annotationsSeq;
+    set({ annotationsLoading: true, annotationsError: null });
+    try {
+      const a = await apiGet<ProteinAnnotations>(
+        `/api/proteins/${id}/annotations`,
+      );
+      if (myReq !== annotationsSeq) return;
+      set({ annotations: a, annotationsLoading: false });
+    } catch (e) {
+      if (myReq !== annotationsSeq) return;
+      const status = e instanceof ApiError ? e.status : null;
+      const message = e instanceof Error ? e.message : String(e);
+      set({ annotationsError: { status, message }, annotationsLoading: false });
+    }
+  },
   clearProtein: () => {
     // Bumping the sequences invalidates any in-flight loads.
     metaSeq++;
     analyticsSeq++;
+    annotationsSeq++;
     set({
       current: null,
       error: null,
@@ -99,6 +141,9 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       analytics: null,
       analyticsError: null,
       analyticsLoading: false,
+      annotations: null,
+      annotationsError: null,
+      annotationsLoading: false,
     });
   },
 });

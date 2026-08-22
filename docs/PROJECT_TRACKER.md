@@ -3,13 +3,13 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-22 by Shubhodeep Chatterjee (New scope from client: P6-P10 annotation / comparison / BLAST / complexes. Design at docs/superpowers/specs/2026-08-22-annotation-comparison-slice-design.md; scheduled to cloud agents.)
+**Last updated:** 2026-08-22 by Shubhodeep Chatterjee (P6 annotation panel built on `feature/p6-annotations`: enriched UniProt field set, `GET /api/proteins/{id}/annotations`, Annotations tab. PR open.)
 
 ---
 
 ## Current phase
 
-**P6–P10 scheduled** — new client scope (annotations, comparison, BLAST, complexes) designed at [2026-08-22-annotation-comparison-slice-design.md](superpowers/specs/2026-08-22-annotation-comparison-slice-design.md) and dispatched to cloud agents.
+**P6 in review, P7–P10 scheduled** — new client scope (annotations, comparison, BLAST, complexes) designed at [2026-08-22-annotation-comparison-slice-design.md](superpowers/specs/2026-08-22-annotation-comparison-slice-design.md) and dispatched to cloud agents.
 
 _Previously:_ **Slice complete and verified (P0–P5).** All six phases merged, and the manual smoke tests have now been executed end-to-end in a real Chromium against live servers and live public APIs. Every acceptance criterion in spec section 12 that needs a browser has been demonstrated. Remaining items are enhancements, not gaps.
 
@@ -21,7 +21,7 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
-| **P6 — Annotation panel.** Enriched UniProt field set, `GET /api/proteins/{id}/annotations`, Annotations tab | shubhodeep | `feature/p6-annotations` | wip | Field names verified against UniProt's own `result-fields` column enum, not the help page — see the decisions log |
+| **P6 — Annotation panel.** Enriched UniProt field set, `GET /api/proteins/{id}/annotations`, Annotations tab | shubhodeep | `feature/p6-annotations` | PR open | Backend + tab both shipped. 166 backend / 155 frontend tests green, lint + webpack build clean. 43 mutations applied, all caught. Manual smoke test (docs/smoke-tests.md P6) still needs a human with a browser |
 
 ---
 
@@ -34,6 +34,8 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | Batch RCSB search enrichment via the GraphQL Data API (currently up to 50 REST calls per search) | follow-up | — | 2h |
 | Virtualise the sequence panel (one `<button>` per residue gets heavy above ~2,000 residues) | follow-up | — | 2h |
 | Make HETATM amino acids (e.g. MSE) selectable — currently skipped consistently by both parser and panel | follow-up | — | 1h |
+| Re-record `uniprot_annotations_P01308.json` / `P00533.json` from a live UniProt response. They were hand-authored against the UniProtKB JSON schema because this environment's egress policy blocks `rest.uniprot.org` entirely; a live capture would also re-confirm the 28 field names | follow-up | egress to rest.uniprot.org | 30m |
+| Similar proteins / homologs via UniRef — dropped from P6 because `xref_uniref` is not a UniProtKB return field. Needs its own client against `rest.uniprot.org/uniref` | P8 | — | 3h |
 | Automated browser-level coverage for `extractResidueRecords` — manually verified 2026-08-21 on both a PDB upload and a 4-chain RCSB mmCIF, so this is now regression protection rather than an unknown | follow-up | a browser test runner | 3h |
 | **P7 — Comparison view (spec A3).** `/compare?a=&b=`, two synced viewers, metric/composition/SS diff, pairwise alignment + identity %, optional superposition + RMSD | P7 | — | 1-2d |
 | **P8 — Similarity & BLAST.** EBI NCBI BLAST REST (submit/poll/retrieve — the project's first async flow) + UniRef similar proteins | P8 | — | 1-2d |
@@ -143,6 +145,13 @@ Append-only. Never edit past entries — supersede with a new entry referencing 
 
 | Date | Decision | Rationale | Reversible? |
 |---|---|---|---|
+| 2026-08-22 | UniProt return-field names verified against UniProt's own `result-fields` column enum (`ebi-uniprot/uniprot-website`, `src/uniprotkb/types/columnTypes.ts`), not the help page | `rest.uniprot.org` and `www.uniprot.org` are both blocked by this environment's egress policy, so neither the REST config endpoint nor the help page was reachable. The website repo's enum documents itself as mirroring `/api/configure/uniprotkb/result-fields` and is UniProt's own source — a better authority than the brief. Cost: it can lag a UniProt release; a 400 from the entry endpoint is the symptom | yes — re-verify against the live endpoint when egress allows |
+| 2026-08-22 | `xref_uniref` dropped from the P6 field set | It is not a UniProtKB return field. UniRef is a separate dataset with its own endpoint; asking for it makes the whole entry request a 400 and takes every other section down with it. "Similar proteins" therefore belongs to P8, where UniRef gets its own client | no — the field does not exist |
+| 2026-08-22 | `xref_ndex` included even though the slice design filed NDEx under "needs another source" | It exists as a UniProtKB cross-reference field, so the client's NDEx ask is answered for free inside the call we were already making. A dedicated NDEx client is still the route to network *contents* | yes |
+| 2026-08-22 | Annotations get their own `TTLCache`, separate from the metadata cache | The payloads are whole UniProtKB entries, an order of magnitude larger than a normalised metadata dict. One shared LRU 256 would let a single annotation lookup evict several search enrichments | yes |
+| 2026-08-22 | A protein with no resolvable UniProt accession returns 200 with an empty payload and `accession_resolved: false`, not an error | A plain upload legitimately has no UniProt counterpart. That is not a failure the user can act on, and a 404/500 would make the panel show a red error where the honest answer is "there is nothing to show, here is why". Upstream *outages* during resolution degrade the same way; only a reachability failure on a known accession is a 502 | yes |
+| 2026-08-22 | Annotation sections render expanded by default | The phase exists to answer "the interface looks a bit empty". A rail of ten collapsed headings reads emptier than nine. Collapsing is for getting a long section out of the way | yes — one default |
+| 2026-08-22 | Cross-reference URLs are resolved on the backend; GO / Rhea / EC / OMIM links are built on the frontend | The backend already decides which databases become cross-references, so it owns their templates. The identifiers that arrive as bare strings inside other sections have no such gate, so their templates live beside the components that render them. Both sides return null rather than a dead link for malformed input | yes |
 | 2026-05-23 | Build MVP slice end-to-end (Approach A vertical-slice) | Tighter feedback loop than frontend-first or backend-first; demoable at every phase | yes |
 | 2026-05-23 | Next.js + FastAPI split per spec | Python needed for BioPython now and DSSP / Foldseek later | hard — affects all of backend |
 | 2026-05-23 | Skip auth + DB this slice | Faster to working viewer + analytics; avoid weeks of migration plumbing | yes (separate slice when ready) |
@@ -241,6 +250,23 @@ Goal: bidirectional click sync between sequence and 3D.
 - [x] Residue search input (`A:123` syntax)
 - [x] Frontend Vitest: selection reducer tests
 - [x] P4 smoke test
+
+### P6 — Annotation panel
+
+Goal: open a protein and read real biological annotation beside the structure.
+
+- [x] `ANNOTATION_FIELD_NAMES` — 28 verified UniProtKB return fields (was 7)
+- [x] `UniProtClient.fetch_annotations` with its own TTL cache
+- [x] `UniProtClient.find_accession_for_pdb` (the `xref:pdb-` fallback)
+- [x] `uniprot_accession` on the RCSB polymer-entity metadata
+- [x] `models/annotations.py` — `ProteinAnnotations` and its ten sub-models
+- [x] `services/annotations.py` — pure projection + accession resolution
+- [x] `GET /api/proteins/{uid}/annotations`
+- [x] `AnnotationsPanel` + Annotations tab in the viewer rail
+- [x] Backend pytest: 31 tests against hand-recorded fixtures
+- [x] Frontend vitest: 22 tests (panel, links, store slice)
+- [x] P6 smoke test in `docs/smoke-tests.md`
+- [ ] Manual smoke test executed in a browser (needs a human)
 
 ### P5 — DB search + import
 
