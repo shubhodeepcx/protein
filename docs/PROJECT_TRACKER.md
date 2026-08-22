@@ -19,10 +19,9 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in flight. All follow-up PRs are merged, the scheduled cloud agents are disabled, and the manual smoke tests have been run. The slice is done._
-
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
+| **P6 — Annotation panel.** Enriched UniProt field set, `GET /api/proteins/{id}/annotations`, Annotations tab | shubhodeep | `feature/p6-annotations` | wip | Field names verified against UniProt's own `result-fields` column enum, not the help page — see the decisions log |
 
 ---
 
@@ -36,7 +35,6 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | Virtualise the sequence panel (one `<button>` per residue gets heavy above ~2,000 residues) | follow-up | — | 2h |
 | Make HETATM amino acids (e.g. MSE) selectable — currently skipped consistently by both parser and panel | follow-up | — | 1h |
 | Automated browser-level coverage for `extractResidueRecords` — manually verified 2026-08-21 on both a PDB upload and a 4-chain RCSB mmCIF, so this is now regression protection rather than an unknown | follow-up | a browser test runner | 3h |
-| **P6 — Annotation panel.** Enrich the UniProt client from 7 fields to the full set; `GET /{id}/annotations`; Annotations tab (names, function, catalytic activity, GO x3 aspects, keywords, subcellular location, transmembrane, disease, PTM, cross-refs to Reactome/BioCyc/SIGNOR/NDEx/proteomes) | P6 | — | 1-2d |
 | **P7 — Comparison view (spec A3).** `/compare?a=&b=`, two synced viewers, metric/composition/SS diff, pairwise alignment + identity %, optional superposition + RMSD | P7 | — | 1-2d |
 | **P8 — Similarity & BLAST.** EBI NCBI BLAST REST (submit/poll/retrieve — the project's first async flow) + UniRef similar proteins | P8 | — | 1-2d |
 | **P9 — Complex viewer.** EBI Complex Portal: participants, stoichiometry, pulldown for multi-complex proteins; topology graph if time allows | P9 | — | 2-3d |
