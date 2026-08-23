@@ -469,6 +469,53 @@ have every number on the page be either a measurement or an explicit statement t
 9. Negative case: open `/compare?a=<real id>&b=deadbeef`.
    - Expect: `Comparison failed (404): Protein B not found` — naming **which** side — plus the
      id form pre-filled so the bad id can be fixed in place. Not a blank page, not a 500.
+## P8 — Similarity & BLAST
+
+Goal: get homologs instantly from UniRef, run a real BLAST search at EBI, watch it for the
+minutes it takes without the UI looking hung, and open a hit in the viewer.
+
+**Requires outbound network** to `rest.uniprot.org` and `www.ebi.ac.uk`. Set
+`BLAST_CONTACT_EMAIL` in `backend/.env` first — unset, the backend submits with a fallback
+address and logs a warning on every job.
+
+1. Start both servers (`start.cmd`, or the two dev commands).
+2. Go to `/search`, search `insulin`, import the **UniProt P01308** card.
+3. Click the **Similarity** tab.
+   - Expect **Homologs (UniRef)** populated within a second or two: a list of accessions with
+     protein name, organism and length, headed by a line reading
+     *"Cluster: Insulin · UniRef50, meaning members share at least 50% sequence identity.
+     Showing N of 35 cluster members"*.
+   - Expect **P01308 itself is not in the list** — a protein is not its own homolog.
+   - Expect **no BLAST job started**: the BLAST section shows a form, not a spinner. Opening
+     the tab must never spend EBI compute.
+4. Click **Open** on any homolog.
+   - Expect: navigation to `/viewer/{new-uid}` with that protein loaded.
+   - Negative case: a homolog with no AlphaFold model shows an inline red message on the
+     section and leaves the rest of the list working. It must not blank the panel.
+5. Go back, reopen Similarity, and click **Run blastp at EBI**.
+   - Expect within ~2 s: the form is replaced by a progress card reading *Queued* or
+     *Running*, with a ticking elapsed timer, EBI's own status sentence, and the job id.
+   - Expect the elapsed time to keep advancing. This is the phase's core UI claim: a
+     multi-minute wait must never look hung.
+6. **While the search is running**, switch to the Analytics tab and back, then reload the page
+   outright (F5).
+   - Expect: the same job id is still shown and still ticking. A second job must **not** be
+     submitted — check the backend log for exactly one `Submitted blastp job` line.
+7. Wait for completion (30 s to several minutes).
+   - Expect: *Search complete*, the elapsed timer gone, and a results table with columns
+     Hit / Description / Identity / E-value / Score.
+   - Expect the top hit to be insulin at ~100% identity with E-value `0.0`, and lower hits
+     showing values like `5.5e-58` rendered in full, never rounded to `0.00`.
+   - Expect a **New search** button.
+8. Click **Open** on a BLAST hit.
+   - Expect: import and navigation, as in step 4.
+   - Expect any hit with no UniProt accession to read *"no structure"* instead of offering a
+     button that could only fail.
+9. Upload a plain local PDB (`backend/app/static/1CRN.pdb`) and open Similarity.
+   - Expect: HTTP 200, no red error, and
+     *"Uploaded structures carry no database identifier to map from."*
+   - The BLAST form is still offered — an upload has a sequence even with no accession — and
+     running it returns real hits for crambin.
 10. Tests:
     ```
     cd backend && pytest
@@ -526,6 +573,10 @@ participant table with stoichiometry; open one that belongs to none and be told 
 table with stoichiometry; complexes that merely mention the accession are excluded and accounted
 for; predicted complexes are labelled as predicted; a protein in none explains itself instead of
 erroring.
+    - Expect: 285 backend, 228 frontend, lint and build clean.
+
+**Pass criteria:** homologs appear without a wait; a BLAST search reports real elapsed progress
+and survives a reload without duplicating itself; both result lists open a hit in the viewer.
 
 ---
 
