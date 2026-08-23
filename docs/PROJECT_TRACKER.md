@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-22 by Shubhodeep Chatterjee (P7 comparison view built on `feature/p7-comparison`: `/compare?a=&b=`, `POST /api/compare`, two Mol\* viewers, diff tables, pairwise alignment, superposition RMSD. PR open.)
+**Last updated:** 2026-08-23 by Shubhodeep Chatterjee (P9 complex viewer claimed on `feature/p9-complexes`: Complex Portal client, `GET /api/proteins/{id}/complexes`, Complexes tab. P7 merged.)
 
 ---
 
@@ -21,8 +21,9 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 | Task | Owner | Branch | Status | Notes |
 |---|---|---|---|---|
-| **P6 — Annotation panel.** Enriched UniProt field set, `GET /api/proteins/{id}/annotations`, Annotations tab | shubhodeep | `feature/p6-annotations` | PR open | Backend + tab both shipped. 166 backend / 155 frontend tests green, lint + webpack build clean. 43 mutations applied, all caught. Manual smoke test (docs/smoke-tests.md P6) still needs a human with a browser |
+| **P6 — Annotation panel.** Enriched UniProt field set, `GET /api/proteins/{id}/annotations`, Annotations tab | shubhodeep | `feature/p6-annotations` | merged | Backend + tab both shipped. 166 backend / 155 frontend tests green, lint + webpack build clean. 43 mutations applied, all caught. Manual smoke test (docs/smoke-tests.md P6) still needs a human with a browser |
 | **P7 — Comparison view (spec A3).** `/compare?a=&b=`, two Mol\* viewers, metric/composition/SS diff table, `POST /api/compare` pairwise alignment, superposition RMSD | shubhodeep | `feature/p7-comparison` | PR open | All four deliverables shipped, RMSD included. 200 backend / 213 frontend tests green, lint + webpack build clean. 53 mutations applied, all caught. Branched from `main` at `d4d58c7`; touches no P6 file and does NOT touch the residue-ordinal seam. Manual smoke test (docs/smoke-tests.md P7) still needs a human with a browser |
+| **P9 — Complex viewer.** EBI Complex Portal client, `GET /api/proteins/{id}/complexes`, Complexes tab with participant + stoichiometry table | shubhodeep | `feature/p9-complexes` | wip | Data tier is the deliverable; the topology graph is the stretch and ships only if the table is solid first. Touches `viewer-rail.tsx`, which P8 also edits — expect a conflict there and rebase |
 
 ---
 
@@ -39,7 +40,6 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | Similar proteins / homologs via UniRef — dropped from P6 because `xref_uniref` is not a UniProtKB return field. Needs its own client against `rest.uniprot.org/uniref` | P8 | — | 3h |
 | Automated browser-level coverage for `extractResidueRecords` — manually verified 2026-08-21 on both a PDB upload and a 4-chain RCSB mmCIF, so this is now regression protection rather than an unknown | follow-up | a browser test runner | 3h |
 | **P8 — Similarity & BLAST.** EBI NCBI BLAST REST (submit/poll/retrieve — the project's first async flow) + UniRef similar proteins | P8 | — | 1-2d |
-| **P9 — Complex viewer.** EBI Complex Portal: participants, stoichiometry, pulldown for multi-complex proteins; topology graph if time allows | P9 | — | 2-3d |
 | **P10 — Interface density + theme.** Populate the left rail (the chain tree promised on the landing page), denser professional layout, optional molecular background. Client ranked this BELOW functionality | P10 | P6 | 1-2d |
 | **Superimpose the two structures in 3D on `/compare`.** P7 computes and reports the RMSD but does not overlay the coordinates — the panes stay independent. Needs the transform applied Mol\*-side (or a transformed copy served) and one shared canvas | follow-up | P7 | 4h |
 | **Compare affordance on the search page.** P7 ships one from the viewer header. A "compare these two" selection on `/search` would import both hits and land on `/compare` in one step — the predicted-vs-experimental pair is one query away | follow-up | P7 | 2h |
