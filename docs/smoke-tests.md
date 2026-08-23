@@ -520,7 +520,7 @@ participant table with stoichiometry; open one that belongs to none and be told 
    cd backend && pytest
    cd frontend && npm ci && npm run lint && npm test && npm run build
    ```
-   - Expect: 207 backend, 178 frontend, lint and build clean.
+   - Expect: 241 backend, 236 frontend, lint and build clean.
 
 **Pass criteria:** a protein in curated complexes shows the complex's function and a participant
 table with stoichiometry; complexes that merely mention the accession are excluded and accounted
