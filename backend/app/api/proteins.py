@@ -20,7 +20,8 @@ from app.models.analytics import (
 from app.models.annotations import ProteinAnnotations
 from app.models.complexes import ProteinComplexes
 from app.models.protein import ProteinSummary
-from app.services import analytics, annotations, complexes, ingest, registry
+from app.models.similarity import DEFAULT_UNIREF_IDENTITY, SimilarProteinsResponse
+from app.services import analytics, annotations, complexes, ingest, registry, similarity
 from app.services.external import SourceNotFoundError, SourceUnavailableError
 from app.storage import local as storage
 
@@ -276,6 +277,68 @@ async def get_protein_complexes(uid: str) -> ProteinComplexes:
         ) from exc
 
     return complexes.build_complexes(uid, body, accession=accession, note=note)
+
+
+@router.get("/{uid}/similar", response_model=SimilarProteinsResponse)
+async def get_similar_proteins(uid: str) -> SimilarProteinsResponse:
+    """Precomputed homologs for a stored protein, from UniRef (P8).
+
+    The instant half of the Similarity tab: UniRef is a clustering UniProt has
+    already computed, so this answers in one or two round trips where a BLAST
+    search takes minutes. Same posture as `/annotations` — an unresolvable
+    accession is a 200 with an explanation, not an error.
+    """
+    from app.api.search import get_rcsb_client, get_uniprot_client
+
+    try:
+        storage.validate_uid(uid)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="Protein not found") from exc
+    summary = registry.get(uid)
+    if not summary:
+        raise HTTPException(status_code=404, detail="Protein not found")
+
+    uniprot = get_uniprot_client()
+    accession, note = await annotations.resolve_accession(
+        summary, uniprot=uniprot, rcsb=get_rcsb_client()
+    )
+    if accession is None:
+        logger.info("No UniProt accession for %s: %s", uid, note)
+        return similarity.empty_similar(uid, note)
+
+    try:
+        cluster = await uniprot.find_uniref_cluster(
+            accession, identity=DEFAULT_UNIREF_IDENTITY
+        )
+        if cluster is None:
+            return similarity.empty_similar(
+                uid,
+                f"{accession} is not in a UniRef{int(DEFAULT_UNIREF_IDENTITY * 100)} "
+                "cluster, so there are no precomputed homologs.",
+                accession=accession,
+            )
+        cluster_id = cluster.get("id")
+        if not isinstance(cluster_id, str) or not cluster_id:
+            logger.warning("UniRef cluster for %s carries no id", accession)
+            return similarity.empty_similar(
+                uid, "UniRef returned a cluster with no identifier.", accession=accession
+            )
+        members = await uniprot.fetch_uniref_members(cluster_id)
+    except SourceNotFoundError as exc:
+        logger.info("UniRef has nothing for %s: %s", accession, exc)
+        return similarity.empty_similar(
+            uid, f"UniRef has no cluster for accession {accession}.", accession=accession
+        )
+    except SourceUnavailableError as exc:
+        logger.warning("UniRef unavailable for %s: %s", accession, exc)
+        raise HTTPException(
+            status_code=502,
+            detail="Could not reach UniProt for this protein's homologs. Try again.",
+        ) from exc
+
+    return similarity.build_similar_proteins(
+        uid, cluster, members, accession=accession, note=note
+    )
 
 
 @router.get("/{uid}/analytics", response_model=AnalyticsResponse)

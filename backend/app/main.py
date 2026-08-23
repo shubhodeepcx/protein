@@ -6,7 +6,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import compare, import_, proteins, search
+from app.api import blast, compare, import_, proteins, search
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,6 +18,13 @@ app.openapi_tags = [
     {"name": "search", "description": "Full-text search across RCSB PDB, AlphaFold DB, and UniProt."},
     {"name": "import", "description": "One-click import of a public structure into local storage."},
     {"name": "compare", "description": "Side-by-side comparison of two stored proteins (spec A3)."},
+    {
+        "name": "blast",
+        "description": (
+            "Sequence similarity search via EBI's NCBI BLAST REST service. "
+            "Asynchronous: POST to submit, then poll GET /api/blast/{job_id}."
+        ),
+    },
 ]
 
 # CORS_ORIGINS is required — leave unset to deny all origins (deploy-time loud failure).
@@ -42,6 +49,7 @@ app.include_router(import_.router, prefix="/api")
 app.include_router(proteins.router, prefix="/api")
 app.include_router(search.router, prefix="/api")
 app.include_router(compare.router, prefix="/api")
+app.include_router(blast.router, prefix="/api")
 
 
 @app.get("/health")

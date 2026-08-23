@@ -1,0 +1,108 @@
+{
+  "results": [
+    {
+      "id": "UniRef50_P01308",
+      "name": "Cluster: Insulin",
+      "updated": "2026-06-10",
+      "entryType": "UniRef50",
+      "commonTaxon": {
+        "scientificName": "Boreoeutheria",
+        "taxonId": 1437010
+      },
+      "memberCount": 35,
+      "organismCount": 22,
+      "representativeMember": {
+        "memberIdType": "UniProtKB ID",
+        "memberId": "INS_HUMAN",
+        "organismName": "Homo sapiens (Human)",
+        "organismTaxId": 9606,
+        "sequenceLength": 110,
+        "proteinName": "Insulin",
+        "accessions": [
+          "P01308",
+          "Q5EEX2"
+        ],
+        "uniref90Id": "UniRef90_P01308",
+        "uniref100Id": "UniRef100_P01308",
+        "uniparcId": "UPI00000017EA",
+        "sequence": {
+          "value": "MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKTRREAEDLQVGQVELGGGPGAGSLQPLALEGSLQKRGIVEQCCTSICSLYQLENYCN",
+          "length": 110,
+          "molWeight": 11981,
+          "crc64": "C2C3B23B85E520E5",
+          "md5": "12E9C9E4E2835C302E8BA615115EDDA3"
+        }
+      },
+      "seedId": "A0ABI7W3H0",
+      "memberIdTypes": [
+        "UniParc",
+        "UniProtKB Reviewed (Swiss-Prot)",
+        "UniProtKB Unreviewed (TrEMBL)"
+      ],
+      "members": [
+        "P01308",
+        "Q6YK33",
+        "P30406",
+        "P06306",
+        "I3WAC9",
+        "F6MZK5",
+        "F7AUL3",
+        "A0A2I3HNQ8",
+        "A0A2K6CQQ5",
+        "A0ABI7W3H0"
+      ],
+      "organisms": [
+        {
+          "scientificName": "Homo sapiens",
+          "commonName": "Human",
+          "taxonId": 9606
+        },
+        {
+          "scientificName": "Gorilla gorilla gorilla",
+          "commonName": "Western lowland gorilla",
+          "taxonId": 9595
+        },
+        {
+          "scientificName": "Macaca fascicularis",
+          "commonName": "Crab-eating macaque",
+          "taxonId": 9541
+        },
+        {
+          "scientificName": "Felis catus",
+          "commonName": "Cat",
+          "taxonId": 9685
+        },
+        {
+          "scientificName": "Macaca mulatta",
+          "commonName": "Rhesus macaque",
+          "taxonId": 9544
+        },
+        {
+          "scientificName": "Nomascus leucogenys",
+          "commonName": "Northern white-cheeked gibbon",
+          "taxonId": 61853
+        },
+        {
+          "scientificName": "Macaca nemestrina",
+          "commonName": "Pig-tailed macaque",
+          "taxonId": 9545
+        },
+        {
+          "scientificName": "Lynx canadensis",
+          "commonName": "Canada lynx",
+          "taxonId": 61383
+        },
+        {
+          "scientificName": "Acinonyx jubatus",
+          "commonName": "Cheetah",
+          "taxonId": 32536
+        },
+        {
+          "scientificName": "Panthera leo",
+          "commonName": "Lion",
+          "taxonId": 9689
+        }
+      ]
+    }
+  ]
+}

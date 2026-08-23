@@ -69,3 +69,28 @@ def fresh_complex_portal_client(monkeypatch):
     monkeypatch.setattr(
         complexes_service, "_CLIENT", complexes_service.ComplexPortalClient()
     )
+
+
+@pytest.fixture(autouse=True)
+def fresh_blast_registry(monkeypatch):
+    """Per-test: a clean BLAST job registry with the upstream poll throttle off.
+
+    The throttle (`MIN_UPSTREAM_POLL_SECONDS`) is a real production behaviour,
+    so it gets its own dedicated test rather than being switched off globally
+    and forgotten — every *other* test wants consecutive polls to actually
+    reach the mocked transport.
+    """
+    from app.services import blast_jobs
+
+    monkeypatch.setattr(
+        blast_jobs,
+        "_REGISTRY",
+        blast_jobs.BlastJobRegistry(min_upstream_poll_seconds=0.0),
+    )
+
+
+@pytest.fixture(autouse=True)
+def default_blast_contact_email(monkeypatch):
+    """Pin the BLAST contact address so a developer's own env cannot leak into
+    an assertion — or into a recorded request body."""
+    monkeypatch.delenv("BLAST_CONTACT_EMAIL", raising=False)
