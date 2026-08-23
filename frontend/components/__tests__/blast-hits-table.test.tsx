@@ -70,14 +70,34 @@ describe("BlastHitsTable", () => {
   });
 
   it("shows the hit's accession, description, identity, E-value and score", () => {
-    render(<BlastHitsTable result={result()} />);
+    // Every number here is deliberately distinct from every other number on
+    // the row: identity 33.4, coverage 49.9, gaps 3, score 527, rank 5. A
+    // shared value would let the identity cell render `gaps` or `coverage`
+    // and still satisfy a whole-row assertion.
+    render(
+      <BlastHitsTable
+        result={result({
+          hits: [
+            hit({
+              rank: 5,
+              identity_percent: 33.4,
+              align_length: 302,
+              gaps: 3,
+              expect: 5.5e-58,
+              score: 527,
+            }),
+          ],
+        })}
+      />,
+    );
 
     const row = screen.getByTestId("blast-hit-P35858");
     expect(row).toHaveTextContent("P35858");
     expect(row).toHaveTextContent("acid labile subunit");
-    expect(row).toHaveTextContent("100.0%");
-    expect(row).toHaveTextContent("0.0");
-    expect(row).toHaveTextContent("3,142");
+    expect(row).toHaveTextContent("Homo sapiens");
+    expect(row).toHaveTextContent("33.4%");
+    expect(row).toHaveTextContent("5.5e-58");
+    expect(row).toHaveTextContent("527");
   });
 
   it("renders a tiny E-value in full rather than rounding it to zero", () => {

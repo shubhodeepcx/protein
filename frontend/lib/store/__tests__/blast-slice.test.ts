@@ -225,6 +225,79 @@ describe("blastSlice", () => {
     expect(recallJob(PROTEIN)).toBeNull();
   });
 
+  it("a poll already in flight cannot write back after clearBlast", async () => {
+    // `cancelTimer` alone only stops a *scheduled* poll. A poll whose fetch is
+    // already awaiting would still land its response on the store, putting a
+    // job the user just dismissed back on screen.
+    let release: ((r: Response) => void) | null = null;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            release = resolve;
+          }),
+      ),
+    );
+
+    const pending = useTestStore.getState().resumeBlast(PROTEIN, JOB_ID);
+    useTestStore.getState().clearBlast(PROTEIN);
+    release!(new Response(JSON.stringify(status()), { status: 200 }));
+    await pending;
+
+    expect(useTestStore.getState().blastJob).toBeNull();
+    expect(useTestStore.getState().blastProteinId).toBeNull();
+  });
+
+  it("resuming a new job invalidates the previous job's scheduled poll", async () => {
+    stubFetch([{ status: 202, body: submitted() }]);
+    await useTestStore.getState().submitBlast(PROTEIN, { protein_id: PROTEIN });
+
+    const { calls } = stubFetch([
+      { status: 200, body: status({ job_id: "ncbiblast-second", status: "QUEUED" }) },
+    ]);
+    await useTestStore.getState().resumeBlast("other-protein", "ncbiblast-second");
+
+    // The first job's timer is now due. It must not fire — every request from
+    // here on belongs to the second job.
+    await vi.advanceTimersByTimeAsync(FAST_POLL_MS);
+    expect(calls.filter((u) => u.includes(JOB_ID))).toHaveLength(0);
+    expect(calls.every((u) => u.includes("ncbiblast-second"))).toBe(true);
+    expect(useTestStore.getState().blastJob?.job_id).toBe("ncbiblast-second");
+  });
+
+  it("a poll in flight for the old job cannot land on the newly resumed one", async () => {
+    // Cancelling the timer only stops a *scheduled* poll. Resuming must also
+    // invalidate a poll that is already awaiting its response, or the old job
+    // reappears seconds after the user switched to a different structure.
+    let releaseFirst: ((r: Response) => void) | null = null;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            releaseFirst = resolve;
+          }),
+      ),
+    );
+    const firstPoll = useTestStore.getState().resumeBlast(PROTEIN, JOB_ID);
+
+    stubFetch([
+      {
+        status: 200,
+        body: status({ job_id: "ncbiblast-second", status: "QUEUED" }),
+      },
+    ]);
+    await useTestStore.getState().resumeBlast("other-protein", "ncbiblast-second");
+    expect(useTestStore.getState().blastJob?.job_id).toBe("ncbiblast-second");
+
+    releaseFirst!(new Response(JSON.stringify(status()), { status: 200 }));
+    await firstPoll;
+
+    expect(useTestStore.getState().blastJob?.job_id).toBe("ncbiblast-second");
+    expect(useTestStore.getState().blastProteinId).toBe("other-protein");
+  });
+
   it("a superseded poll loop cannot overwrite the newer job", async () => {
     stubFetch([{ status: 200, body: status() }]);
     await useTestStore.getState().resumeBlast(PROTEIN, JOB_ID);

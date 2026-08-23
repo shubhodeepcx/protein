@@ -28,6 +28,19 @@ describe("formatEValue", () => {
     expect(formatEValue(10)).toBe("10");
   });
 
+  it("switches notation exactly at 1e-3, not somewhere further down", () => {
+    // Pins the boundary itself. Without this, widening the exponential range
+    // (e.g. to 1e-30) leaves both the tiny and the ordinary cases unchanged
+    // and renders 1e-5 as "0.00001".
+    expect(formatEValue(1e-5)).toBe("1.0e-5");
+    expect(formatEValue(9e-4)).toBe("9.0e-4");
+    expect(formatEValue(1.1e-3)).toBe("0.0011");
+  });
+
+  it("switches back to exponential for implausibly large values", () => {
+    expect(formatEValue(15000)).toBe("1.5e4");
+  });
+
   it("returns an em dash only when the value really is absent", () => {
     expect(formatEValue(null)).toBe("—");
     expect(formatEValue(Number.NaN)).toBe("—");
