@@ -287,6 +287,19 @@ async def test_status_404_reads_as_not_found_rather_than_an_outage() -> None:
 
 
 @respx.mock
+async def test_status_reads_not_found_from_a_200_body_too() -> None:
+    """This is what EBI actually does, checked against the live service.
+
+    Asking `/status/` for an id that never existed returns **HTTP 200 with the
+    body `NOT_FOUND`**, not a 404 — so the 404 branch above is the rarer path.
+    Both must land on the same answer, or an expired job reads as "running"
+    forever and the UI polls it until the user gives up.
+    """
+    respx.get(STATUS_URL).mock(return_value=httpx.Response(200, text="NOT_FOUND\n"))
+    assert await EBIBlastClient().status(JOB_ID) == "NOT_FOUND"
+
+
+@respx.mock
 async def test_status_5xx_raises_unavailable() -> None:
     respx.get(STATUS_URL).mock(return_value=httpx.Response(503))
     with pytest.raises(SourceUnavailableError):

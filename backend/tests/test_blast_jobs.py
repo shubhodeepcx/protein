@@ -289,6 +289,28 @@ async def test_an_expired_job_becomes_not_found() -> None:
 
 
 @respx.mock
+async def test_an_expired_job_stops_polling_when_ebi_says_so_in_a_200_body() -> None:
+    """The path EBI actually takes: HTTP 200 with the body `NOT_FOUND`.
+
+    Verified against the live service. If this did not become terminal, the
+    browser would poll a dead job forever.
+    """
+    registry = new_registry()
+    register(registry)
+    route = respx.get(STATUS_URL).mock(
+        return_value=httpx.Response(200, text="NOT_FOUND")
+    )
+
+    record = await registry.poll(JOB_ID)
+    assert record is not None
+    assert record.status == "NOT_FOUND"
+    assert record.finished is True
+
+    await registry.poll(JOB_ID)
+    assert route.call_count == 1
+
+
+@respx.mock
 async def test_a_failed_search_is_terminal_and_says_so() -> None:
     registry = new_registry()
     register(registry)
