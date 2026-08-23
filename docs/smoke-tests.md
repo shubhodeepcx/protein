@@ -430,6 +430,58 @@ given category shows no heading for it; an upload explains itself instead of err
 
 ---
 
+## P7 — Comparison view (spec A3)
+
+Goal: put an experimental structure and a predicted model of the same protein side by side, and
+have every number on the page be either a measurement or an explicit statement that it is not.
+
+1. Start both servers (`start.cmd`, or the two dev commands).
+2. Go to `/search` and search `insulin`. One query returns both an **RCSB** experimental entry
+   (e.g. `4INS`) and an **AlphaFold** prediction (`P01308`) — this is A3's headline case.
+   Import **both**; note each viewer URL's id.
+3. From either viewer, click **Compare** in the header.
+   - Expect: `/compare?a=<that id>`, and a form asking for the second id with A pre-filled.
+   - Paste the other id and submit.
+4. Two Mol\* canvases render side by side, each labelled **A** / **B** with its source.
+   - Rotate one. Expect: the other does not move — they are independent viewers.
+   - Negative case: neither canvas may be blank, and the browser console must show **no**
+     "createRoot() on a container that has already been passed to createRoot()" error. That
+     duplicate-root error is what two viewers on one page used to cause.
+5. Change **Representation** to `Surface`. Expect: both panes change together.
+   - Open **Coloring**. Expect **neither** `pLDDT confidence` nor `B-factor` in the list —
+     the two structures disagree about what their B-factor column holds, so one shared
+     select cannot label it truthfully for both. Import two AlphaFold models instead and the
+     option reappears.
+6. Read the **Sequence alignment** section.
+   - Expect four figures: Identity, Similarity, Alignment length, and Identity over the
+     overlap. For 4INS vs P01308 the last is far higher than the first — the crystal form is a
+     mature two-chain construct and the model is the full precursor, so the overhang is real.
+   - The alignment prints in numbered 60-column blocks with a `|` / `+` / blank match line.
+7. Read the **Structural superposition** section.
+   - Expect an RMSD in Å with its alpha-carbon pair count, over the chains named in the note.
+   - Negative case: if a caveat appears (twilight-zone identity, or a thin fit), it must be
+     shown in amber beside the number, never omitted.
+8. Read the diff tables. Expect Δ columns of the form `+23` / `−16` / `0`, never an unsigned
+   difference, and the composition table sorted by largest difference with a "show all 20" toggle.
+   - Expect an amber line under Secondary structure saying structure **B** declares none —
+     an AlphaFold model has no assigned secondary structure, so its all-coil split is a
+     placeholder rather than a measurement.
+9. Negative case: open `/compare?a=<real id>&b=deadbeef`.
+   - Expect: `Comparison failed (404): Protein B not found` — naming **which** side — plus the
+     id form pre-filled so the bad id can be fixed in place. Not a blank page, not a 500.
+10. Tests:
+    ```
+    cd backend && pytest
+    cd frontend && npm ci && npm run lint && npm test && npm run build
+    ```
+    - Expect: 200 backend, 213 frontend, lint and build clean.
+
+**Pass criteria:** two independent viewers render together without a duplicate-root error; the
+alignment and RMSD agree about which chains they used; and every absent result — no alignment,
+no RMSD, an unmatched chain, an unannotated secondary structure — states its reason on screen.
+
+---
+
 ## How to add a smoke test
 
 When you start a phase, replace the placeholder for that phase with the concrete steps. The steps should be the minimum sequence a fresh agent or human needs to verify the phase works end-to-end, including:

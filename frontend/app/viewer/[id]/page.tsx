@@ -169,6 +169,7 @@ export default function DynamicViewerPage() {
           title={title}
           source={summary?.source ?? null}
           hasPlddt={hasPlddt}
+          proteinId={summary ? id : undefined}
           onResetCamera={() => viewerRef.current?.resetCamera()}
         />
 

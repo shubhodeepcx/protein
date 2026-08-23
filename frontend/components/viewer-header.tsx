@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Atom, RotateCcw } from "lucide-react";
+import { Atom, Columns2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ViewerControls } from "@/components/viewer-controls";
@@ -13,6 +13,8 @@ interface ViewerHeaderProps {
   source: string | null;
   /** `ProteinSummary.has_plddt` — picks pLDDT vs B-factor coloring. */
   hasPlddt?: boolean;
+  /** Storage uid, used to open `/compare` with this protein already on side A. */
+  proteinId?: string;
   onResetCamera: () => void;
 }
 
@@ -21,6 +23,7 @@ export function ViewerHeader({
   title,
   source,
   hasPlddt = false,
+  proteinId,
   onResetCamera,
 }: ViewerHeaderProps) {
   const selectedCount = useStore((s) => s.selected.size);
@@ -56,6 +59,18 @@ export function ViewerHeader({
           {selectedCount} selected
         </span>
         <ViewerControls disabled={!ready} hasPlddt={hasPlddt} />
+        {/* Opens /compare with this protein on side A; the compare page asks
+            for B. Rendered only once there is an id to carry. */}
+        {proteinId && (
+          <Link
+            href={`/compare?a=${encodeURIComponent(proteinId)}`}
+            title="Compare with another structure"
+            className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-[11px] text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+          >
+            <Columns2 className="size-3.5" aria-hidden />
+            Compare
+          </Link>
+        )}
         <Button
           size="sm"
           variant="ghost"

@@ -196,6 +196,134 @@ export interface CrossReference {
   url: string | null;
 }
 
+/* ------------------------------------------------------------------------ */
+/* P7 — comparison view (spec A3)                                             */
+/* Mirrors `backend/app/models/compare.py`. Delta convention, without          */
+/* exception: `delta = b - a`. Positive means B has more of it.                */
+/* ------------------------------------------------------------------------ */
+
+/** Body for `POST /api/compare`. Chains default to each protein's longest. */
+export interface CompareRequest {
+  a: string;
+  b: string;
+  chain_a?: string;
+  chain_b?: string;
+}
+
+/** Narrow projection of `ProteinSummary` — enough to label and load one side. */
+export interface CompareProteinRef {
+  id: string;
+  source: ProteinSource;
+  source_id: string | null;
+  name: string | null;
+  organism: string | null;
+  file_url: string;
+  file_format: ProteinFileFormat;
+  has_plddt: boolean;
+}
+
+export interface MetricDelta {
+  key: string;
+  label: string;
+  /** e.g. "Da". Null when the metric is a bare count. */
+  unit: string | null;
+  a: number;
+  b: number;
+  delta: number;
+}
+
+/**
+ * Chains are paired by descending length, not by label — two structures of the
+ * same protein routinely label them differently. A side with fewer chains
+ * reports null rather than dropping the row.
+ */
+export interface ChainLengthPair {
+  rank: number;
+  chain_a: string | null;
+  length_a: number | null;
+  chain_b: string | null;
+  length_b: number | null;
+  delta: number | null;
+}
+
+export interface CompositionDelta {
+  aa: string;
+  label: string;
+  count_a: number;
+  count_b: number;
+  percent_a: number;
+  percent_b: number;
+  /** Percentage points, not counts — the only figure comparable across sizes. */
+  delta_percent: number;
+}
+
+export interface SecondaryStructureDelta {
+  helix_a: number;
+  helix_b: number;
+  helix_delta: number;
+  sheet_a: number;
+  sheet_b: number;
+  sheet_delta: number;
+  coil_a: number;
+  coil_b: number;
+  coil_delta: number;
+  /** False means that side declared no secondary structure — the split is a
+   *  placeholder and the deltas on this row mean nothing. */
+  available_a: boolean;
+  available_b: boolean;
+}
+
+export interface SequenceAlignment {
+  chain_a: string;
+  chain_b: string;
+  length_a: number;
+  length_b: number;
+  /** Total columns, gaps included. */
+  alignment_length: number;
+  /** Columns where neither side is a gap. */
+  aligned_columns: number;
+  identities: number;
+  similarities: number;
+  gap_columns: number;
+  /** identities / alignment_length — what EMBOSS needle prints. */
+  identity_percent: number;
+  similarity_percent: number;
+  /** identities / aligned_columns — "how similar is the shared part". */
+  identity_percent_aligned: number;
+  score: number;
+  aligned_a: string;
+  aligned_b: string;
+  /** '|' identity, '+' similar, ' ' otherwise. Same length as the rows. */
+  match_line: string;
+}
+
+export interface Superposition {
+  chain_a: string;
+  chain_b: string;
+  /** Angstroms, over the paired alpha carbons. */
+  rmsd: number;
+  atom_pairs: number;
+  residue_pairs: number;
+  identity_percent: number;
+  /** Set when the RMSD is real but should not be read at face value. */
+  caveat: string | null;
+}
+
+export interface CompareResponse {
+  a: CompareProteinRef;
+  b: CompareProteinRef;
+  metrics: MetricDelta[];
+  chain_lengths: ChainLengthPair[];
+  composition: CompositionDelta[];
+  secondary_structure: SecondaryStructureDelta;
+  /** Null when no chain pair could be aligned — `alignment_note` says why. */
+  alignment: SequenceAlignment | null;
+  alignment_note: string;
+  /** Null when the RMSD was refused — `superposition_note` says why. */
+  superposition: Superposition | null;
+  superposition_note: string;
+}
+
 export interface ProteinAnnotations {
   id: string;
   accession: string | null;

@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 from Bio.PDB import MMCIFParser, PDBParser
+from Bio.PDB.Structure import Structure
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
@@ -113,8 +114,13 @@ def get_protein_file(uid: str) -> FileResponse:
     return FileResponse(str(path), media_type=media_type, filename=path.name)
 
 
-def _parse_structure_for_analytics(file_path: Path):
-    """Parse a PDB or mmCIF file into a BioPython Structure for analytics use."""
+def parse_structure_for_analytics(file_path: Path) -> Structure:
+    """Parse a PDB or mmCIF file into a BioPython Structure for analytics use.
+
+    Public because `api/compare.py` (P7) needs the same structure and the same
+    analytics for two proteins at once; a second parse path would be a second
+    place for the format detection to drift.
+    """
     ext = file_path.suffix.lower().lstrip(".")
     if ext in ("cif", "mmcif"):
         bio_parser = MMCIFParser(QUIET=True)
@@ -123,11 +129,11 @@ def _parse_structure_for_analytics(file_path: Path):
     return bio_parser.get_structure(file_path.stem, str(file_path))
 
 
-def _compute_analytics(
+def compute_analytics(
     uid: str, summary: ProteinSummary, file_path: Path
 ) -> AnalyticsResponse:
     """Orchestrate analytics service calls + assemble the response payload."""
-    structure = _parse_structure_for_analytics(file_path)
+    structure = parse_structure_for_analytics(file_path)
 
     # Aggregate composition / property distribution over all chains' sequences.
     full_seq = "".join(c.sequence for c in summary.chains)
@@ -232,4 +238,4 @@ async def get_protein_analytics(uid: str) -> AnalyticsResponse:
         file_path = storage.get_file(uid)
     except (FileNotFoundError, ValueError) as exc:
         raise HTTPException(status_code=404, detail="File not found") from exc
-    return await run_in_threadpool(_compute_analytics, uid, summary, file_path)
+    return await run_in_threadpool(compute_analytics, uid, summary, file_path)

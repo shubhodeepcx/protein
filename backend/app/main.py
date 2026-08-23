@@ -6,7 +6,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import import_, proteins, search
+from app.api import compare, import_, proteins, search
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,6 +17,7 @@ app.openapi_tags = [
     {"name": "proteins", "description": "Protein upload, metadata, and structure files."},
     {"name": "search", "description": "Full-text search across RCSB PDB, AlphaFold DB, and UniProt."},
     {"name": "import", "description": "One-click import of a public structure into local storage."},
+    {"name": "compare", "description": "Side-by-side comparison of two stored proteins (spec A3)."},
 ]
 
 # CORS_ORIGINS is required — leave unset to deny all origins (deploy-time loud failure).
@@ -40,6 +41,7 @@ app.add_middleware(
 app.include_router(import_.router, prefix="/api")
 app.include_router(proteins.router, prefix="/api")
 app.include_router(search.router, prefix="/api")
+app.include_router(compare.router, prefix="/api")
 
 
 @app.get("/health")
