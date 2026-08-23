@@ -18,8 +18,9 @@ from app.models.analytics import (
     SecondaryStructurePercentages,
 )
 from app.models.annotations import ProteinAnnotations
+from app.models.complexes import ProteinComplexes
 from app.models.protein import ProteinSummary
-from app.services import analytics, annotations, ingest, registry
+from app.services import analytics, annotations, complexes, ingest, registry
 from app.services.external import SourceNotFoundError, SourceUnavailableError
 from app.storage import local as storage
 
@@ -223,6 +224,58 @@ async def get_protein_annotations(uid: str) -> ProteinAnnotations:
         ) from exc
 
     return annotations.build_annotations(uid, entry, accession=accession, note=note)
+
+
+@router.get("/{uid}/complexes", response_model=ProteinComplexes)
+async def get_protein_complexes(uid: str) -> ProteinComplexes:
+    """Macromolecular complexes this protein participates in, from the EBI
+    Complex Portal (P9).
+
+    The accession is resolved exactly the way P6's annotations route resolves
+    it — same helper, so the two tabs can never disagree about which UniProt
+    entry a structure maps to.
+
+    Like annotations, "no complexes" is a success, not an error: most proteins
+    are in none, and a plain upload has no accession to look one up with. 502
+    is reserved for the case where we know the accession and Complex Portal
+    itself could not be reached, because there retrying is worth offering.
+    """
+    from app.api.search import get_rcsb_client, get_uniprot_client
+
+    try:
+        storage.validate_uid(uid)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="Protein not found") from exc
+    summary = registry.get(uid)
+    if not summary:
+        raise HTTPException(status_code=404, detail="Protein not found")
+
+    accession, note = await annotations.resolve_accession(
+        summary, uniprot=get_uniprot_client(), rcsb=get_rcsb_client()
+    )
+    if accession is None:
+        logger.info("No UniProt accession for %s: %s", uid, note)
+        return complexes.empty_complexes(uid, note)
+
+    client = complexes.get_complex_portal_client()
+    try:
+        body = await client.search_by_accession(accession)
+    except SourceNotFoundError as exc:
+        logger.info("Complex Portal has no index for %s (protein %s): %s", accession, uid, exc)
+        return complexes.empty_complexes(
+            uid,
+            f"The Complex Portal has no record for accession {accession}.",
+            accession=accession,
+            query=complexes.base_accession(accession),
+        )
+    except SourceUnavailableError as exc:
+        logger.warning("Complex Portal unavailable for %s: %s", accession, exc)
+        raise HTTPException(
+            status_code=502,
+            detail="Could not reach the EBI Complex Portal for this protein. Try again.",
+        ) from exc
+
+    return complexes.build_complexes(uid, body, accession=accession, note=note)
 
 
 @router.get("/{uid}/analytics", response_model=AnalyticsResponse)

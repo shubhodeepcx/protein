@@ -54,3 +54,18 @@ def fresh_search_clients(monkeypatch):
     monkeypatch.setitem(search_api._CLIENTS, "rcsb", RCSBClient())
     monkeypatch.setitem(search_api._CLIENTS, "alphafold", AlphaFoldClient(uniprot=uniprot))
     monkeypatch.setitem(search_api._CLIENTS, "uniprot", uniprot)
+
+
+@pytest.fixture(autouse=True)
+def fresh_complex_portal_client(monkeypatch):
+    """Per-test: a fresh Complex Portal client, so its TTL cache never leaks.
+
+    Its singleton lives in `services/complexes` rather than `api/search`'s
+    `_CLIENTS` registry — Complex Portal is not a search source — so it needs
+    its own swap.
+    """
+    from app.services import complexes as complexes_service
+
+    monkeypatch.setattr(
+        complexes_service, "_CLIENT", complexes_service.ComplexPortalClient()
+    )

@@ -1,0 +1,701 @@
+{
+  "size": 9,
+  "totalNumberOfResults": 9,
+  "elements": [
+    {
+      "complexAC": "CPX-2419",
+      "complexName": "Hemoglobin HbA2 complex",
+      "organismName": "Homo sapiens; 9606",
+      "description": "Adult hemoglobin A2 (HbA2) is expressed in erythrocytes in the bone marrow. Binds oxygen in the lungs and transports it to the various peripheral tissues. Transports CO2 back from the cells to the lungs. It is a minor form and makes up about 2-3% of adult hemoglobins, first appearing in late pregnancy.",
+      "predictedComplex": false,
+      "interactors": [
+        {
+          "ac": "EBI-6152722",
+          "identifier": "P02042",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P02042/entry",
+          "name": "HBD",
+          "description": "Hemoglobin subunit delta",
+          "stochiometry": "minValue: 2, maxValue: 2",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-6880399",
+          "identifier": "CHEBI:30413",
+          "identifierLink": "http://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:30413",
+          "name": "heme",
+          "description": "heme",
+          "stochiometry": "minValue: 4, maxValue: 4",
+          "interactorType": "small molecule",
+          "organismName": "chemical synthesis; -2",
+          "xrefs": []
+        },
+        {
+          "ac": "EBI-714680",
+          "identifier": "P69905",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P69905/entry",
+          "name": "HBA1",
+          "description": "Hemoglobin subunit alpha",
+          "stochiometry": "minValue: 2, maxValue: 2",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-2927",
+      "complexName": "Hemoglobin E complex",
+      "organismName": "Homo sapiens; 9606",
+      "description": "Embryonic hemoglobin E (HbE) complex is the main embryonic hemoglobin type, expressed predominantly in fetal liver and embryonic erythrocytes. Binds and transports oxygen and carbon dioxide to/from the peripheral tissues.  It replaces embryonic Gower-1 hemoglobin (CPX-2928) and is itself replaced by fetal hemoglobin (CPX-2932, CPX-2933) after about 8 weeks gestation.",
+      "predictedComplex": false,
+      "interactors": [
+        {
+          "ac": "EBI-6190240",
+          "identifier": "P02100",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P02100/entry",
+          "name": "HBE1",
+          "description": "Hemoglobin subunit epsilon",
+          "stochiometry": "minValue: 2, maxValue: 2",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-6880399",
+          "identifier": "CHEBI:30413",
+          "identifierLink": "http://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:30413",
+          "name": "heme",
+          "description": "heme",
+          "stochiometry": "minValue: 4, maxValue: 4",
+          "interactorType": "small molecule",
+          "organismName": "chemical synthesis; -2",
+          "xrefs": []
+        },
+        {
+          "ac": "EBI-714680",
+          "identifier": "P69905",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P69905/entry",
+          "name": "HBA1",
+          "description": "Hemoglobin subunit alpha",
+          "stochiometry": "minValue: 2, maxValue: 2",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-2932",
+      "complexName": "Hemoglobin HbF Variant 1 complex",
+      "organismName": "Homo sapiens; 9606",
+      "description": "Fetal hemoglobin (HbF) complex is expressed in the fetal liver from around 9 weeks gestation until 4-5 week after birth. It can be detected for up to 6 months after birth. Binds and transports oxygen and carbon dioxide to/from the peripheral tissues. It replaces embryonic hemoglobins Gower-1 (CPX-2928) and hemoglobin HbE (Gower-2) (CPX-2927).",
+      "predictedComplex": false,
+      "interactors": [
+        {
+          "ac": "EBI-1056789",
+          "identifier": "P69891",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P69891/entry",
+          "name": "HBG1",
+          "description": "Hemoglobin subunit gamma-1",
+          "stochiometry": "minValue: 2, maxValue: 2",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-6880399",
+          "identifier": "CHEBI:30413",
+          "identifierLink": "http://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:30413",
+          "name": "heme",
+          "description": "heme",
+          "stochiometry": "minValue: 4, maxValue: 4",
+          "interactorType": "small molecule",
+          "organismName": "chemical synthesis; -2",
+          "xrefs": []
+        },
+        {
+          "ac": "EBI-714680",
+          "identifier": "P69905",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P69905/entry",
+          "name": "HBA1",
+          "description": "Hemoglobin subunit alpha",
+          "stochiometry": "minValue: 2, maxValue: 2",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-2933",
+      "complexName": "Hemoglobin HbF Variant 2 complex",
+      "organismName": "Homo sapiens; 9606",
+      "description": "Fetal hemoglobin (HbF) complex is expressed in the fetal liver from around 9 weeks gestation until 4-5 week after birth. It can be detected for up to 6 months after birth. Binds and transports oxygen and carbon dioxide to/from the peripheral tissues. It replaces embryonic hemoglobins Gower-1 (CPX-2928) and hemoglobin HbE (Gower-2) (CPX-2927).",
+      "predictedComplex": false,
+      "interactors": [
+        {
+          "ac": "EBI-3910089",
+          "identifier": "P69892",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P69892/entry",
+          "name": "HBG2",
+          "description": "Hemoglobin subunit gamma-2",
+          "stochiometry": "minValue: 2, maxValue: 2",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-6880399",
+          "identifier": "CHEBI:30413",
+          "identifierLink": "http://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:30413",
+          "name": "heme",
+          "description": "heme",
+          "stochiometry": "minValue: 4, maxValue: 4",
+          "interactorType": "small molecule",
+          "organismName": "chemical synthesis; -2",
+          "xrefs": []
+        },
+        {
+          "ac": "EBI-714680",
+          "identifier": "P69905",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P69905/entry",
+          "name": "HBA1",
+          "description": "Hemoglobin subunit alpha",
+          "stochiometry": "minValue: 2, maxValue: 2",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-2158",
+      "complexName": "Hemoglobin HbA complex",
+      "organismName": "Homo sapiens; 9606",
+      "description": "Adult hemoglobin A (HbA) is expressed in erythrocytes in the bone marrow. Binds oxygen in the lungs and transports it to the various peripheral tissues. Transports CO2 from cells back to the lungs. It appears in late pregnancy and becomes the dominant hemoglobin type in adults, replacing fetal hemoglobin (CPX-2932 & CPX-2933).",
+      "predictedComplex": false,
+      "interactors": [
+        {
+          "ac": "EBI-6880399",
+          "identifier": "CHEBI:30413",
+          "identifierLink": "http://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:30413",
+          "name": "heme",
+          "description": "heme",
+          "stochiometry": "minValue: 4, maxValue: 4",
+          "interactorType": "small molecule",
+          "organismName": "chemical synthesis; -2",
+          "xrefs": []
+        },
+        {
+          "ac": "EBI-714680",
+          "identifier": "P69905",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P69905/entry",
+          "name": "HBA1",
+          "description": "Hemoglobin subunit alpha",
+          "stochiometry": "minValue: 2, maxValue: 2",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-715554",
+          "identifier": "P68871",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P68871/entry",
+          "name": "HBB",
+          "description": "Hemoglobin subunit beta",
+          "stochiometry": "minValue: 2, maxValue: 2",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-15202",
+      "complexName": "HBB:HBA1:MSL2:DKK2",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-13274770",
+          "identifier": "Q9UBU2",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q9UBU2/entry",
+          "name": "DKK2",
+          "description": "Dickkopf-related protein 2",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR12113",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-2560775",
+          "identifier": "Q9HCI7",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q9HCI7/entry",
+          "name": "MSL2",
+          "description": "E3 ubiquitin-protein ligase MSL2",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR16048",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-714680",
+          "identifier": "P69905",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P69905/entry",
+          "name": "HBA1",
+          "description": "Hemoglobin subunit alpha",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-715554",
+          "identifier": "P68871",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P68871/entry",
+          "name": "HBB",
+          "description": "Hemoglobin subunit beta",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-22475",
+      "complexName": "HBB:HBA1:DKK2",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-13274770",
+          "identifier": "Q9UBU2",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q9UBU2/entry",
+          "name": "DKK2",
+          "description": "Dickkopf-related protein 2",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR12113",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-714680",
+          "identifier": "P69905",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P69905/entry",
+          "name": "HBA1",
+          "description": "Hemoglobin subunit alpha",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-715554",
+          "identifier": "P68871",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P68871/entry",
+          "name": "HBB",
+          "description": "Hemoglobin subunit beta",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-25381",
+      "complexName": "HP:CA1:BMP5:LPAR6:HBB:HBA1:SLC9A5:HMGCLL1:UPF3A:PLSCR4",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-11710063",
+          "identifier": "P22003",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P22003/entry",
+          "name": "BMP5",
+          "description": "Bone morphogenetic protein 5",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11848",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-1220767",
+          "identifier": "P00738",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P00738/entry",
+          "name": "HP",
+          "description": "Haptoglobin",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR24255",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-2814578",
+          "identifier": "Q14940",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q14940/entry",
+          "name": "SLC9A5",
+          "description": "Sodium/hydrogen exchanger 5",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR10110",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-2876949",
+          "identifier": "P43657",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P43657/entry",
+          "name": "LPAR6",
+          "description": "Lysophosphatidic acid receptor 6",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR24232",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-3912102",
+          "identifier": "P00915",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P00915/entry",
+          "name": "CA1",
+          "description": "Carbonic anhydrase 1",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR18952",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-521530",
+          "identifier": "Q9H1J1",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q9H1J1/entry",
+          "name": "UPF3A",
+          "description": "Regulator of nonsense transcripts 3A",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR13112",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-53971242",
+          "identifier": "Q8TB92",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q8TB92/entry",
+          "name": "HMGCLL1",
+          "description": "3-hydroxy-3-methylglutaryl-CoA lyase, cytoplasmic",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR42738",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-714680",
+          "identifier": "P69905",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P69905/entry",
+          "name": "HBA1",
+          "description": "Hemoglobin subunit alpha",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-715554",
+          "identifier": "P68871",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P68871/entry",
+          "name": "HBB",
+          "description": "Hemoglobin subunit beta",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-769257",
+          "identifier": "Q9NRQ2",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q9NRQ2/entry",
+          "name": "PLSCR4",
+          "description": "Phospholipid scramblase 4",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR23248",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-24145",
+      "complexName": "HBB:HBA1:UPF3A:DKK2",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-13274770",
+          "identifier": "Q9UBU2",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q9UBU2/entry",
+          "name": "DKK2",
+          "description": "Dickkopf-related protein 2",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR12113",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-521530",
+          "identifier": "Q9H1J1",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q9H1J1/entry",
+          "name": "UPF3A",
+          "description": "Regulator of nonsense transcripts 3A",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR13112",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-714680",
+          "identifier": "P69905",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P69905/entry",
+          "name": "HBA1",
+          "description": "Hemoglobin subunit alpha",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-715554",
+          "identifier": "P68871",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P68871/entry",
+          "name": "HBB",
+          "description": "Hemoglobin subunit beta",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11442",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "facets": null
+}

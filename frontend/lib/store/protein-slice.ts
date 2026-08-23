@@ -3,6 +3,7 @@ import type {
   ProteinSummary,
   AnalyticsResponse,
   ProteinAnnotations,
+  ProteinComplexes,
 } from "@/lib/types";
 import { apiGet, ApiError } from "@/lib/api";
 
@@ -21,6 +22,9 @@ export interface ProteinSlice {
   annotations: ProteinAnnotations | null;
   annotationsLoading: boolean;
   annotationsError: ProteinLoadError | null;
+  complexes: ProteinComplexes | null;
+  complexesLoading: boolean;
+  complexesError: ProteinLoadError | null;
   /**
    * Loads protein metadata by id from `GET /api/proteins/{id}`.
    *
@@ -55,6 +59,18 @@ export interface ProteinSlice {
    * transport or 5xx failure lands in `annotationsError`.
    */
   loadAnnotations: (id: string) => Promise<void>;
+  /**
+   * Loads Complex Portal complexes from `GET /api/proteins/{id}/complexes`.
+   *
+   * Fourth independent request token, for the same reason the other three have
+   * their own: the rail is mounted twice (side panel + stacked) and all four
+   * requests race freely.
+   *
+   * A protein that belongs to no complex is a *successful* load carrying an
+   * empty list, not an error — most proteins are in none. Only a transport or
+   * 5xx failure lands in `complexesError`.
+   */
+  loadComplexes: (id: string) => Promise<void>;
   clearProtein: () => void;
 }
 
@@ -62,6 +78,7 @@ export interface ProteinSlice {
 let metaSeq = 0;
 let analyticsSeq = 0;
 let annotationsSeq = 0;
+let complexesSeq = 0;
 
 export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice> = (
   set,
@@ -75,6 +92,9 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
   annotations: null,
   annotationsLoading: false,
   annotationsError: null,
+  complexes: null,
+  complexesLoading: false,
+  complexesError: null,
   loadProtein: async (id: string) => {
     const myReq = ++metaSeq;
     // Clear stale data immediately so consumers don't see protein A while loading B.
@@ -87,6 +107,8 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       analyticsError: null,
       annotations: null,
       annotationsError: null,
+      complexes: null,
+      complexesError: null,
     });
     try {
       const summary = await apiGet<ProteinSummary>(`/api/proteins/${id}`);
@@ -129,11 +151,26 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       set({ annotationsError: { status, message }, annotationsLoading: false });
     }
   },
+  loadComplexes: async (id: string) => {
+    const myReq = ++complexesSeq;
+    set({ complexesLoading: true, complexesError: null });
+    try {
+      const c = await apiGet<ProteinComplexes>(`/api/proteins/${id}/complexes`);
+      if (myReq !== complexesSeq) return;
+      set({ complexes: c, complexesLoading: false });
+    } catch (e) {
+      if (myReq !== complexesSeq) return;
+      const status = e instanceof ApiError ? e.status : null;
+      const message = e instanceof Error ? e.message : String(e);
+      set({ complexesError: { status, message }, complexesLoading: false });
+    }
+  },
   clearProtein: () => {
     // Bumping the sequences invalidates any in-flight loads.
     metaSeq++;
     analyticsSeq++;
     annotationsSeq++;
+    complexesSeq++;
     set({
       current: null,
       error: null,
@@ -144,6 +181,9 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       annotations: null,
       annotationsError: null,
       annotationsLoading: false,
+      complexes: null,
+      complexesError: null,
+      complexesLoading: false,
     });
   },
 });

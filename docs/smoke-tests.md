@@ -482,6 +482,53 @@ no RMSD, an unmatched chain, an unannotated secondary structure — states its r
 
 ---
 
+## P9 — Complex viewer
+
+Goal: open a protein that belongs to curated complexes and read the complex's function plus a
+participant table with stoichiometry; open one that belongs to none and be told plainly.
+
+1. Start both servers (`start.cmd`, or the two dev commands).
+2. Go to `/search`, search `hemoglobin`, import the **UniProt P69905** card (HBA1).
+3. In the viewer rail, click the **Complexes** tab.
+   - Expect a **Complex** selector reading `1/9`, opening on **Hemoglobin HbA2 complex**
+     (`CPX-2419`) — a *curated* complex, not a predicted one.
+   - **Function** shows the curated description ("Adult hemoglobin A2 (HbA2) is expressed in
+     erythrocytes…").
+   - **Participants (3)** table lists `HBD` (2 copies), `heme` — type *small molecule*,
+     4 copies — and `HBA1`, which carries the blue **This protein** marker.
+   - The accession `CPX-2419` links out to `ebi.ac.uk/complexportal/complex/CPX-2419`.
+4. Move the selector to the last entry.
+   - Expect a complex flagged **Evidence: Predicted, not curated**, with **no Function
+     heading** — predicted complexes carry no curated function text.
+   - Expect its participants' Copies column to read `n/a`: Complex Portal curates no
+     stoichiometry for these, and the table must not invent one.
+5. Import **UniProt P01308** (insulin) and open Complexes.
+   - Expect **7** complexes, and the footer line *"2 further record(s) name this accession in
+     their description without containing the protein, and are not listed."*
+   - Negative case: `CPX-26675` / `CPX-16536` (the insulin *receptor* complexes) must **not**
+     appear. They name "Insulin (P01308)" in their description but contain no insulin.
+6. Import **UniProt P06213** (INSR) and open Complexes.
+   - Expect `CPX-16536` present and curated, with the **This protein** marker on the
+     `P06213-PRO_…` mature-chain rows — the protein participates as PRO chains, not under its
+     bare accession.
+7. Upload a plain local PDB (e.g. `backend/app/static/1CRN.pdb`) and open Complexes.
+   - Expect: HTTP 200, no red error, and *"Uploaded structures carry no database identifier to
+     map from."*
+   - Negative case: this must never be a 500 or an error state.
+8. Tests:
+   ```
+   cd backend && pytest
+   cd frontend && npm ci && npm run lint && npm test && npm run build
+   ```
+   - Expect: 241 backend, 236 frontend, lint and build clean.
+
+**Pass criteria:** a protein in curated complexes shows the complex's function and a participant
+table with stoichiometry; complexes that merely mention the accession are excluded and accounted
+for; predicted complexes are labelled as predicted; a protein in none explains itself instead of
+erroring.
+
+---
+
 ## How to add a smoke test
 
 When you start a phase, replace the placeholder for that phase with the concrete steps. The steps should be the minimum sequence a fresh agent or human needs to verify the phase works end-to-end, including:

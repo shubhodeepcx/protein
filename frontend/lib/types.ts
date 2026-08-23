@@ -349,3 +349,49 @@ export interface ProteinAnnotations {
   ptm_features: SequenceFeature[];
   cross_references: CrossReference[];
 }
+
+/** Mirrors `backend/app/models/complexes.py` (P9). */
+export interface ComplexParticipant {
+  /** A UniProt accession, a PRO chain id, or a ChEBI id for a small molecule. */
+  identifier: string;
+  name: string;
+  description: string | null;
+  /** Complex Portal interactor type — "protein", "small molecule", RNA kinds. */
+  interactor_type: string | null;
+  organism: string | null;
+  /** "2", or "0-1" for an optional participant. Null when not curated. */
+  stoichiometry: string | null;
+  stoichiometry_min: number | null;
+  stoichiometry_max: number | null;
+  url: string | null;
+  /** True for the row that is the protein currently open in the viewer. */
+  is_query_protein: boolean;
+}
+
+export interface ProteinComplex {
+  /** Complex Portal accession, e.g. "CPX-2158". */
+  accession: string;
+  name: string;
+  organism: string | null;
+  /** The curated function of the complex. Predicted complexes have none. */
+  description: string | null;
+  predicted: boolean;
+  url: string | null;
+  participants: ComplexParticipant[];
+}
+
+export interface ProteinComplexes {
+  id: string;
+  accession: string | null;
+  accession_resolved: boolean;
+  resolution_note: string;
+  /** The base accession actually sent to Complex Portal. */
+  query: string | null;
+  complexes: ProteinComplex[];
+  /**
+   * How many records Complex Portal's free-text index matched. Larger than
+   * `complexes.length` when a complex merely names the accession in its
+   * description without containing the protein.
+   */
+  search_matches: number;
+}

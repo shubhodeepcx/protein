@@ -1,0 +1,348 @@
+{
+  "size": 5,
+  "totalNumberOfResults": 5,
+  "elements": [
+    {
+      "complexAC": "CPX-16536",
+      "complexName": "INSR-IGF1R, hybrid insulin receptor complex",
+      "organismName": "Homo sapiens; 9606",
+      "description": "Complex regulates glucose homeostasis and normal human growth.\r\n\r\nHybrid receptors are formed when one half (alpha-beta) of INSR pairs with one half (alpha-beta) of the IGF1R. The specific INSR isoform involved, either the long form (P06213-1, INSR-B which includes exon 11) or the short form (P06213-2, INSR-A which excludes exon 11) can influence the ligand-binding and activation properties of the resulting hybrid complex. Hybrids containing INSR-B are reported to be strongly activated by IGF1 (P05019), exhibit low affinity for IGF2 (P01344), and show minimal responsiveness to INS (P01308). In contrast, hybrids involving the INSR-A have been reported in some studies to respond to IGF1, IGF2, and, to a limited extent, INS. However, INS activation of hybrid receptors remains significantly weaker than that of homodimeric INSR, regardless of isoform. The extent to which isoform identity determines hybrid receptor function remains unclear, and INS binding may vary depending on cell type, receptor abundance, and experimental context.\r\n\r\nDysregulation of insulin receptor (INSR) signalling is a well-established contributor to the pathogenesis of diabetes mellitus. In parallel, aberrant activation of the hybrid INS-IGF1R receptors has been implicated in tumourigenesis and cancer progression, as well as in the molecular mechanisms underlying neurodegenerative diseases such as Alzheimer’s disease.",
+      "predictedComplex": false,
+      "interactors": [
+        {
+          "ac": "EBI-10818032",
+          "identifier": "P06213-PRO_0000016689",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P06213-PRO_0000016689/entry",
+          "name": "INSR",
+          "description": "Insulin receptor subunit beta",
+          "stochiometry": "minValue: 1, maxValue: 1",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": []
+        },
+        {
+          "ac": "EBI-22054038",
+          "identifier": "P08069-PRO_0000016682",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P08069-PRO_0000016682/entry",
+          "name": "IGF1R",
+          "description": "Insulin-like growth factor 1 receptor beta chain",
+          "stochiometry": "minValue: 1, maxValue: 1",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": []
+        },
+        {
+          "ac": "EBI-67171059",
+          "identifier": "P06213-PRO_0000016687",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P06213-PRO_0000016687/entry",
+          "name": "INSR",
+          "description": "Insulin receptor subunit alpha",
+          "stochiometry": "minValue: 1, maxValue: 1",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": []
+        },
+        {
+          "ac": "EBI-67171102",
+          "identifier": "P08069-PRO_0000016681",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P08069-PRO_0000016681/entry",
+          "name": "IGF1R",
+          "description": "Insulin-like growth factor 1 receptor alpha chain",
+          "stochiometry": "minValue: 1, maxValue: 1",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": []
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-12130",
+      "complexName": "INSR:IGF1R:HSD11B1:DNASE1L1:ADAMTS14:PLXND1",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-20894690",
+          "identifier": "P49184",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P49184/entry",
+          "name": "DNASE1L1",
+          "description": "Deoxyribonuclease-1-like 1",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11371",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-21018005",
+          "identifier": "Q8WXS8",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q8WXS8/entry",
+          "name": "ADAMTS14",
+          "description": "A disintegrin and metalloproteinase with thrombospondin motifs 14",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR13723",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-310731",
+          "identifier": "Q9Y4D7",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q9Y4D7/entry",
+          "name": "PLXND1",
+          "description": "Plexin-D1",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR22625",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-3918817",
+          "identifier": "P28845",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P28845/entry",
+          "name": "HSD11B1",
+          "description": "11-beta-hydroxysteroid dehydrogenase 1",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR44279",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-475899",
+          "identifier": "P06213",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P06213/entry",
+          "name": "INSR",
+          "description": "Insulin receptor",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR24416",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-475981",
+          "identifier": "P08069",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P08069/entry",
+          "name": "IGF1R",
+          "description": "Insulin-like growth factor 1 receptor",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR24416",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-15356",
+      "complexName": "INSR:HSD11B1:HSD17B2",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-11724790",
+          "identifier": "P37059",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P37059/entry",
+          "name": "HSD17B2",
+          "description": "17-beta-hydroxysteroid dehydrogenase type 2",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR43313",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-3918817",
+          "identifier": "P28845",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P28845/entry",
+          "name": "HSD11B1",
+          "description": "11-beta-hydroxysteroid dehydrogenase 1",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR44279",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-475899",
+          "identifier": "P06213",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P06213/entry",
+          "name": "INSR",
+          "description": "Insulin receptor",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR24416",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-10862",
+      "complexName": "INSR:HSD11B1",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-3918817",
+          "identifier": "P28845",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P28845/entry",
+          "name": "HSD11B1",
+          "description": "11-beta-hydroxysteroid dehydrogenase 1",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR44279",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-475899",
+          "identifier": "P06213",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P06213/entry",
+          "name": "INSR",
+          "description": "Insulin receptor",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR24416",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-18594",
+      "complexName": "INSR:IGF1R:HSD17B2",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-11724790",
+          "identifier": "P37059",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P37059/entry",
+          "name": "HSD17B2",
+          "description": "17-beta-hydroxysteroid dehydrogenase type 2",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR43313",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-475899",
+          "identifier": "P06213",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P06213/entry",
+          "name": "INSR",
+          "description": "Insulin receptor",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR24416",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-475981",
+          "identifier": "P08069",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P08069/entry",
+          "name": "IGF1R",
+          "description": "Insulin-like growth factor 1 receptor",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR24416",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "facets": null
+}
