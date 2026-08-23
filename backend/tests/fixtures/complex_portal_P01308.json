@@ -1,0 +1,658 @@
+{
+  "size": 9,
+  "totalNumberOfResults": 9,
+  "elements": [
+    {
+      "complexAC": "CPX-26675",
+      "complexName": "INSR, insulin receptor complex",
+      "organismName": "Homo sapiens; 9606",
+      "description": "Insulin (P01308) binding tyrosine kinase receptor complex. Regulates glucose homeostasis and normal human growth. Initiates key signalling pathways upon insulin binding. Activation of INSR leads to autophosphorylation and recruitment of insulin receptor substrates (IRS proteins), which in turn activate the PI3K-AKT and MAPK pathways, thereby regulating critical metabolic functions such as glucose uptake (via GLUT4 translocation), glycogen synthesis, lipid metabolism, and inhibition of hepatic glucose production. INSR also influences physiological processes including growth, development, and bone formation, partly through interactions with the growth hormone/IGF. INSR function is tightly regulated by internalization and recycling mechanisms, and its dysfunction can result in severe insulin resistance syndromes or contribute to the pathogenesis of diabetes mellitus.",
+      "predictedComplex": false,
+      "interactors": [
+        {
+          "ac": "EBI-10818032",
+          "identifier": "P06213-PRO_0000016689",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P06213-PRO_0000016689/entry",
+          "name": "INSR",
+          "description": "Insulin receptor subunit beta",
+          "stochiometry": "minValue: 2, maxValue: 2",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": []
+        },
+        {
+          "ac": "EBI-67171059",
+          "identifier": "P06213-PRO_0000016687",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P06213-PRO_0000016687/entry",
+          "name": "INSR",
+          "description": "Insulin receptor subunit alpha",
+          "stochiometry": "minValue: 2, maxValue: 2",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": []
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-16536",
+      "complexName": "INSR-IGF1R, hybrid insulin receptor complex",
+      "organismName": "Homo sapiens; 9606",
+      "description": "Complex regulates glucose homeostasis and normal human growth.\r\n\r\nHybrid receptors are formed when one half (alpha-beta) of INSR pairs with one half (alpha-beta) of the IGF1R. The specific INSR isoform involved, either the long form (P06213-1, INSR-B which includes exon 11) or the short form (P06213-2, INSR-A which excludes exon 11) can influence the ligand-binding and activation properties of the resulting hybrid complex. Hybrids containing INSR-B are reported to be strongly activated by IGF1 (P05019), exhibit low affinity for IGF2 (P01344), and show minimal responsiveness to INS (P01308). In contrast, hybrids involving the INSR-A have been reported in some studies to respond to IGF1, IGF2, and, to a limited extent, INS. However, INS activation of hybrid receptors remains significantly weaker than that of homodimeric INSR, regardless of isoform. The extent to which isoform identity determines hybrid receptor function remains unclear, and INS binding may vary depending on cell type, receptor abundance, and experimental context.\r\n\r\nDysregulation of insulin receptor (INSR) signalling is a well-established contributor to the pathogenesis of diabetes mellitus. In parallel, aberrant activation of the hybrid INS-IGF1R receptors has been implicated in tumourigenesis and cancer progression, as well as in the molecular mechanisms underlying neurodegenerative diseases such as Alzheimer’s disease.",
+      "predictedComplex": false,
+      "interactors": [
+        {
+          "ac": "EBI-10818032",
+          "identifier": "P06213-PRO_0000016689",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P06213-PRO_0000016689/entry",
+          "name": "INSR",
+          "description": "Insulin receptor subunit beta",
+          "stochiometry": "minValue: 1, maxValue: 1",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": []
+        },
+        {
+          "ac": "EBI-22054038",
+          "identifier": "P08069-PRO_0000016682",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P08069-PRO_0000016682/entry",
+          "name": "IGF1R",
+          "description": "Insulin-like growth factor 1 receptor beta chain",
+          "stochiometry": "minValue: 1, maxValue: 1",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": []
+        },
+        {
+          "ac": "EBI-67171059",
+          "identifier": "P06213-PRO_0000016687",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P06213-PRO_0000016687/entry",
+          "name": "INSR",
+          "description": "Insulin receptor subunit alpha",
+          "stochiometry": "minValue: 1, maxValue: 1",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": []
+        },
+        {
+          "ac": "EBI-67171102",
+          "identifier": "P08069-PRO_0000016681",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P08069-PRO_0000016681/entry",
+          "name": "IGF1R",
+          "description": "Insulin-like growth factor 1 receptor alpha chain",
+          "stochiometry": "minValue: 1, maxValue: 1",
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": []
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-12676",
+      "complexName": "INS:ACHE:PRSS12:MFAP5:B4GALNT3:SEMA3G",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-11040603",
+          "identifier": "P56730",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P56730/entry",
+          "name": "PRSS12",
+          "description": "Neurotrypsin",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR48071",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-1637793",
+          "identifier": "P22303",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P22303/entry",
+          "name": "ACHE",
+          "description": "Acetylcholinesterase",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11559",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-17574989",
+          "identifier": "Q9NS98",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q9NS98/entry",
+          "name": "SEMA3G",
+          "description": "Semaphorin-3G",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11036",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-21513542",
+          "identifier": "Q6L9W6",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q6L9W6/entry",
+          "name": "B4GALNT3",
+          "description": "Beta-1,4-N-acetylgalactosaminyltransferase 3",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR12369",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-54606722",
+          "identifier": "Q13361",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q13361/entry",
+          "name": "MFAP5",
+          "description": "Microfibrillar-associated protein 5",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR16485",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-7090529",
+          "identifier": "P01308",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P01308/entry",
+          "name": "INS",
+          "description": "Insulin",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11454",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-11356",
+      "complexName": "INS:PRSS12:MFAP5:SEMA3G",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-11040603",
+          "identifier": "P56730",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P56730/entry",
+          "name": "PRSS12",
+          "description": "Neurotrypsin",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR48071",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-17574989",
+          "identifier": "Q9NS98",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q9NS98/entry",
+          "name": "SEMA3G",
+          "description": "Semaphorin-3G",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11036",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-54606722",
+          "identifier": "Q13361",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q13361/entry",
+          "name": "MFAP5",
+          "description": "Microfibrillar-associated protein 5",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR16485",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-7090529",
+          "identifier": "P01308",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P01308/entry",
+          "name": "INS",
+          "description": "Insulin",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11454",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-16271",
+      "complexName": "INS:B4GALNT4",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-21379362",
+          "identifier": "Q76KP1",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q76KP1/entry",
+          "name": "B4GALNT4",
+          "description": "N-acetyl-beta-glucosaminyl-glycoprotein 4-beta-N-acetylgalactosaminyltransferase 1",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR12369",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-7090529",
+          "identifier": "P01308",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P01308/entry",
+          "name": "INS",
+          "description": "Insulin",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11454",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-13718",
+      "complexName": "INS:B4GALNT4:INSL5",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-21379362",
+          "identifier": "Q76KP1",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q76KP1/entry",
+          "name": "B4GALNT4",
+          "description": "N-acetyl-beta-glucosaminyl-glycoprotein 4-beta-N-acetylgalactosaminyltransferase 1",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR12369",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-21626318",
+          "identifier": "Q9Y5Q6",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q9Y5Q6/entry",
+          "name": "INSL5",
+          "description": "Insulin-like peptide INSL5",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR20968",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-7090529",
+          "identifier": "P01308",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P01308/entry",
+          "name": "INS",
+          "description": "Insulin",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11454",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-10631",
+      "complexName": "INS:ACHE:PRSS12:MFAP5:SEMA3G",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-11040603",
+          "identifier": "P56730",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P56730/entry",
+          "name": "PRSS12",
+          "description": "Neurotrypsin",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR48071",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-1637793",
+          "identifier": "P22303",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P22303/entry",
+          "name": "ACHE",
+          "description": "Acetylcholinesterase",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11559",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-17574989",
+          "identifier": "Q9NS98",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q9NS98/entry",
+          "name": "SEMA3G",
+          "description": "Semaphorin-3G",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11036",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-54606722",
+          "identifier": "Q13361",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q13361/entry",
+          "name": "MFAP5",
+          "description": "Microfibrillar-associated protein 5",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR16485",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-7090529",
+          "identifier": "P01308",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P01308/entry",
+          "name": "INS",
+          "description": "Insulin",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11454",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-19016",
+      "complexName": "INS:PRSS12",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-11040603",
+          "identifier": "P56730",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P56730/entry",
+          "name": "PRSS12",
+          "description": "Neurotrypsin",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR48071",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-7090529",
+          "identifier": "P01308",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P01308/entry",
+          "name": "INS",
+          "description": "Insulin",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11454",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "complexAC": "CPX-24024",
+      "complexName": "INS:ACHE:PRSS12:MFAP5:B4GALNT4:SEMA3G",
+      "organismName": "Homo sapiens; 9606",
+      "description": "",
+      "predictedComplex": true,
+      "interactors": [
+        {
+          "ac": "EBI-11040603",
+          "identifier": "P56730",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P56730/entry",
+          "name": "PRSS12",
+          "description": "Neurotrypsin",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR48071",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-1637793",
+          "identifier": "P22303",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P22303/entry",
+          "name": "ACHE",
+          "description": "Acetylcholinesterase",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11559",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-17574989",
+          "identifier": "Q9NS98",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q9NS98/entry",
+          "name": "SEMA3G",
+          "description": "Semaphorin-3G",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11036",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-21379362",
+          "identifier": "Q76KP1",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q76KP1/entry",
+          "name": "B4GALNT4",
+          "description": "N-acetyl-beta-glucosaminyl-glycoprotein 4-beta-N-acetylgalactosaminyltransferase 1",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR12369",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-54606722",
+          "identifier": "Q13361",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/Q13361/entry",
+          "name": "MFAP5",
+          "description": "Microfibrillar-associated protein 5",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR16485",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        },
+        {
+          "ac": "EBI-7090529",
+          "identifier": "P01308",
+          "identifierLink": "https://www.uniprot.org/uniprotkb/P01308/entry",
+          "name": "INS",
+          "description": "Insulin",
+          "stochiometry": null,
+          "interactorType": "protein",
+          "organismName": "Homo sapiens; 9606",
+          "xrefs": [
+            {
+              "identifier": "PTHR11454",
+              "identifierLink": null,
+              "database": "panther",
+              "qualifier": "orthology-group"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "facets": null
+}
