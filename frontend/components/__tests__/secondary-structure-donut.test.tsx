@@ -61,6 +61,21 @@ describe("secondaryStructureSlices", () => {
     expect(names).not.toContain("Coil");
   });
 
+  it("still draws a measured all-coil protein as coil", () => {
+    // The converse of the bug, and the reason the flag exists rather than a
+    // `coil === 1` heuristic: a structure really can be entirely coil. That
+    // is a finding, and it must keep its name and its colour.
+    const slices = secondaryStructureSlices({
+      helix: 0,
+      sheet: 0,
+      coil: 1,
+      available: true,
+    });
+    expect(slices).toHaveLength(1);
+    expect(slices[0].name).toBe("Coil");
+    expect(slices[0].name).not.toBe(NOT_ANNOTATED_LABEL);
+  });
+
   it("does not colour the placeholder with any of the three data colours", () => {
     const dataColours = new Set(
       secondaryStructureSlices(measured).map((s) => s.fill),

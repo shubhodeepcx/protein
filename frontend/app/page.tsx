@@ -113,7 +113,10 @@ export default function HomePage() {
           </div>
           <Separator />
           <ScrollArea className="flex-1">
-            <nav className="flex flex-col gap-1.5 p-3">
+            <nav
+              data-testid="quick-actions"
+              className="flex flex-col gap-1.5 p-3"
+            >
               {QUICK_ACTIONS.map(({ href, icon: Icon, title, body }) => (
                 <Link
                   key={href}

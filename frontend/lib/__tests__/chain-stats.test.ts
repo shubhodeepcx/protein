@@ -42,6 +42,18 @@ describe("chainSegments", () => {
     expect(chainSegments(-3)).toEqual([]);
   });
 
+  it("keeps the base size when the chain fills the budget exactly", () => {
+    // 100 residues at the 25 base size is exactly 4 segments for a budget of
+    // 4. Growing here — an off-by-one in the loop's comparison — would halve
+    // the resolution of every chain that lands on the boundary.
+    expect(chainSegments(100, 4, 25)).toEqual([
+      { start: 1, end: 25 },
+      { start: 26, end: 50 },
+      { start: 51, end: 75 },
+      { start: 76, end: 100 },
+    ]);
+  });
+
   it("respects a caller-supplied chip budget", () => {
     expect(chainSegments(1000, 4).length).toBeLessThanOrEqual(4);
     expect(chainSegments(1000, 4)[chainSegments(1000, 4).length - 1].end).toBe(

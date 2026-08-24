@@ -172,6 +172,35 @@ describe("ChainTree", () => {
     ]);
   });
 
+  it("selects the segment, not the whole chain, when a chain has several", () => {
+    // Both fixture chains are shorter than one segment, so "click the chip"
+    // and "click the chain" produced identical selections and the test could
+    // not tell them apart. A 30-residue chain splits into 1-25 and 26-30.
+    resetStore({
+      ...SUMMARY,
+      chains: [
+        {
+          id: "test-id:L",
+          label: "L",
+          sequence: "A".repeat(30),
+          residue_count: 30,
+        },
+      ],
+    });
+    render(<ChainTree />);
+    fireEvent.click(screen.getByTestId("chain-segment-L-26"));
+
+    const selected = useStore.getState().selected;
+    expect(selected.size).toBe(5);
+    expect([...selected].sort()).toEqual([
+      "L:26",
+      "L:27",
+      "L:28",
+      "L:29",
+      "L:30",
+    ]);
+  });
+
   it("says so plainly when a structure parsed with no chains", () => {
     resetStore({ ...SUMMARY, chains: [] });
     render(<ChainTree />);

@@ -92,12 +92,15 @@ describe("landing page rail preview", () => {
 
   it("offers the demo, the databases and the drop zone as real routes", () => {
     render(<HomePage />);
-    for (const href of ["/viewer/demo", "/search", "#upload"]) {
-      expect(
-        document.querySelector(`a[href="${href}"]`),
-        `no link to ${href}`,
-      ).not.toBeNull();
-    }
+    // Scoped to the rail's own nav on purpose. Querying the whole document
+    // proved nothing: the header carries its own links to `#upload` and the
+    // viewer strip to `/viewer/demo`, so a broken rail href was still
+    // "found" somewhere else on the page.
+    const nav = screen.getByTestId("quick-actions");
+    const hrefs = Array.from(nav.querySelectorAll("a")).map((a) =>
+      a.getAttribute("href"),
+    );
+    expect(hrefs).toEqual(["/viewer/demo", "/search", "#upload"]);
   });
 
   it("lists a database the backend really talks to, for each source card", () => {

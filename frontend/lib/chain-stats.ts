@@ -41,8 +41,10 @@ export function chainSegments(
   maxSegments = 24,
   baseSize = 25,
 ): ChainSegment[] {
-  if (residueCount <= 0) return [];
-
+  // No early return for an empty or negative chain: the loop below already
+  // produces nothing for those. A guard here was provably equivalent to the
+  // loop's own bound — mutation testing could not tell the two apart — so it
+  // was a branch that could never be shown to do anything.
   let size = Math.max(1, Math.floor(baseSize));
   const limit = Math.max(1, Math.floor(maxSegments));
   while (Math.ceil(residueCount / size) > limit) size *= 2;
