@@ -97,6 +97,21 @@ def test_submit_returns_a_job_id_immediately_and_does_not_poll() -> None:
 
 
 @respx.mock
+def test_the_default_program_is_a_protein_search() -> None:
+    """blastp, because a protein sequence is what this application always has
+    to hand. A nucleotide default would send `stype=dna` with a protein query
+    and EBI would reject every unqualified submission."""
+    run = respx.post(RUN_URL).mock(return_value=httpx.Response(200, text=JOB_ID))
+
+    response = client.post("/api/blast", json={"sequence": "MALRKGG"})
+
+    assert response.json()["program"] == "blastp"
+    form = submitted_form(run)
+    assert form["program"] == "blastp"
+    assert form["stype"] == "protein"
+
+
+@respx.mock
 def test_submit_from_a_stored_protein_uses_its_longest_chain() -> None:
     """Same convention analytics already uses for the "primary" chain."""
     register()

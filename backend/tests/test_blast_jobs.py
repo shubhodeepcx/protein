@@ -324,6 +324,28 @@ async def test_a_failed_search_is_terminal_and_says_so() -> None:
 
 
 @respx.mock
+@pytest.mark.parametrize("upstream", ["ERROR", "SOMETHING_NEW"])
+async def test_an_errored_job_is_terminal_and_stops_polling(upstream: str) -> None:
+    """ERROR is where every unrecognised token lands, so it must be terminal.
+
+    If it were not, an unknowable job would be polled forever: the browser
+    keeps asking, we keep asking EBI, and the status never changes.
+    """
+    registry = new_registry()
+    register(registry)
+    route = respx.get(STATUS_URL).mock(return_value=httpx.Response(200, text=upstream))
+
+    record = await registry.poll(JOB_ID)
+    assert record is not None
+    assert record.status == "ERROR"
+    assert record.finished is True
+    assert record.result is None
+
+    await registry.poll(JOB_ID)
+    assert route.call_count == 1
+
+
+@respx.mock
 async def test_a_finished_job_whose_download_fails_is_retried_not_lost() -> None:
     """The search succeeded; only the download did not. Losing it would be wrong."""
     registry = new_registry()

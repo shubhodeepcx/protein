@@ -13,6 +13,9 @@ shape EBI actually emits — a hand-written fixture would prove nothing.
 
 from __future__ import annotations
 
+import logging
+from urllib.parse import parse_qs
+
 import httpx
 import pytest
 import respx
@@ -29,6 +32,7 @@ from app.models.protein import ChainInfo, ProteinSummary
 from app.services import registry
 from app.services.blast import (
     BASE_URL,
+    CONTACT_EMAIL_ENV,
     DEFAULT_CONTACT_EMAIL,
     BlastRequestRejected,
     EBIBlastClient,
@@ -51,6 +55,16 @@ UID = "2222222222224222822222222222bbbb"
 
 def blastp_payload() -> dict:
     return load_json("ebi_ncbiblast_result_P35858.json")
+
+
+def form_body(route) -> dict[str, str]:
+    """The form-encoded submission body, decoded.
+
+    `parse_qs` rather than a `split("&")`, because a real contact address
+    percent-encodes its `@` and a naive split would compare the wrong string.
+    """
+    raw = route.calls[0].request.content.decode()
+    return {key: values[0] for key, values in parse_qs(raw).items()}
 
 
 def register(**overrides: object) -> ProteinSummary:
@@ -135,6 +149,15 @@ def test_query_type_follows_the_program(program: str, expected: str) -> None:
     assert request.query_type == expected
 
 
+def test_a_protein_id_query_clears_any_leftover_sequence() -> None:
+    """A whitespace-only `sequence` alongside a `protein_id` is not a second
+    query source, but it must not survive on the model either: a downstream
+    reader that picked `sequence` would BLAST whitespace."""
+    request = BlastSubmitRequest(protein_id=UID, sequence="   ")
+    assert request.protein_id == UID
+    assert request.sequence is None
+
+
 def test_submit_request_rejects_a_hostile_database_name() -> None:
     with pytest.raises(ValidationError, match="EBI database name"):
         BlastSubmitRequest(sequence="MALR", database="../../etc/passwd")
@@ -148,6 +171,16 @@ def test_submit_request_rejects_a_non_numeric_expect_threshold() -> None:
 def test_submit_request_rejects_a_non_positive_expect_threshold() -> None:
     with pytest.raises(ValidationError, match="greater than zero"):
         BlastSubmitRequest(sequence="MALR", exp="0")
+
+
+@pytest.mark.parametrize("field", ["alignments", "scores"])
+@pytest.mark.parametrize("value", [0, -1, 1001, 100_000])
+def test_alignment_and_score_counts_are_bounded_at_both_ends(field: str, value: int) -> None:
+    """EBI caps these itself; an unbounded value is refused here rather than
+    sent upstream to be rejected slowly, and a zero would ask for no output at
+    all."""
+    with pytest.raises(ValidationError):
+        BlastSubmitRequest(sequence="MALR", **{field: value})
 
 
 def test_submit_request_normalises_matrix_and_database_case() -> None:
@@ -186,6 +219,68 @@ def test_contact_email_reads_the_environment(monkeypatch) -> None:
 def test_blank_environment_value_falls_back_to_the_default(monkeypatch) -> None:
     monkeypatch.setenv("BLAST_CONTACT_EMAIL", "   ")
     assert contact_email() == DEFAULT_CONTACT_EMAIL
+
+
+@respx.mock
+async def test_the_configured_address_is_the_one_actually_posted(monkeypatch) -> None:
+    """The address is plumbing, not decoration.
+
+    EBI blocks clients it cannot reach, so a deployment that configures a
+    mailbox must have *that* mailbox reach the request body — resolving it
+    correctly and then posting something else would be invisible until the
+    block arrives.
+    """
+    monkeypatch.setenv("BLAST_CONTACT_EMAIL", "lab@example.org")
+    route = respx.post(RUN_URL).mock(return_value=httpx.Response(200, text=JOB_ID))
+    await EBIBlastClient().submit(sequence="MALR", program="blastp", database="uniprotkb")
+    assert form_body(route)["email"] == "lab@example.org"
+
+
+@respx.mock
+async def test_an_address_passed_to_the_client_overrides_the_environment(
+    monkeypatch,
+) -> None:
+    """The constructor argument exists so a caller can submit as itself.
+
+    A client that quietly ignored it would send every job under the wrong
+    contact address.
+    """
+    monkeypatch.setenv("BLAST_CONTACT_EMAIL", "env@example.org")
+    route = respx.post(RUN_URL).mock(return_value=httpx.Response(200, text=JOB_ID))
+    client_ = EBIBlastClient(email="explicit@example.org")
+    assert client_.email == "explicit@example.org"
+    await client_.submit(sequence="MALR", program="blastp", database="uniprotkb")
+    assert form_body(route)["email"] == "explicit@example.org"
+
+
+@respx.mock
+async def test_submitting_under_the_fallback_address_warns(monkeypatch, caplog) -> None:
+    """A deployment that never sets a reachable address is one EBI may block.
+
+    The warning names the environment variable, so the log says how to fix it
+    rather than only that something is wrong.
+    """
+    monkeypatch.delenv("BLAST_CONTACT_EMAIL", raising=False)
+    respx.post(RUN_URL).mock(return_value=httpx.Response(200, text=JOB_ID))
+    with caplog.at_level(logging.WARNING, logger="app.services.blast"):
+        await EBIBlastClient().submit(
+            sequence="MALR", program="blastp", database="uniprotkb"
+        )
+    warnings = [r.getMessage() for r in caplog.records if r.levelno >= logging.WARNING]
+    assert any(CONTACT_EMAIL_ENV in message for message in warnings)
+
+
+@respx.mock
+async def test_a_configured_address_submits_without_the_warning(
+    monkeypatch, caplog
+) -> None:
+    monkeypatch.setenv("BLAST_CONTACT_EMAIL", "lab@example.org")
+    respx.post(RUN_URL).mock(return_value=httpx.Response(200, text=JOB_ID))
+    with caplog.at_level(logging.WARNING, logger="app.services.blast"):
+        await EBIBlastClient().submit(
+            sequence="MALR", program="blastp", database="uniprotkb"
+        )
+    assert not [r for r in caplog.records if r.levelno >= logging.WARNING]
 
 
 # --------------------------------------------------------------- transport
@@ -326,6 +421,31 @@ async def test_retrieve_json_rejects_a_non_json_body() -> None:
     respx.get(RESULT_URL).mock(return_value=httpx.Response(200, text="not json"))
     with pytest.raises(SourceUnavailableError, match="non-JSON"):
         await EBIBlastClient().retrieve_json(JOB_ID)
+
+
+@respx.mock
+async def test_retrieve_json_rejects_a_payload_that_is_not_an_object() -> None:
+    """A JSON array is valid JSON and still not a BLAST result.
+
+    Letting one through would reach `parse_result`, which reads it as a mapping
+    and fails with an AttributeError — a 500 in place of the 502 this is.
+    """
+    respx.get(RESULT_URL).mock(return_value=httpx.Response(200, json=["not", "a", "result"]))
+    with pytest.raises(SourceUnavailableError, match="unexpected payload"):
+        await EBIBlastClient().retrieve_json(JOB_ID)
+
+
+@respx.mock
+async def test_result_types_404_is_an_expired_job_not_an_empty_list() -> None:
+    """An expired job has no result types; so does a job with none.
+
+    Returning [] for both would make "this job is gone" indistinguishable from
+    "this job produced nothing", which is the difference between re-running the
+    search and waiting.
+    """
+    respx.get(TYPES_URL).mock(return_value=httpx.Response(404))
+    with pytest.raises(SourceNotFoundError, match="expired"):
+        await EBIBlastClient().result_types(JOB_ID)
 
 
 @respx.mock
