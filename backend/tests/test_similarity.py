@@ -17,6 +17,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.models.protein import ChainInfo, ProteinSummary
+from app.models.similarity import DEFAULT_UNIREF_IDENTITY
 from app.services import registry, similarity
 from app.services.external import SourceNotFoundError, SourceUnavailableError
 from app.services.uniprot import (
@@ -138,6 +139,33 @@ async def test_cluster_lookups_are_cached_per_accession_and_level() -> None:
     assert route.call_count == 2
 
 
+@respx.mock
+async def test_cluster_lookups_do_not_collide_across_accessions() -> None:
+    """Two proteins at the same clustering level are two different questions.
+
+    A cache key that dropped the accession would hand the second protein the
+    first one's homologs — a wrong answer that looks entirely plausible, since
+    every field in it is real.
+    """
+    route = respx.get(UNIREF_SEARCH_URL).mock(
+        side_effect=[
+            httpx.Response(200, json=cluster_payload()),
+            httpx.Response(
+                200,
+                json={"results": [{"id": "UniRef50_P00698", "name": "Cluster: Lysozyme C"}]},
+            ),
+        ]
+    )
+    uniprot = UniProtClient()
+
+    first = await uniprot.find_uniref_cluster("P01308")
+    second = await uniprot.find_uniref_cluster("P00698")
+
+    assert route.call_count == 2
+    assert first is not None and first["id"] == CLUSTER_ID
+    assert second is not None and second["id"] == "UniRef50_P00698"
+
+
 async def test_an_unsupported_identity_level_is_refused_before_any_request() -> None:
     """No `@respx.mock`: reaching the network here would fail the test."""
     with pytest.raises(SourceNotFoundError, match="0.5, 0.9 or 1.0"):
@@ -162,6 +190,78 @@ async def test_member_fetches_are_capped_at_the_per_source_maximum() -> None:
     )
     await UniProtClient().fetch_uniref_members(CLUSTER_ID, size=5000)
     assert route.calls[0].request.url.params["size"] == "25"
+
+
+@respx.mock
+async def test_member_pages_are_cached_per_cluster() -> None:
+    """The Similarity tab is re-opened constantly; the second open must not be
+    a second round trip to UniProt."""
+    route = respx.get(MEMBERS_URL).mock(
+        return_value=httpx.Response(200, json=members_payload())
+    )
+    uniprot = UniProtClient()
+
+    first = await uniprot.fetch_uniref_members(CLUSTER_ID)
+    second = await uniprot.fetch_uniref_members(CLUSTER_ID)
+
+    assert route.call_count == 1
+    assert len(first) == len(second) == 25
+
+
+@respx.mock
+async def test_the_member_fetch_drops_records_that_are_not_objects() -> None:
+    """A stray null in `results` must not become a member with no fields."""
+    respx.get(MEMBERS_URL).mock(
+        return_value=httpx.Response(
+            200, json={"results": [{"accessions": ["P01308"]}, "junk", None, 7]}
+        )
+    )
+    members = await UniProtClient().fetch_uniref_members(CLUSTER_ID)
+    assert members == [{"accessions": ["P01308"]}]
+
+
+@respx.mock
+async def test_the_member_fetch_validates_the_cluster_id_before_using_it() -> None:
+    """The id is interpolated into a URL path, so it is checked first.
+
+    `@respx.mock` with nothing mocked: were the guard dropped, the outbound
+    request would fail this test rather than reach UniProt.
+    """
+    with pytest.raises(SourceNotFoundError):
+        await UniProtClient().fetch_uniref_members("../../etc/passwd")
+
+
+@respx.mock
+async def test_a_uniref_404_is_an_absence_not_an_outage() -> None:
+    """"UniProt has nothing for this accession" is an answer the user can act
+    on; "UniProt is down" is one they can only retry. Collapsing the two turns
+    a permanent empty result into an endless retry."""
+    respx.get(UNIREF_SEARCH_URL).mock(return_value=httpx.Response(404))
+    with pytest.raises(SourceNotFoundError):
+        await UniProtClient().find_uniref_cluster("P01308")
+
+
+@respx.mock
+async def test_a_uniref_error_status_is_reported_as_that_status() -> None:
+    """A 500 whose body happens to be valid JSON is still an outage.
+
+    Falling through to the body would read an error document as a result and
+    report "no cluster" for a protein that has one.
+    """
+    respx.get(UNIREF_SEARCH_URL).mock(
+        return_value=httpx.Response(500, json={"messages": ["internal error"]})
+    )
+    with pytest.raises(SourceUnavailableError, match="HTTP 500"):
+        await UniProtClient().find_uniref_cluster("P01308")
+
+
+@respx.mock
+async def test_uniref_rejects_a_payload_that_is_not_an_object() -> None:
+    respx.get(UNIREF_SEARCH_URL).mock(
+        return_value=httpx.Response(200, json=["not", "an", "object"])
+    )
+    with pytest.raises(SourceUnavailableError, match="unexpected payload"):
+        await UniProtClient().find_uniref_cluster("P01308")
 
 
 @respx.mock
@@ -196,7 +296,9 @@ def test_projection_reads_the_cluster_header() -> None:
     assert result.cluster_id == CLUSTER_ID
     assert result.cluster_name == "Cluster: Insulin"
     assert result.member_count == 35
-    assert result.organism_count > 0
+    # 22, not 35: the cluster spans fewer organisms than it has members, so a
+    # count that merely had to be positive could not tell the two fields apart.
+    assert result.organism_count == 22
     assert result.identity_threshold == 0.5
     assert result.accession_resolved is True
 
@@ -241,6 +343,29 @@ def test_a_member_is_identified_by_its_primary_accession() -> None:
     """
     macaque = next(m for m in build().members if m.entry_id == "INS_MACFA")
     assert macaque.accession == "P30406"
+
+
+def test_a_member_accession_is_normalised_before_it_is_compared() -> None:
+    """UniRef spells accessions upper-case today.
+
+    Both the self-exclusion and the deduplication are string comparisons, so
+    they depend on that habit holding rather than on the comparison being made
+    safe — and a lower-case query accession slipping through would list the
+    protein among its own homologs.
+    """
+    members = members_payload()["results"]
+    members.append({"memberId": "INS_SHOUTED", "accessions": ["p01308"]})
+    members.append({"memberId": "INS_MUTTERED", "accessions": ["q6yk33"]})
+
+    result = similarity.build_similar_proteins(
+        UID, cluster_payload()["results"][0], members, accession="P01308", note="t"
+    )
+
+    accessions = [m.accession for m in result.members]
+    assert "p01308" not in accessions
+    assert "P01308" not in accessions
+    assert all(a == a.upper() for a in accessions)
+    assert len(accessions) == len(set(accessions))
 
 
 def test_the_cluster_representative_is_flagged() -> None:
@@ -297,6 +422,17 @@ def test_empty_similar_is_a_successful_answer_not_an_error() -> None:
     assert result.resolution_note == "no accession here"
 
 
+def test_an_empty_answer_still_reports_a_resolved_accession() -> None:
+    """"We know which entry this is and it has no homologs" and "we could not
+    work out which entry this is" are different answers, and the UI shows a
+    different thing for each. An empty member list is not what tells them
+    apart."""
+    result = similarity.empty_similar(UID, "no cluster", accession="P01308")
+    assert result.accession_resolved is True
+    assert result.accession == "P01308"
+    assert result.members == []
+
+
 # ---------------------------------------------------------------- endpoint
 
 
@@ -335,8 +471,91 @@ def test_similar_endpoint_explains_an_accession_with_no_cluster() -> None:
     body = client.get(f"/api/proteins/{UID}/similar").json()
 
     assert body["accession"] == "P01308"
+    assert body["accession_resolved"] is True
     assert body["members"] == []
     assert "UniRef50" in body["resolution_note"]
+
+
+@respx.mock
+def test_the_endpoint_asks_for_the_clustering_level_it_reports() -> None:
+    """The level searched and the level shown must be the same number.
+
+    UniRef50 and UniRef100 answer different questions — 100 mostly returns the
+    same protein under other accessions — so a response labelled 50 that was
+    fetched at 100 is a wrong answer with a correct-looking label.
+    """
+    register()
+    search = respx.get(UNIREF_SEARCH_URL).mock(
+        return_value=httpx.Response(200, json=cluster_payload())
+    )
+    respx.get(MEMBERS_URL).mock(return_value=httpx.Response(200, json=members_payload()))
+
+    body = client.get(f"/api/proteins/{UID}/similar").json()
+
+    assert body["identity_threshold"] == DEFAULT_UNIREF_IDENTITY
+    query = search.calls[0].request.url.params["query"]
+    assert f"identity:{body['identity_threshold']:.1f}" in query
+
+
+@respx.mock
+def test_a_cluster_with_no_identifier_is_explained_not_crashed() -> None:
+    """Without an id there is no members URL to build.
+
+    Saying so is a 200 with an explanation; letting the id through would
+    interpolate None into a path and turn a UniProt oddity into a 500.
+    """
+    register()
+    body = cluster_payload()
+    body["results"][0].pop("id")
+    respx.get(UNIREF_SEARCH_URL).mock(return_value=httpx.Response(200, json=body))
+    members = respx.get(MEMBERS_URL).mock(
+        return_value=httpx.Response(200, json=members_payload())
+    )
+
+    response = client.get(f"/api/proteins/{UID}/similar")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["members"] == []
+    assert "no identifier" in payload["resolution_note"]
+    assert members.call_count == 0
+
+
+@respx.mock
+def test_similar_endpoint_explains_a_uniref_404_rather_than_failing() -> None:
+    """UniRef having nothing for an accession is an answer, not an outage.
+
+    Same posture as `/annotations`: the user is told why the panel is empty
+    instead of being handed an error they can only retry.
+    """
+    register()
+    respx.get(UNIREF_SEARCH_URL).mock(return_value=httpx.Response(404))
+
+    response = client.get(f"/api/proteins/{UID}/similar")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["accession"] == "P01308"
+    assert body["members"] == []
+    assert "no cluster" in body["resolution_note"]
+
+
+@respx.mock
+def test_similar_endpoint_refuses_a_malformed_uid_even_when_one_is_registered() -> None:
+    """The registry is a plain dict and will answer for any key it was given,
+    so a 404 for an *unknown* malformed uid cannot tell the shape guard from
+    the lookup miss. The upstream route is mocked so a regression is caught
+    here rather than by an outbound request."""
+    summary = register()
+    registry.put("not-a-storage-uid", summary)
+    search = respx.get(UNIREF_SEARCH_URL).mock(
+        return_value=httpx.Response(200, json=cluster_payload())
+    )
+
+    response = client.get("/api/proteins/not-a-storage-uid/similar")
+
+    assert response.status_code == 404
+    assert search.call_count == 0
 
 
 @respx.mock
