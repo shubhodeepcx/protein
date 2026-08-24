@@ -115,18 +115,12 @@ export function PaeHeatmap({ pae }: { pae: PaeMatrix }) {
         Expected error in one residue&apos;s position when the model is aligned on
         another. <strong className="text-zinc-300">Lower is better</strong> — the
         opposite direction from pLDDT. Median{" "}
-        <span className="tabular-nums text-zinc-200">
-          {summary.median.toFixed(1)} Å
-        </span>
+        <span className="tabular-nums text-zinc-200">{`${summary.median.toFixed(1)} Å`}</span>
         , worst{" "}
-        <span className="tabular-nums text-zinc-200">
-          {summary.worst.toFixed(1)} Å
-        </span>
+        <span className="tabular-nums text-zinc-200">{`${summary.worst.toFixed(1)} Å`}</span>
         ;{" "}
-        <span className="tabular-nums text-zinc-200">
-          {(summary.confidentFraction * 100).toFixed(0)}%
-        </span>{" "}
-        of residue pairs are within {PAE_CONFIDENT_ANGSTROMS} Å.
+        <span className="tabular-nums text-zinc-200">{`${(summary.confidentFraction * 100).toFixed(0)}%`}</span>{" "}
+        {`of residue pairs are within ${PAE_CONFIDENT_ANGSTROMS} Å.`}
       </p>
 
       <p

@@ -81,9 +81,9 @@ export function PlddtBandChart({ bands }: { bands: PlddtBand[] }) {
               aria-hidden
             />
             <span className="text-zinc-300">{band.label}</span>
-            <span className="text-zinc-500">(pLDDT {band.range})</span>
+            <span className="text-zinc-500">{`(pLDDT ${band.range})`}</span>
             <span className="ml-auto tabular-nums text-zinc-300">
-              {band.residue_count} · {(band.fraction * 100).toFixed(1)}%
+              {`${band.residue_count} · ${(band.fraction * 100).toFixed(1)}%`}
             </span>
           </li>
         ))}
