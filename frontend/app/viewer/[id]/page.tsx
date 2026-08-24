@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import type { MolstarViewerRef } from "@/components/molstar-viewer";
+import { ChainTree } from "@/components/chain-tree";
 import { ViewerRail } from "@/components/viewer-rail";
 import { ViewerHeader } from "@/components/viewer-header";
 import {
@@ -173,8 +174,16 @@ export default function DynamicViewerPage() {
           onResetCamera={() => viewerRef.current?.resetCamera()}
         />
 
-        {/* Split content: viewer left, tabbed rail right (xl+) or stacked below. */}
-        <div className="grid flex-1 grid-cols-1 overflow-hidden xl:grid-cols-[1fr_24rem]">
+        {/* Split content: chain tree left, viewer centre, tabbed rail right
+            (xl+); at narrower widths the viewer takes the full width and the
+            rail stacks below. */}
+        <div className="grid flex-1 grid-cols-1 overflow-hidden xl:grid-cols-[15rem_1fr_24rem]">
+          {/* xl+ left rail — the chain tree. Drives the same selection slice
+              the sequence panel and the 3D click handler already share. */}
+          <aside className="hidden min-h-0 border-r border-zinc-800 bg-zinc-950 xl:block">
+            {summary && <ChainTree />}
+          </aside>
+
           <div className="relative overflow-hidden">
             <ViewerOverlays
               loading={loading}

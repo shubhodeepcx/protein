@@ -580,6 +580,61 @@ and survives a reload without duplicating itself; both result lists open a hit i
 
 ---
 
+## P10 — Interface density and the left rail
+
+Goal: the left rail is a working chain tree that highlights into the 3D view, the analytics donut
+stops reporting "100% coil" for structures that declare no secondary structure, and the landing
+page describes the app that exists.
+
+Run at a window width of at least 1280px (`xl`) — the left rail is xl-only.
+
+1. Start both servers (`start.cmd`, or the two dev commands).
+2. Open `/` and read the left rail.
+   - Expect the badge to read **no structure**, not `empty`.
+   - Expect three working entry points: **Open the demo structure** (`/viewer/demo`),
+     **Search the databases** (`/search`), **Drop a PDB or mmCIF file** (`#upload`).
+   - Expect the right rail to preview **five** tabs — Overview, Sequence, Analytics,
+     Annotations, Complexes — matching the viewer's rail exactly.
+   - Expect a **Wired to** strip under the drop zone naming RCSB PDB, AlphaFold DB, UniProtKB
+     and Complex Portal.
+3. Go to `/search`, search `insulin`, import the **RCSB 4INS** card (4 chains).
+4. Read the left rail in the viewer.
+   - Expect four rows — `A 21 aa 21%`, `B 30 aa 29%`, `C 21 aa 21%`, `D 30 aa 29%` — each
+     with a residue-class composition bar, and a header reading `4 chains · 102 aa`.
+   - Expect the rows to be **open** (four chains is at or under the collapse threshold), showing
+     per-class counts and ordinal-range chips.
+5. Click the **B** row.
+   - Expect the header to read `30 selected`, the B row to show `30 sel`, and chain B to
+     highlight in the 3D view.
+6. Click chain B's `26–30` chip.
+   - Expect `5 selected`, and exactly five residues highlighted in 3D.
+   - Open the **Sequence** tab: expect exactly those five B-chain cells to read as selected.
+     This is the check that the rail uses the one shared selection and not a second mechanism.
+7. Open the **Analytics** tab on 4INS.
+   - Expect a helix/sheet/coil donut and **no** amber warning — 4INS declares real secondary
+     structure (54.9% helix / 5.9% sheet).
+8. Import **AlphaFold P01308** and open its **Analytics** tab.
+   - Expect a single neutral ring legended **Not annotated**, carrying no percentage.
+   - Expect the amber note *"This structure declares no secondary structure, so the ring above is
+     an all-coil placeholder and not a measurement."*
+   - Negative case: the legend must **not** read `Coil (100%)`. That was the shipped bug — the
+     API had been reporting `available: false` and the donut ignored it.
+9. Check the other four tabs on the same protein still render (Overview, Sequence, Annotations,
+   Complexes) and that the page does not scroll horizontally at 900px wide.
+10. Tests:
+    ```
+    cd backend && pytest
+    cd frontend && npm ci && npm run lint && npm test && npm run build
+    ```
+    - Expect: 241 backend, 285 frontend, lint and build clean.
+
+**Pass criteria:** clicking a chain or a residue range in the left rail highlights those residues
+in Mol\* and in the sequence panel; a structure with no secondary-structure assignment says so
+instead of reporting an all-coil measurement; the landing page's rail preview matches the viewer's
+actual tabs.
+
+---
+
 ## How to add a smoke test
 
 When you start a phase, replace the placeholder for that phase with the concrete steps. The steps should be the minimum sequence a fresh agent or human needs to verify the phase works end-to-end, including:
