@@ -158,8 +158,10 @@ describe("ConfidencePanel", () => {
 
   it("lists every band as text, with its pLDDT range and count", () => {
     render(<ConfidencePanel proteinId="test-id" />);
-    // Colour is not the message: the counts must be legible without it.
-    expect(screen.getByText("(pLDDT >90)")).toBeInTheDocument();
+    // Colour is not the message: the counts must be legible without it, and
+    // legible means *visible* — a hidden list would still satisfy getByText.
+    expect(screen.getByTestId("plddt-band-list")).toBeVisible();
+    expect(screen.getByText("(pLDDT >90)")).toBeVisible();
     expect(screen.getByText("(pLDDT 70-90)")).toBeInTheDocument();
     expect(screen.getByText("(pLDDT 50-70)")).toBeInTheDocument();
     expect(screen.getByText("(pLDDT <50)")).toBeInTheDocument();

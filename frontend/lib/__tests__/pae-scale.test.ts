@@ -75,6 +75,23 @@ describe("paeColor direction", () => {
   });
 });
 
+describe("relativeLuminance", () => {
+  it("matches the WCAG definition at the ends and in the middle", () => {
+    // The direction tests above are only as trustworthy as this function. A
+    // luminance that dropped the sRGB transfer curve would still rank the ramp
+    // correctly today and quietly mis-rank a future palette, so pin it against
+    // the published values rather than against itself.
+    expect(relativeLuminance({ r: 255, g: 255, b: 255 })).toBeCloseTo(1, 6);
+    expect(relativeLuminance({ r: 0, g: 0, b: 0 })).toBeCloseTo(0, 6);
+    // Mid grey #808080 is 0.2159 under the sRGB curve, and would be 0.5019
+    // without it.
+    expect(relativeLuminance({ r: 128, g: 128, b: 128 })).toBeCloseTo(0.2159, 3);
+    // Pure green carries most of the weight; pure blue almost none.
+    expect(relativeLuminance({ r: 0, g: 255, b: 0 })).toBeCloseTo(0.7152, 4);
+    expect(relativeLuminance({ r: 0, g: 0, b: 255 })).toBeCloseTo(0.0722, 4);
+  });
+});
+
 describe("summarisePae", () => {
   it("reports median, worst and the confidently-placed share", () => {
     const values = [

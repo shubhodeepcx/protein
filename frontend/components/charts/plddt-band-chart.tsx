@@ -72,7 +72,10 @@ export function PlddtBandChart({ bands }: { bands: PlddtBand[] }) {
       {/* The same numbers as text. The chart renders at zero height in a
           headless environment and, more importantly, colour alone must never
           be the message. */}
-      <ul className="space-y-0.5 px-1 text-[11px] text-zinc-400">
+      <ul
+        data-testid="plddt-band-list"
+        className="space-y-0.5 px-1 text-[11px] text-zinc-400"
+      >
         {data.map((band) => (
           <li key={band.key} className="flex items-baseline gap-1.5">
             <span
