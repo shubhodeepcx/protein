@@ -92,6 +92,10 @@ export interface ProteinSlice {
    * nothing lands in `functionalError` except a transport failure.
    */
   loadFunctional: (id: string) => Promise<void>;
+  /**
+   * Loads AlphaFold confidence analysis from
+   * `GET /api/proteins/{id}/confidence` (A1).
+   *
    * An experimental structure is a *successful* load carrying
    * `has_plddt: false` and a prose note, not an error — pLDDT and PAE are
    * properties of a predicted model, and their absence is a fact about the
@@ -219,6 +223,8 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       const status = e instanceof ApiError ? e.status : null;
       const message = e instanceof Error ? e.message : String(e);
       set({ functionalError: { status, message }, functionalLoading: false });
+    }
+  },
   loadConfidence: async (id: string) => {
     const myReq = ++confidenceSeq;
     set({ confidenceLoading: true, confidenceError: null });

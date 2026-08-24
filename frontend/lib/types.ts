@@ -687,6 +687,8 @@ export interface FunctionalRegions {
   priority_residues: PriorityResidue[];
   unlocated_sites: number;
   notes: string[];
+}
+
 /* ------------------------------------------------------------------------ */
 /* A1 — AlphaFold confidence analysis                                         */
 /* Mirrors `backend/app/models/confidence.py`. See spec section 7.2 A1.        */
