@@ -404,3 +404,153 @@ export interface ProteinComplexes {
    */
   search_matches: number;
 }
+
+/* ------------------------------------------------------------------------ */
+/* P8 — sequence similarity: BLAST and UniRef homologs                        */
+/* Mirrors `backend/app/models/blast.py` and `models/similarity.py`.          */
+/*                                                                            */
+/* BLAST is the project's only ASYNCHRONOUS flow: `POST /api/blast` returns   */
+/* a job id, and `GET /api/blast/{job_id}` is polled until `finished` is      */
+/* true. A search takes 30 s to several minutes.                              */
+/* ------------------------------------------------------------------------ */
+
+/** The four programs EBI's REST service exposes. blastp is our default. */
+export type BlastProgram = "blastp" | "blastn" | "tblastn" | "blastx";
+
+/** EBI's job states, plus NOT_FOUND for an expired or unknown job. */
+export type BlastStatus =
+  | "QUEUED"
+  | "RUNNING"
+  | "FINISHED"
+  | "FAILURE"
+  | "ERROR"
+  | "NOT_FOUND";
+
+/** Body for `POST /api/blast`. Exactly one of protein_id / sequence. */
+export interface BlastSubmitRequest {
+  protein_id?: string;
+  /** Chain label to query with. Omitted means the longest chain. */
+  chain_id?: string;
+  sequence?: string;
+  program?: BlastProgram;
+  database?: string;
+  /** E-value threshold as a string, e.g. "1e-3". */
+  exp?: string;
+  alignments?: number;
+  scores?: number;
+  matrix?: string;
+  filter_low_complexity?: boolean;
+}
+
+/** The submit round trip. Carries a job id and nothing else of substance. */
+export interface BlastSubmitResponse {
+  job_id: string;
+  status: BlastStatus;
+  program: BlastProgram;
+  database: string;
+  query_length: number;
+  /** Where the query came from, e.g. "1CRN chain A". */
+  query_source: string;
+  /** ISO-8601 UTC. */
+  submitted_at: string;
+  poll_url: string;
+}
+
+export interface BlastHsp {
+  rank: number;
+  score: number | null;
+  bit_score: number | null;
+  expect: number | null;
+  align_length: number | null;
+  identity_percent: number | null;
+  positive_percent: number | null;
+  gaps: number | null;
+  query_start: number | null;
+  query_end: number | null;
+  hit_start: number | null;
+  hit_end: number | null;
+}
+
+export interface BlastHit {
+  rank: number;
+  accession: string;
+  entry_id: string | null;
+  description: string | null;
+  database: string | null;
+  organism: string | null;
+  gene: string | null;
+  length: number | null;
+  url: string | null;
+  /**
+   * Accession to import by, or null when the hit is not a UniProt entry.
+   * Null is what stops the UI offering an Open button that could only fail.
+   */
+  uniprot_accession: string | null;
+  /** Summary of the BEST HSP, chosen by score. */
+  identity_percent: number | null;
+  expect: number | null;
+  score: number | null;
+  bit_score: number | null;
+  align_length: number | null;
+  gaps: number | null;
+  hsps: BlastHsp[];
+}
+
+export interface BlastResult {
+  program: string | null;
+  version: string | null;
+  databases: string[];
+  query_id: string | null;
+  query_definition: string | null;
+  query_length: number | null;
+  hit_count: number;
+  hits: BlastHit[];
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+/** `GET /api/blast/{job_id}`. `result` is non-null only once FINISHED. */
+export interface BlastJobStatus {
+  job_id: string;
+  status: BlastStatus;
+  /** True once the status will not change again — stop polling. */
+  finished: boolean;
+  program: BlastProgram;
+  database: string;
+  query_length: number;
+  query_source: string;
+  submitted_at: string;
+  /** Seconds since submission — real progress, not a guess. */
+  elapsed_seconds: number;
+  poll_count: number;
+  message: string;
+  result: BlastResult | null;
+}
+
+export interface SimilarProtein {
+  accession: string;
+  entry_id: string | null;
+  protein_name: string | null;
+  organism: string | null;
+  taxon_id: number | null;
+  sequence_length: number | null;
+  is_representative: boolean;
+  uniprot_url: string | null;
+}
+
+/** `GET /api/proteins/{uid}/similar` — precomputed UniRef homologs. */
+export interface SimilarProteinsResponse {
+  id: string;
+  accession: string | null;
+  accession_resolved: boolean;
+  resolution_note: string;
+  /** UniRef clustering level: 0.5, 0.9 or 1.0. */
+  identity_threshold: number;
+  cluster_id: string | null;
+  cluster_name: string | null;
+  /** Total members in the cluster, before the query and UniParc rows are dropped. */
+  member_count: number;
+  organism_count: number;
+  members: SimilarProtein[];
+  truncated: boolean;
+}

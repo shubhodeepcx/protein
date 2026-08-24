@@ -23,6 +23,20 @@ logger = logging.getLogger(__name__)
 SEARCH_URL = "https://rest.uniprot.org/uniprotkb/search"
 ENTRY_URL = "https://rest.uniprot.org/uniprotkb/{accession}.json"
 
+# P8: UniRef is a *separate dataset* on the same host, not a UniProtKB
+# cross-reference field — which is exactly why P6 could not deliver "similar
+# proteins" and deferred it here (see the `xref_uniref` note below).
+UNIREF_SEARCH_URL = "https://rest.uniprot.org/uniref/search"
+UNIREF_MEMBERS_URL = "https://rest.uniprot.org/uniref/{cluster_id}/members"
+
+# Cluster ids are interpolated into a URL path, so their shape is checked
+# before use. UniProt only publishes the three clustering levels.
+_CLUSTER_ID_RE = re.compile(r"^UniRef(100|90|50)_[A-Za-z0-9_.-]{1,60}$")
+
+# Same per-source cap the search fan-out uses, for the same reason: bound the
+# payload without silently dropping anything unlogged.
+MAX_UNIREF_MEMBERS = MAX_RESULTS_PER_SOURCE
+
 # Only ask for the fields we actually render — a bare UniProtKB entry is ~100 kB.
 SEARCH_FIELDS = "accession,id,protein_name,organism_name,length,xref_alphafolddb,cc_function"
 
@@ -100,6 +114,7 @@ class UniProtClient:
         self,
         cache: TTLCache[Metadata] | None = None,
         annotation_cache: TTLCache[Metadata] | None = None,
+        uniref_cache: TTLCache[Metadata] | None = None,
     ) -> None:
         self._cache: TTLCache[Metadata] = cache if cache is not None else TTLCache()
         # Annotations get their own cache: the payloads have a different shape
@@ -108,6 +123,12 @@ class UniProtClient:
         # annotation lookup evict several search enrichments.
         self._annotation_cache: TTLCache[Metadata] = (
             annotation_cache if annotation_cache is not None else TTLCache()
+        )
+        # UniRef gets a third, for the same reason again: a different dataset
+        # with a different payload shape, and its keys are cluster ids rather
+        # than accessions, so they could not share a keyspace anyway.
+        self._uniref_cache: TTLCache[Metadata] = (
+            uniref_cache if uniref_cache is not None else TTLCache()
         )
 
     # ---------------------------------------------------------------- search
@@ -259,6 +280,92 @@ class UniProtClient:
         self._annotation_cache.put(accession, body)
         return body
 
+    # ---------------------------------------------------------------- uniref
+
+    async def find_uniref_cluster(
+        self, protein_id: str, *, identity: float = 0.5
+    ) -> Metadata | None:
+        """The UniRef cluster this accession belongs to, at one identity level.
+
+        Returns None when the accession is in no cluster at that level — a real
+        outcome for a brand-new or obsolete entry, not an error.
+
+        Searching by `uniprot_id` rather than fetching `UniRef{n}_{accession}`
+        directly is deliberate: a protein is only named after its cluster when
+        it happens to be the *representative* sequence. Every other member
+        would 404 on the direct URL.
+        """
+        accession = normalise_accession(protein_id)
+        level = _uniref_identity(identity)
+        cache_key = f"cluster:{accession}:{level}"
+        cached = self._uniref_cache.get(cache_key)
+        if cached is not None:
+            return cached or None
+
+        params: dict[str, Any] = {
+            "query": f"(uniprot_id:{accession}) AND (identity:{level})",
+            "size": 1,
+        }
+        body = await self._uniref_get(UNIREF_SEARCH_URL, params, "cluster search")
+        results = body.get("results")
+        cluster = results[0] if isinstance(results, list) and results else None
+        if not isinstance(cluster, dict):
+            # Cache the *absence* too: a protein with no cluster would
+            # otherwise re-query UniProt on every tab open.
+            self._uniref_cache.put(cache_key, {})
+            return None
+        self._uniref_cache.put(cache_key, cluster)
+        return cluster
+
+    async def fetch_uniref_members(
+        self, cluster_id: str, *, size: int = MAX_UNIREF_MEMBERS
+    ) -> list[Metadata]:
+        """The cluster's member records, capped at `size`.
+
+        The cluster entry itself carries only a truncated list of member
+        accessions; the member records (organism, protein name, length) come
+        from this second endpoint.
+        """
+        safe_id = normalise_cluster_id(cluster_id)
+        capped = max(1, min(size, MAX_UNIREF_MEMBERS))
+        cache_key = f"members:{safe_id}:{capped}"
+        cached = self._uniref_cache.get(cache_key)
+        if cached is not None:
+            members = cached.get("results")
+            return members if isinstance(members, list) else []
+
+        body = await self._uniref_get(
+            UNIREF_MEMBERS_URL.format(cluster_id=safe_id), {"size": capped}, "members"
+        )
+        results = body.get("results")
+        members = [m for m in results if isinstance(m, dict)] if isinstance(results, list) else []
+        self._uniref_cache.put(cache_key, {"results": members})
+        return members
+
+    async def _uniref_get(
+        self, url: str, params: dict[str, Any], what: str
+    ) -> Metadata:
+        """One UniRef GET, with this project's uniform error posture."""
+        async with new_client() as client:
+            try:
+                response = await client.get(url, params=params)
+            except httpx.HTTPError as exc:
+                raise SourceUnavailableError(f"UniRef {what} request failed: {exc}") from exc
+
+        if response.status_code == 404:
+            raise SourceNotFoundError(f"UniRef {what} found nothing at {url}")
+        if response.status_code >= 400:
+            raise SourceUnavailableError(
+                f"UniRef {what} returned HTTP {response.status_code}"
+            )
+        try:
+            body = response.json()
+        except ValueError as exc:
+            raise SourceUnavailableError(f"UniRef {what} returned non-JSON body") from exc
+        if not isinstance(body, dict):
+            raise SourceUnavailableError(f"UniRef {what} returned an unexpected payload")
+        return body
+
     async def find_accession_for_pdb(self, pdb_id: str) -> str | None:
         """Resolve a PDB entry ID to a UniProt accession via UniProt's own index.
 
@@ -328,6 +435,28 @@ def normalise_accession(protein_id: str) -> str:
     if not _ACCESSION_RE.match(accession):
         raise SourceNotFoundError(f"{protein_id!r} is not a valid UniProt accession")
     return accession
+
+
+def normalise_cluster_id(cluster_id: str) -> str:
+    """Validate a UniRef cluster id before it is interpolated into a URL path."""
+    candidate = cluster_id.strip()
+    if not _CLUSTER_ID_RE.match(candidate):
+        raise SourceNotFoundError(f"{cluster_id!r} is not a valid UniRef cluster id")
+    return candidate
+
+
+def _uniref_identity(identity: float) -> str:
+    """Render an identity level the way UniProt's query grammar spells it.
+
+    UniProt accepts `identity:0.5` / `0.9` / `1.0` and nothing else; anything
+    else is refused here rather than sent upstream to fail slowly.
+    """
+    for level in (0.5, 0.9, 1.0):
+        if abs(identity - level) < 1e-9:
+            return f"{level:.1f}"
+    raise SourceNotFoundError(
+        f"UniRef has no {identity} clustering level; use 0.5, 0.9 or 1.0"
+    )
 
 
 def _normalise(entry: Metadata) -> Metadata:

@@ -70,6 +70,17 @@ export const RAIL_TABS: readonly RailTab[] = [
     ],
   },
   {
+    value: "similarity",
+    title: "Similarity",
+    source: "EBI NCBI BLAST, UniRef",
+    items: [
+      "Precomputed UniRef homologs, returned immediately",
+      "BLAST search against UniProtKB and the ENA nucleotide sets",
+      "blastp, blastn, tblastn and blastx, with live progress",
+      "Identity, E-value and score per hit, each openable in the viewer",
+    ],
+  },
+  {
     value: "complexes",
     title: "Complexes",
     source: "EBI Complex Portal",

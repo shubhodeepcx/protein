@@ -6,10 +6,11 @@ import { AnnotationsPanel } from "@/components/annotations-panel";
 import { ComplexesPanel } from "@/components/complexes-panel";
 import { OverviewPanel } from "@/components/overview-panel";
 import { SequencePanel } from "@/components/sequence-panel";
+import { SimilarityPanel } from "@/components/similarity-panel";
 
 /**
- * The workspace's right rail (spec 4.1, extended in P6 and P9):
- * Overview / Sequence / Analytics / Annotations / Complexes.
+ * The workspace's right rail (spec 4.1, extended in P6, P8 and P9):
+ * Overview / Sequence / Analytics / Annotations / Similarity / Complexes.
  *
  * Rendered twice by the viewer page — once as the `xl` side rail and once
  * stacked below the viewer at narrow widths — so it keeps its own tab state.
@@ -33,6 +34,9 @@ export function ViewerRail({ proteinId }: { proteinId: string }) {
         <TabsTrigger value="annotations" className="text-xs">
           Annotations
         </TabsTrigger>
+        <TabsTrigger value="similarity" className="text-xs">
+          Similarity
+        </TabsTrigger>
         <TabsTrigger value="complexes" className="text-xs">
           Complexes
         </TabsTrigger>
@@ -49,6 +53,9 @@ export function ViewerRail({ proteinId }: { proteinId: string }) {
       </TabsContent>
       <TabsContent value="annotations" className="min-h-0 overflow-hidden">
         <AnnotationsPanel proteinId={proteinId} />
+      </TabsContent>
+      <TabsContent value="similarity" className="min-h-0 overflow-hidden">
+        <SimilarityPanel proteinId={proteinId} />
       </TabsContent>
       <TabsContent value="complexes" className="min-h-0 overflow-hidden">
         <ComplexesPanel proteinId={proteinId} />

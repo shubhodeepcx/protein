@@ -1,0 +1,345 @@
+{
+  "results": [
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "INS_HUMAN",
+      "organismName": "Homo sapiens (Human)",
+      "organismTaxId": 9606,
+      "sequenceLength": 110,
+      "proteinName": "Insulin",
+      "accessions": [
+        "P01308",
+        "Q5EEX2"
+      ],
+      "uniref90Id": "UniRef90_P01308",
+      "uniref100Id": "UniRef100_P01308",
+      "uniparcId": "UPI00000017EA",
+      "sequence": {
+        "value": "MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKTRREAEDLQVGQVELGGGPGAGSLQPLALEGSLQKRGIVEQCCTSICSLYQLENYCN",
+        "length": 110,
+        "molWeight": 11981,
+        "crc64": "C2C3B23B85E520E5",
+        "md5": "12E9C9E4E2835C302E8BA615115EDDA3"
+      }
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "INS_GORGO",
+      "organismName": "Gorilla gorilla gorilla (Western lowland gorilla)",
+      "organismTaxId": 9595,
+      "sequenceLength": 110,
+      "proteinName": "Insulin",
+      "accessions": [
+        "Q6YK33"
+      ],
+      "uniref90Id": "UniRef90_P01308",
+      "uniref100Id": "UniRef100_P01308",
+      "uniparcId": "UPI00000017EA"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "INS_MACFA",
+      "organismName": "Macaca fascicularis (Crab-eating macaque) (Cynomolgus monkey)",
+      "organismTaxId": 9541,
+      "sequenceLength": 110,
+      "proteinName": "Insulin",
+      "accessions": [
+        "P30406",
+        "P01309"
+      ],
+      "uniref90Id": "UniRef90_P01308",
+      "uniref100Id": "UniRef100_P30406",
+      "uniparcId": "UPI000012D6D1"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "INS_FELCA",
+      "organismName": "Felis catus (Cat) (Felis silvestris catus)",
+      "organismTaxId": 9685,
+      "sequenceLength": 110,
+      "proteinName": "Insulin",
+      "accessions": [
+        "P06306",
+        "Q8WNW6"
+      ],
+      "uniref90Id": "UniRef90_P06306",
+      "uniref100Id": "UniRef100_P06306",
+      "uniparcId": "UPI0000087292"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "I3WAC9_HUMAN",
+      "organismName": "Homo sapiens (Human)",
+      "organismTaxId": 9606,
+      "sequenceLength": 110,
+      "proteinName": "Insulin",
+      "accessions": [
+        "I3WAC9"
+      ],
+      "uniref90Id": "UniRef90_P01308",
+      "uniref100Id": "UniRef100_P01308",
+      "uniparcId": "UPI00000017EA"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "F6MZK5_HUMAN",
+      "organismName": "Homo sapiens (Human)",
+      "organismTaxId": 9606,
+      "sequenceLength": 94,
+      "proteinName": "Insulin (Fragment)",
+      "accessions": [
+        "F6MZK5"
+      ],
+      "uniref90Id": "UniRef90_P01308",
+      "uniref100Id": "UniRef100_P01308",
+      "uniparcId": "UPI000211B12E"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "F7AUL3_MACMU",
+      "organismName": "Macaca mulatta (Rhesus macaque)",
+      "organismTaxId": 9544,
+      "sequenceLength": 110,
+      "proteinName": "Insulin",
+      "accessions": [
+        "F7AUL3"
+      ],
+      "uniref90Id": "UniRef90_P01308",
+      "uniref100Id": "UniRef100_P30406",
+      "uniparcId": "UPI000012D6D1"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "A0A2I3HNQ8_NOMLE",
+      "organismName": "Nomascus leucogenys (Northern white-cheeked gibbon) (Hylobates leucogenys)",
+      "organismTaxId": 61853,
+      "sequenceLength": 110,
+      "proteinName": "Insulin",
+      "accessions": [
+        "A0A2I3HNQ8"
+      ],
+      "uniref90Id": "UniRef90_P01308",
+      "uniref100Id": "UniRef100_P30406",
+      "uniparcId": "UPI000012D6D1"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "A0A2K6CQQ5_MACNE",
+      "organismName": "Macaca nemestrina (Pig-tailed macaque)",
+      "organismTaxId": 9545,
+      "sequenceLength": 110,
+      "proteinName": "Insulin",
+      "accessions": [
+        "A0A2K6CQQ5"
+      ],
+      "uniref90Id": "UniRef90_P01308",
+      "uniref100Id": "UniRef100_P30406",
+      "uniparcId": "UPI000012D6D1"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "A0ABI7W3H0_FELCA",
+      "organismName": "Felis catus (Cat) (Felis silvestris catus)",
+      "organismTaxId": 9685,
+      "sequenceLength": 170,
+      "proteinName": "Insulin",
+      "accessions": [
+        "A0ABI7W3H0"
+      ],
+      "uniref90Id": "UniRef90_P06306",
+      "uniref100Id": "UniRef100_P06306",
+      "uniparcId": "UPI000DE7BEF6",
+      "seed": true
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "Q52PU3_FELCA",
+      "organismName": "Felis catus (Cat) (Felis silvestris catus)",
+      "organismTaxId": 9685,
+      "sequenceLength": 86,
+      "proteinName": "Insulin (Fragment)",
+      "accessions": [
+        "Q52PU3"
+      ],
+      "uniref90Id": "UniRef90_P06306",
+      "uniref100Id": "UniRef100_P06306",
+      "uniparcId": "UPI0000509065"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "A0A667HLH0_LYNCA",
+      "organismName": "Lynx canadensis (Canada lynx) (Felis canadensis)",
+      "organismTaxId": 61383,
+      "sequenceLength": 170,
+      "proteinName": "Insulin",
+      "accessions": [
+        "A0A667HLH0"
+      ],
+      "uniref90Id": "UniRef90_P06306",
+      "uniref100Id": "UniRef100_A0A667HLH0",
+      "uniparcId": "UPI00133ADBDE"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "A0A6J1Y9M9_ACIJB",
+      "organismName": "Acinonyx jubatus (Cheetah)",
+      "organismTaxId": 32536,
+      "sequenceLength": 110,
+      "proteinName": "Insulin",
+      "accessions": [
+        "A0A6J1Y9M9"
+      ],
+      "uniref90Id": "UniRef90_P06306",
+      "uniref100Id": "UniRef100_A0A667HLH0",
+      "uniparcId": "UPI0009059CA1"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "A0A8C8XQC8_PANLE",
+      "organismName": "Panthera leo (Lion)",
+      "organismTaxId": 9689,
+      "sequenceLength": 110,
+      "proteinName": "Insulin",
+      "accessions": [
+        "A0A8C8XQC8"
+      ],
+      "uniref90Id": "UniRef90_P06306",
+      "uniref100Id": "UniRef100_A0A667HLH0",
+      "uniparcId": "UPI0009059CA1"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "A0A9V1EZY1_PANPR",
+      "organismName": "Panthera pardus (Leopard) (Felis pardus)",
+      "organismTaxId": 9691,
+      "sequenceLength": 110,
+      "proteinName": "Insulin",
+      "accessions": [
+        "A0A9V1EZY1"
+      ],
+      "uniref90Id": "UniRef90_P06306",
+      "uniref100Id": "UniRef100_A0A667HLH0",
+      "uniparcId": "UPI0009059CA1"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "G1TTU1_RABIT",
+      "organismName": "Oryctolagus cuniculus (Rabbit)",
+      "organismTaxId": 9986,
+      "sequenceLength": 164,
+      "proteinName": "Insulin",
+      "accessions": [
+        "G1TTU1"
+      ],
+      "uniref90Id": "UniRef90_G1TTU1",
+      "uniref100Id": "UniRef100_G1TTU1",
+      "uniparcId": "UPI0012356DC6"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "A0A8C9LMF1_9PRIM",
+      "organismName": "Piliocolobus tephrosceles (Ugandan red Colobus)",
+      "organismTaxId": 591936,
+      "sequenceLength": 110,
+      "proteinName": "Insulin",
+      "accessions": [
+        "A0A8C9LMF1"
+      ],
+      "uniref90Id": "UniRef90_A0A8C9LMF1",
+      "uniref100Id": "UniRef100_A0A8C9LMF1",
+      "uniparcId": "UPI000C2AFF54"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "A0A8D2GB84_THEGE",
+      "organismName": "Theropithecus gelada (Gelada baboon)",
+      "organismTaxId": 9565,
+      "sequenceLength": 110,
+      "proteinName": "Insulin",
+      "accessions": [
+        "A0A8D2GB84"
+      ],
+      "uniref90Id": "UniRef90_A0A8C9LMF1",
+      "uniref100Id": "UniRef100_A0A8D2GB84",
+      "uniparcId": "UPI00027F5347"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "A0A2K6UJQ4_SAIBB",
+      "organismName": "Saimiri boliviensis boliviensis (Bolivian squirrel monkey)",
+      "organismTaxId": 39432,
+      "sequenceLength": 108,
+      "proteinName": "Insulin",
+      "accessions": [
+        "A0A2K6UJQ4"
+      ],
+      "uniref90Id": "UniRef90_A0A2K5DMS7",
+      "uniref100Id": "UniRef100_A0A2K6UJQ4",
+      "uniparcId": "UPI00027FBE1A"
+    },
+    {
+      "memberIdType": "UniProtKB ID",
+      "memberId": "A0A2K5DMS7_AOTNA",
+      "organismName": "Aotus nancymaae (Ma's night monkey)",
+      "organismTaxId": 37293,
+      "sequenceLength": 108,
+      "proteinName": "Insulin",
+      "accessions": [
+        "A0A2K5DMS7"
+      ],
+      "uniref90Id": "UniRef90_A0A2K5DMS7",
+      "uniref100Id": "UniRef100_A0A2K5DMS7",
+      "uniparcId": "UPI000625B3A2"
+    },
+    {
+      "memberIdType": "UniParc",
+      "memberId": "UPI002445C148",
+      "organismName": "Gorilla gorilla gorilla",
+      "organismTaxId": 9595,
+      "sequenceLength": 153,
+      "proteinName": "insulin isoform X1",
+      "uniref90Id": "UniRef90_P01308",
+      "uniref100Id": "UniRef100_P01308"
+    },
+    {
+      "memberIdType": "UniParc",
+      "memberId": "UPI0026756CAC",
+      "organismName": "Hylobates moloch",
+      "organismTaxId": 81572,
+      "sequenceLength": 153,
+      "proteinName": "insulin isoform X2",
+      "uniref90Id": "UniRef90_P01308",
+      "uniref100Id": "UniRef100_UPI0026756CAC"
+    },
+    {
+      "memberIdType": "UniParc",
+      "memberId": "UPI00136275C5",
+      "organismName": "Hylobates moloch",
+      "organismTaxId": 81572,
+      "sequenceLength": 110,
+      "proteinName": "insulin isoform X3",
+      "uniref90Id": "UniRef90_P01308",
+      "uniref100Id": "UniRef100_UPI0026756CAC"
+    },
+    {
+      "memberIdType": "UniParc",
+      "memberId": "UPI0021BC8141",
+      "organismName": "Macaca nemestrina",
+      "organismTaxId": 9545,
+      "sequenceLength": 153,
+      "proteinName": "insulin isoform X1",
+      "uniref90Id": "UniRef90_P01308",
+      "uniref100Id": "UniRef100_UPI0021BC8141"
+    },
+    {
+      "memberIdType": "UniParc",
+      "memberId": "UPI00045D908A",
+      "organismName": "Chlorocebus sabaeus",
+      "organismTaxId": 60711,
+      "sequenceLength": 144,
+      "proteinName": "insulin isoform X2",
+      "uniref90Id": "UniRef90_P01308",
+      "uniref100Id": "UniRef100_UPI00045D908A"
+    }
+  ]
+}
