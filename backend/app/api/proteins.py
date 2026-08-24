@@ -19,9 +19,18 @@ from app.models.analytics import (
 )
 from app.models.annotations import ProteinAnnotations
 from app.models.complexes import ProteinComplexes
+from app.models.confidence import ConfidenceResponse
 from app.models.protein import ProteinSummary
 from app.models.similarity import DEFAULT_UNIREF_IDENTITY, SimilarProteinsResponse
-from app.services import analytics, annotations, complexes, ingest, registry, similarity
+from app.services import (
+    analytics,
+    annotations,
+    complexes,
+    confidence,
+    ingest,
+    registry,
+    similarity,
+)
 from app.services.external import SourceNotFoundError, SourceUnavailableError
 from app.storage import local as storage
 
@@ -338,6 +347,82 @@ async def get_similar_proteins(uid: str) -> SimilarProteinsResponse:
 
     return similarity.build_similar_proteins(
         uid, cluster, members, accession=accession, note=note
+    )
+
+
+#: Sources whose stored file is an AlphaFold model, so `source_id` is the
+#: UniProt accession the PAE document can be looked up by. A plain upload has
+#: pLDDT in the file but nothing to query AlphaFold DB with — see the import
+#: router for why "uniprot" belongs here.
+_ALPHAFOLD_SOURCES = ("alphafold", "uniprot")
+
+
+@router.get("/{uid}/confidence", response_model=ConfidenceResponse)
+async def get_protein_confidence(uid: str) -> ConfidenceResponse:
+    """AlphaFold confidence analysis for a stored protein (spec A1).
+
+    Three things this route will not do:
+
+    * **It will not invent confidence for an experimental structure.** X-ray and
+      cryo-EM entries put a temperature factor in the column AlphaFold uses for
+      pLDDT, and scoring that would produce a full, entirely fictional band
+      table. `has_plddt` gates the whole analysis and the response says so in
+      prose.
+    * **It will not fail because AlphaFold DB is down.** pLDDT comes from the
+      file already on disk; PAE is a supplement. An upstream failure degrades
+      the `pae` block to `available: false` with a reason and leaves the rest
+      intact. This endpoint has no 502.
+    * **It will not return a zeroed matrix.** Absent PAE is an absent matrix
+      plus a sentence, never an all-zero grid that renders as a perfect
+      prediction.
+    """
+    from app.api.search import get_alphafold_client
+
+    try:
+        storage.validate_uid(uid)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="Protein not found") from exc
+    summary = registry.get(uid)
+    if not summary:
+        raise HTTPException(status_code=404, detail="Protein not found")
+
+    if not summary.has_plddt:
+        return confidence.not_applicable(
+            uid,
+            "This is an experimental structure, so it carries no pLDDT confidence "
+            "scores and no predicted aligned error. Both are properties of a "
+            "predicted model. Its B-factor column holds crystallographic "
+            "temperature factors, which measure something different.",
+        )
+
+    try:
+        file_path = storage.get_file(uid)
+    except (FileNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail="File not found") from exc
+
+    structure = await run_in_threadpool(parse_structure_for_analytics, file_path)
+    chains = confidence.extract_plddt(structure)
+
+    accession: str | None = None
+    if summary.source in _ALPHAFOLD_SOURCES and summary.source_id:
+        accession = summary.source_id
+
+    if accession is None:
+        pae = confidence.unavailable_pae(
+            "Predicted aligned error is published per AlphaFold DB entry. This "
+            "structure was uploaded directly, so there is no accession to look one "
+            "up by. Import the same model from AlphaFold or UniProt to see its PAE."
+        )
+        note = (
+            "pLDDT was read from this file's B-factor column. Predicted aligned "
+            "error is only available for structures imported from AlphaFold DB."
+        )
+    else:
+        pae = await confidence.pae_matrix_for(accession, get_alphafold_client())
+        note = ""
+
+    return confidence.build_confidence(
+        uid, summary, chains, pae, accession=accession, note=note
     )
 
 
