@@ -635,6 +635,67 @@ actual tabs.
 
 ---
 
+## A5 — Functional regions and binding pockets
+
+Goal: curated active and binding sites land on the residues the file really contains, bound
+ligands report the residues they touch, and everything that cannot be placed says so instead of
+being placed anyway. Runs in the **Annotations** tab — A5 has no rail tab of its own.
+
+1. Start both servers (`start.cmd`, or the two dev commands).
+2. Go to `/search`, search `EGFR`, import the **AlphaFold P00533** card, and open **Annotations**.
+   - Under **Active sites**, expect one entry labelled `UniProt 837`, chip **`DA:837`**, badged
+     `inferred` (ECO:0000255 is a PROSITE rule, not an observation).
+   - Under **Ligand-binding sites**, expect four ATP entries badged `experimental`:
+     `UniProt 718-726` (nine chips, `A:718`-`A:726`), `745`, `790-791`, `855`.
+     Those are the GxGxxG P-loop, the catalytic lysine K745, the gatekeeper T790 and the DFG
+     aspartate D855.
+   - Expect **no Bound ligands section**, and the note *"No non-water ligand is present in this
+     file, so no binding pocket is observed here."*
+   - Negative case: the tab must **never** show a "predicted pocket". The notes must contain
+     *"ProteoLens does not predict pockets in a structure that has no bound ligand."*
+3. Click chip `A:790` and check the 3D view.
+   - Expect exactly that residue highlighted in Mol\*, and the Sequence tab's residue 790
+     highlighted too — the chip drives the same `setSelection` everything else does.
+4. Import **RCSB 1HVR** (HIV-1 protease with a cyclic-urea inhibitor) and open Annotations.
+   - This is the offset case: UniProt P04585 is a 1435-residue polyprotein.
+   - Under **UniProt position mapping**, expect both chains mapped, each reading
+     *"UniProt 489-587 covers chain A residues 1-98 (numbered 1-99 in the file)"*.
+   - Under **Active sites**, expect `UniProt 513` placed on **`DA:25`** and **`DB:25`** — the
+     catalytic Asp25/Asp25' dyad. Not residue 513, and not residue 25 by luck.
+   - Under **Bound ligands**, expect `XK2 263 (chain A)` with ~23 contacts, `A:25` closest at
+     2.86 Å, including the `I50`/`I50'` flap tips.
+   - Under **High-priority residues**, expect `A:25` and `B:25` at the top with
+     *"1 residue is both curated…"*-style convergence text and both a curated and a contact
+     reason.
+   - Expect the footer note *"27 curated site(s) exist for this protein but could not be placed
+     in this structure."* — the Mg(2+) sites belong to the RT and integrase domains.
+5. Import **RCSB 4INS** (insulin) and open Annotations.
+   - Expect **two different offsets in one file**: chain A mapped to UniProt 88-108, chain B to
+     25-54.
+   - Expect two `ZN` ligands, each contacting a single **`HB:10`** / **`HD:10`** at ~2.1 Å.
+   - Expect no curated sites at all, and none invented: P01315 carries no site features.
+6. Open **Surface hydrophobicity and charge** on any of the above.
+   - Expect one row per chain with Net charge, Surface charge, Mean KD and Surface KD, and the
+     note naming Shrake-Rupley over the polymer alone.
+7. Upload a plain local PDB (`backend/app/static/1CRN.pdb`) and open Annotations.
+   - Expect HTTP 200, no red error, the notice *"No UniProt annotations for this structure…
+     What follows is measured from the coordinate file itself"*, and the surface table below it.
+   - Negative case: this must not be an empty dead end and must not be a 500.
+8. Stop the backend and reload the tab.
+   - Expect the panel to report the failure, not to render half a payload.
+9. Tests:
+   ```
+   cd backend && pytest
+   cd frontend && npm ci && npm run lint && npm test && npm run build
+   ```
+   - Expect: 475 backend, 387 frontend, lint and build clean.
+
+**Pass criteria:** every curated position is placed on the residue the literature names, or is
+refused in words; every ligand contact is measured from the file; nothing anywhere is labelled a
+predicted pocket.
+
+---
+
 ## How to add a smoke test
 
 When you start a phase, replace the placeholder for that phase with the concrete steps. The steps should be the minimum sequence a fresh agent or human needs to verify the phase works end-to-end, including:

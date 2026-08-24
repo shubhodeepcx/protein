@@ -204,6 +204,42 @@ describe("FunctionalRegionsPanel", () => {
     ).toHaveAttribute("title", expect.stringContaining("numbered 35 in the file"));
   });
 
+  it("keeps labelling by ordinal when the file numbers the residue differently", () => {
+    // 1HEW numbers its chain 1-129 with no gaps, so ordinal and auth_seq_id
+    // coincide there and a label built from the wrong one would look right.
+    // 1HVR does not: its chain A has 98 modelled residues numbered 1-99, so
+    // ordinal 80 is the residue the file calls 81. That is the case a chip
+    // must not get wrong, because the selection key is the ordinal and a chip
+    // reading `A:81` would select a residue one place further along.
+    setFunctional({
+      active_sites: [],
+      binding_sites: [],
+      priority_residues: [],
+      ligands: [
+        {
+          ...LYSOZYME.ligands[0],
+          label: "XK2 263 (chain A)",
+          contacts: [
+            { ...ref("B", 80, "P", 81), min_distance: 3.52, atom_contacts: 2 },
+          ],
+        },
+      ],
+    });
+    render(<FunctionalRegionsPanel proteinId="test-id" />);
+    const chip = within(section("Bound ligands")).getByTestId(
+      "functional-residue-B:80",
+    );
+
+    expect(chip).toHaveTextContent("PB:80");
+    expect(chip.textContent).not.toContain("81");
+    expect(chip).toHaveAttribute(
+      "title",
+      expect.stringContaining("numbered 81 in the file"),
+    );
+    fireEvent.click(chip);
+    expect(Array.from(useStore.getState().selected)).toEqual(["B:80"]);
+  });
+
   it("selects through the existing setSelection when a residue is clicked", () => {
     render(<FunctionalRegionsPanel proteinId="test-id" />);
 
@@ -258,6 +294,30 @@ describe("FunctionalRegionsPanel", () => {
 
     expect(sites.queryByTestId("functional-residue-A:35")).toBeNull();
     expect(sites.getByText(/could not be located in this structure/)).toBeInTheDocument();
+  });
+
+  it("says how much of a partly-present feature is missing", () => {
+    // A located site can still be incomplete: a construct that starts mid-loop
+    // carries some of a nine-residue P-loop and not the rest. Rendering the
+    // chips without the note would present a partial site as a whole one.
+    setFunctional({
+      binding_sites: [
+        {
+          ...LYSOZYME.binding_sites[0],
+          uniprot_start: 718,
+          uniprot_end: 726,
+          location_note:
+            "2 of 9 position(s) in this feature are not present in the structure: 718-719.",
+        },
+      ],
+    });
+    render(<FunctionalRegionsPanel proteinId="test-id" />);
+    const sites = within(section("Ligand-binding sites"));
+
+    expect(sites.getByTestId("functional-residue-A:101")).toBeInTheDocument();
+    expect(
+      sites.getByText(/2 of 9 position\(s\) in this feature are not present/),
+    ).toBeInTheDocument();
   });
 
   it("shows a substitution rather than hiding it", () => {
@@ -357,10 +417,16 @@ describe("FunctionalRegionsPanel", () => {
     const mapping = within(section("UniProt position mapping"));
     expect(mapping.getByText("mapped")).toBeInTheDocument();
     expect(mapping.getByText("not mapped")).toBeInTheDocument();
-    expect(mapping.getAllByText(/21\.05% identity/).length).toBeGreaterThan(0);
+    // A refused chain must show its REFUSAL, not a mapped chain's offset note.
+    // Matching on the identity number alone is not enough — the stat line beside
+    // the row carries the same number whichever note is rendered.
+    expect(
+      mapping.getByText(/Chain B aligns to this UniProt entry at 21\.05% identity/),
+    ).toBeInTheDocument();
     expect(
       mapping.getByText(/UniProt 19-147 covers chain A residues 1-129/),
     ).toBeInTheDocument();
+    expect(mapping.queryAllByText(/covers chain B/)).toHaveLength(0);
   });
 
   it("renders nothing at all before the first payload arrives", () => {

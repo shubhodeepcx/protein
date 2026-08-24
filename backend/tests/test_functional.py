@@ -475,6 +475,33 @@ def test_accessibility_is_computed_without_waters_or_ligand() -> None:
     assert functional.strip_non_polymer(parse_structure_for_analytics(LYSOZYME)) == 106
 
 
+def test_accessibility_is_dropped_when_it_does_not_line_up_with_the_ordinals(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A short SASA list would zip against the sequence and shift every value.
+
+    `zip` stops at the shorter iterable, so publishing a mismatched list would
+    not raise — it would attach chain A's residue-1 area to residue 1, residue
+    2's to residue 2, and then silently truncate, leaving a profile that looks
+    complete and describes a different set of residues. The guard drops the
+    accessibility instead; hydropathy and charge are untouched.
+    """
+    monkeypatch.setattr(
+        functional, "_residue_areas", lambda structure, chains: ({"A": [1.0, 2.0]}, "note")
+    )
+    summary = parse(LYSOZYME, "u")
+    chains = functional.read_chain_residues(parse_structure_for_analytics(LYSOZYME), summary)
+    profiles, _ = functional.surface_profiles(
+        parse_structure_for_analytics(LYSOZYME), chains
+    )
+
+    (profile,) = profiles
+    assert profile.relative_accessibility == []
+    assert profile.surface_exposed == []
+    assert profile.surface_mean_hydropathy is None
+    assert len(profile.hydropathy) == 129
+
+
 def test_accessibility_is_skipped_rather_than_guessed_when_too_large(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -509,6 +536,24 @@ def test_priority_ranks_converging_evidence_first() -> None:
         >= payload.priority_residues[i + 1].evidence_kinds
         for i in range(len(payload.priority_residues) - 1)
     )
+
+
+def test_a_curated_site_with_no_ligand_near_it_is_still_high_priority() -> None:
+    """Curation alone is enough to be listed — a ligand is not required.
+
+    1HEW's tri-NAG occupies subsites A-C, so Glu35 and Asp52 touch nothing in
+    this file. They are the two most important residues in the enzyme and must
+    still be there, marked as curated active sites and as curated only.
+    """
+    payload = regions(LYSOZYME, lysozyme_entry(), "P00698")
+    by_key = {residue.key: residue for residue in payload.priority_residues}
+
+    for key in ("A:35", "A:52"):
+        assert key in by_key, "a curated active site must be listed on its own"
+        assert by_key[key].curated_active_site is True
+        assert by_key[key].ligand_contact is False
+        assert by_key[key].provenance == ["uniprot"]
+        assert by_key[key].reasons == ["Curated: Active site"]
 
 
 def test_priority_residues_carry_their_own_chemistry() -> None:
@@ -670,8 +715,8 @@ def test_a_substitution_is_reported_not_hidden_and_does_not_move_the_marker() ->
     """An engineered mutant still maps; the difference is stated on the site."""
     entry = lysozyme_entry()
     reference = functional.entry_sequence(entry)
-    mutated = reference[18:52] + "A" + reference[53:]
-    chain = ChainResidues("A", mutated, tuple(range(1, len(mutated) + 1)), (None,) * len(mutated))
+    variant = reference[18:52] + "A" + reference[53:]
+    chain = ChainResidues("A", variant, tuple(range(1, len(variant) + 1)), (None,) * len(variant))
     mapped = functional.map_uniprot_positions(reference, [chain])
     buckets = functional.curated_sites(entry, mapped, "P00698")
     glu35 = next(s for s in buckets["active_site"] if s.uniprot_start == 53)
