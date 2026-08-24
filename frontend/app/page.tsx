@@ -1,13 +1,14 @@
 import Link from "next/link";
-import { Upload, Search, Atom, Database } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Upload,
+  Search,
+  Atom,
+  Database,
+  FileDown,
+  Boxes,
+  ArrowRight,
+} from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,29 @@ import {
 } from "@/components/ui/tabs";
 import { HealthPill } from "@/components/health-pill";
 import { DropZone } from "@/components/drop-zone";
+import { RAIL_TABS, RailTabPreview } from "@/components/rail-tab-preview";
+
+/** Left-rail entry points. Every one of these is a route that exists today. */
+const QUICK_ACTIONS = [
+  {
+    href: "/viewer/demo",
+    icon: Boxes,
+    title: "Open the demo structure",
+    body: "Crambin (1CRN) — 46 residues, one chain, bundled with the server.",
+  },
+  {
+    href: "/search",
+    icon: Database,
+    title: "Search the databases",
+    body: "RCSB PDB, AlphaFold DB and UniProt in one query, then import a hit.",
+  },
+  {
+    href: "#upload",
+    icon: FileDown,
+    title: "Drop a PDB or mmCIF file",
+    body: "Parsed server-side into chains, residues, atoms and molecular weight.",
+  },
+] as const;
 
 export default function HomePage() {
   return (
@@ -60,10 +84,7 @@ export default function HomePage() {
             <Database aria-hidden />
             Databases
           </Link>
-          <Link
-            href="#upload"
-            className={buttonVariants({ size: "sm" })}
-          >
+          <Link href="#upload" className={buttonVariants({ size: "sm" })}>
             <Upload aria-hidden />
             Upload
           </Link>
@@ -75,28 +96,46 @@ export default function HomePage() {
           - tablet (md..xl): left rail + center, right panel hidden
           - desktop (xl+): full three-column layout */}
       <main className="grid flex-1 grid-cols-1 overflow-hidden md:grid-cols-[16rem_1fr] xl:grid-cols-[18rem_1fr_24rem]">
-        {/* Left sidebar — hidden on mobile, narrower on tablet */}
+        {/* Left sidebar — the chain tree's home once a structure is open. */}
         <aside className="hidden w-full flex-col border-r border-border/60 bg-card/30 md:flex xl:w-72">
-          <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between px-4 py-2.5">
             <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               Chains &amp; residues
             </h2>
             <Badge variant="secondary" className="text-[10px]">
-              empty
+              no structure
             </Badge>
           </div>
           <Separator />
           <ScrollArea className="flex-1">
-            <div className="space-y-3 p-4 text-xs text-muted-foreground">
-              <p>
-                Load a protein to explore its chains, sequence, and analytics
-                side by side with the 3D structure.
-              </p>
-              <p className="leading-relaxed">
-                Upload a PDB / mmCIF file, or import a structure from RCSB PDB,
-                AlphaFold DB, or UniProt.
-              </p>
-            </div>
+            <nav className="flex flex-col gap-1.5 p-3">
+              {QUICK_ACTIONS.map(({ href, icon: Icon, title, body }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="group rounded-md border border-border/60 bg-background/40 px-3 py-2 transition-colors hover:border-border hover:bg-accent/40"
+                >
+                  <span className="flex items-center gap-1.5 text-xs font-medium">
+                    <Icon className="size-3.5 text-primary" aria-hidden />
+                    {title}
+                    <ArrowRight
+                      className="ml-auto size-3 opacity-0 transition-opacity group-hover:opacity-100"
+                      aria-hidden
+                    />
+                  </span>
+                  <span className="mt-1 block text-[11px] leading-relaxed text-muted-foreground">
+                    {body}
+                  </span>
+                </Link>
+              ))}
+            </nav>
+            <Separator />
+            <p className="p-3 text-[11px] leading-relaxed text-muted-foreground">
+              With a structure open this rail becomes its chain tree: one row
+              per chain with residue count, share of the structure and
+              composition, expanding to residue-range chips that highlight
+              straight into the 3D view.
+            </p>
           </ScrollArea>
         </aside>
 
@@ -106,6 +145,12 @@ export default function HomePage() {
             <span className="font-medium text-foreground">Viewer</span>
             <Separator orientation="vertical" className="h-4" />
             <span>No protein loaded &mdash; drop a file to start</span>
+            <Link
+              href="/viewer/demo"
+              className="ml-auto text-xs text-primary hover:underline"
+            >
+              Open the demo instead
+            </Link>
           </div>
           <div
             id="upload"
@@ -115,52 +160,32 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Right tabbed panel — desktop only (xl+) */}
+        {/* Right tabbed panel — desktop only (xl+). Mirrors the five tabs the
+            viewer's rail actually renders. */}
         <aside className="hidden w-96 flex-col border-l border-border/60 bg-card/30 xl:flex">
           <Tabs defaultValue="overview" className="flex h-full flex-col gap-0">
-            <TabsList className="m-3 w-[calc(100%-1.5rem)] shrink-0">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="sequence">Sequence</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsList className="m-2 w-[calc(100%-1rem)] shrink-0 gap-0.5">
+              {RAIL_TABS.map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="px-1.5 text-[11px]"
+                >
+                  {tab.title}
+                </TabsTrigger>
+              ))}
             </TabsList>
             <Separator />
             <ScrollArea className="flex-1">
-              <TabsContent value="overview" className="m-0 p-4">
-                <PanelPlaceholder
-                  title="Overview"
-                  body="Metric cards — MW, residues, atoms, chains — appear here once a protein is loaded."
-                />
-              </TabsContent>
-              <TabsContent value="sequence" className="m-0 p-4">
-                <PanelPlaceholder
-                  title="Sequence"
-                  body="The per-chain sequence panel, with click-to-highlight sync to the 3D view, appears here once a protein is loaded."
-                />
-              </TabsContent>
-              <TabsContent value="analytics" className="m-0 p-4">
-                <PanelPlaceholder
-                  title="Analytics"
-                  body="Composition, secondary-structure, and hydrophobicity charts appear here once a protein is loaded."
-                />
-              </TabsContent>
+              {RAIL_TABS.map((tab) => (
+                <TabsContent key={tab.value} value={tab.value} className="m-0 p-3">
+                  <RailTabPreview tab={tab} />
+                </TabsContent>
+              ))}
             </ScrollArea>
           </Tabs>
         </aside>
       </main>
     </div>
-  );
-}
-
-function PanelPlaceholder({ title, body }: { title: string; body: string }) {
-  return (
-    <Card className="border-dashed">
-      <CardHeader>
-        <CardTitle className="text-sm">{title}</CardTitle>
-        <CardDescription>No protein loaded</CardDescription>
-      </CardHeader>
-      <CardContent className="text-xs leading-relaxed text-muted-foreground">
-        {body}
-      </CardContent>
-    </Card>
   );
 }
