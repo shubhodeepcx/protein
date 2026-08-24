@@ -312,6 +312,11 @@ def downsample_pae(
     if bin_size <= 1:
         return [[round(cell, PAE_DECIMALS) for cell in row] for row in values], 1
 
+    # `ceil` is what keeps the ragged final block: `side // bin_size` would
+    # silently drop the last partial row and column of a matrix whose N is not
+    # a multiple of the bin. The `min()` clamps below are belt-and-braces —
+    # Python slicing already clamps — but they state the intent for anyone who
+    # later moves this onto an array library that does not.
     out_side = math.ceil(side / bin_size)
     binned: list[list[float]] = []
     for bi in range(out_side):

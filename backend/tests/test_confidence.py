@@ -147,6 +147,30 @@ def test_bands_are_exhaustive_and_disjoint() -> None:
     assert sum(b.fraction for b in bands) == pytest.approx(1.0)
 
 
+def test_band_rows_carry_the_thresholds_they_were_counted_with() -> None:
+    """The edges on the wire must be the edges that produced the counts.
+
+    The UI draws its legend from `min_plddt` / `max_plddt`, so a table whose
+    counts are right but whose advertised edges are swapped is a legend that
+    lies about a correct measurement — and nothing else would catch it.
+    """
+    bands = {b.key: b for b in confidence.summarise_bands([95.0])}
+    assert (bands["very_high"].min_plddt, bands["very_high"].max_plddt) == (90.0, 100.0)
+    assert (bands["confident"].min_plddt, bands["confident"].max_plddt) == (70.0, 90.0)
+    assert (bands["low"].min_plddt, bands["low"].max_plddt) == (50.0, 70.0)
+    assert (bands["very_low"].min_plddt, bands["very_low"].max_plddt) == (0.0, 50.0)
+
+    # Contiguous and ascending: each band starts where the one below it ends.
+    ordered = confidence.summarise_bands([95.0])[::-1]
+    for lower, upper in zip(ordered, ordered[1:]):
+        assert lower.max_plddt == upper.min_plddt
+        assert lower.min_plddt < upper.min_plddt
+
+    # And every advertised edge must place a value in the band that advertises it.
+    for band in ordered:
+        assert confidence.band_for(band.min_plddt) == band.key
+
+
 def test_summarise_bands_keeps_empty_bands() -> None:
     """An absent band still gets a row: zero is a finding, absence is not."""
     bands = confidence.summarise_bands([95.0, 96.0])
@@ -200,6 +224,38 @@ def test_extract_plddt_reads_the_real_model() -> None:
     assert chains[0][1][0] == pytest.approx(64.44)
     assert min(chains[0][1]) == pytest.approx(37.66)
     assert max(chains[0][1]) == pytest.approx(85.56)
+
+
+HETATM_PDB = """\
+ATOM      1  N   MET A   1      11.000  11.000  11.000  1.00 95.00           N
+ATOM      2  CA  MET A   1      12.000  12.000  12.000  1.00 95.00           C
+HETATM    3  O   HOH A 101      20.000  20.000  20.000  1.00 20.00           O
+ATOM      4  N   ALA A   2      13.000  13.000  13.000  1.00 40.00           N
+ATOM      5  CA  ALA A   2      14.000  14.000  14.000  1.00 40.00           C
+HETATM    6 ZN    ZN A 201      30.000  30.000  30.000  1.00  1.00          ZN
+END
+"""
+
+
+def test_extract_plddt_skips_hetatm_exactly_as_the_parser_does(tmp_path) -> None:
+    """Waters and ligands must not enter the pLDDT walk.
+
+    The parser builds the sequence from ATOM records only, so ordinal *n* in
+    the sequence panel is the *n*-th ATOM residue. Letting a HETATM in here
+    would shift every residue range this feature reports by one — and the
+    ranges would still look perfectly plausible. This is the residue-ordinal
+    seam; this module reads alongside it and must never redefine it.
+    """
+    from app.api.proteins import parse_structure_for_analytics
+
+    path = tmp_path / "het.pdb"
+    path.write_text(HETATM_PDB, encoding="utf-8")
+    chains = confidence.extract_plddt(parse_structure_for_analytics(path))
+
+    assert chains == [("A", [95.0, 40.0])]
+    # The waters' 20.00 and the zinc's 1.00 would both have landed in a band.
+    assert 20.0 not in chains[0][1]
+    assert 1.0 not in chains[0][1]
 
 
 # ---------------------------------------------------------------- regions
@@ -349,6 +405,32 @@ def test_recorded_pae_is_square_and_matches_the_model_length() -> None:
     assert len(matrix) == prediction_payload()[0]["uniprotEnd"]
 
 
+def test_an_empty_matrix_is_unavailable_not_an_empty_grid() -> None:
+    """Upstream sending nothing must not render as a perfect prediction."""
+    built = confidence.build_pae_matrix([], max_error=0.0)
+    assert built.available is False
+    assert built.values == []
+    assert built.unavailable_reason
+
+
+def test_the_default_cell_budget_is_a_real_bound() -> None:
+    """The budget must actually bind at realistic protein sizes.
+
+    Asserted against the sizes the feature was verified on rather than against
+    the constant itself, so raising `MAX_PAE_CELLS` to something that no longer
+    bounds anything fails here. The lower bound matters too: a budget so small
+    that a 128-residue protein gets binned would degrade data for no reason.
+    """
+    assert confidence.bin_size_for(110) == 1  # small protein: untouched
+    assert confidence.bin_size_for(128) == 1
+    assert confidence.bin_size_for(1_273) == 10  # SARS-CoV-2 spike: binned 10x
+    assert confidence.bin_size_for(2_700) == 22  # AlphaFold's fragment limit
+    for residue_count in (1_273, 2_700, 10_000):
+        bin_size = confidence.bin_size_for(residue_count)
+        side = -(-residue_count // bin_size)
+        assert side * side <= confidence.MAX_PAE_CELLS
+
+
 def test_unavailable_pae_carries_a_reason_and_no_values() -> None:
     empty = confidence.unavailable_pae("nope")
     assert empty.available is False
@@ -451,12 +533,41 @@ async def test_fetch_pae_rejects_a_document_over_the_byte_budget(monkeypatch) ->
         await AlphaFoldClient().fetch_pae("P01308")
 
 
-def test_the_byte_budget_admits_the_largest_alphafold_fragment() -> None:
-    """2,700 residues is AlphaFold's fragment limit; a 1,273-residue entry was
-    measured at 9.4 MB, so the ceiling extrapolates to about 42 MB."""
+def test_the_byte_budget_brackets_the_largest_alphafold_fragment() -> None:
+    """The budget must admit every real entry *and* still bind.
+
+    2,700 residues is AlphaFold's fragment limit; a 1,273-residue entry was
+    measured live at 9,399,636 bytes, uncompressed, so the ceiling extrapolates
+    to about 42 MB. Both bounds are asserted: too low and the largest real
+    models silently lose their PAE, too high and the guard stops guarding the
+    symptom it exists for — peak memory while parsing a document into millions
+    of Python floats.
+    """
     measured_bytes_per_cell = 9_399_636 / (1_273 * 1_273)
     largest = measured_bytes_per_cell * 2_700 * 2_700
-    assert largest < MAX_PAE_DOC_BYTES
+    assert largest < MAX_PAE_DOC_BYTES < 2 * largest
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_max_error_falls_back_to_the_matrix_maximum() -> None:
+    """`max_error` anchors the colour scale, so it may never be a constant.
+
+    A document without `max_predicted_aligned_error` must take the matrix's own
+    maximum — a fixed 30 would rescale every heatmap by an arbitrary amount and
+    the legend's Angstrom labels would be wrong.
+    """
+    respx.get(f"{PREDICTION}P01308").mock(
+        return_value=httpx.Response(200, json=prediction_payload())
+    )
+    respx.get(PAE_URL).mock(
+        return_value=httpx.Response(
+            200, json=[{"predicted_aligned_error": [[0, 7.5], [7.5, 0]]}]
+        )
+    )
+
+    document = await AlphaFoldClient().fetch_pae("P01308")
+    assert document.max_error == pytest.approx(7.5)
 
 
 @respx.mock
@@ -493,6 +604,30 @@ async def test_pae_matrix_is_cached() -> None:
     assert first.size == second.size == 110
 
 
+@respx.mock
+@pytest.mark.asyncio
+async def test_the_pae_cache_is_keyed_by_the_cell_budget() -> None:
+    """Two budgets are two different matrices and must not share a cache slot.
+
+    A key that ignores `max_cells` would serve a 110x110 matrix to a caller
+    that asked for a coarse one — a resolution label describing the wrong data.
+    """
+    respx.get(f"{PREDICTION}P01308").mock(
+        return_value=httpx.Response(200, json=prediction_payload())
+    )
+    respx.get(PAE_URL).mock(return_value=httpx.Response(200, json=pae_payload()))
+
+    af = AlphaFoldClient()
+    fine = await confidence.pae_matrix_for("P01308", af, max_cells=16_384)
+    coarse = await confidence.pae_matrix_for("P01308", af, max_cells=100)
+
+    assert fine.size == 110
+    assert fine.bin_size == 1
+    assert coarse.size == 10  # ceil(110 / 11)
+    assert coarse.bin_size == 11
+    assert coarse.max_cells == 100
+
+
 # ---------------------------------------------------------------- endpoint
 
 
@@ -520,6 +655,10 @@ def test_confidence_endpoint_returns_bands_regions_and_pae() -> None:
         "very_low",
     ]
     assert body["low_confidence_residue_count"] == 96
+    # A *residue* fraction, not a region fraction: 2 regions covering 96 of 110
+    # residues is 87% of the model, and reporting 2/110 = 2% would be a
+    # reassuring lie about a mostly-disordered protein.
+    assert body["low_confidence_fraction"] == pytest.approx(96 / 110)
     assert [(r["start"], r["end"]) for r in body["low_confidence_regions"]] == [
         (1, 1),
         (16, 110),
@@ -568,7 +707,29 @@ def test_uploaded_alphafold_model_gets_plddt_but_no_pae() -> None:
     assert body["residue_count"] == 110
     assert len(body["low_confidence_regions"]) == 2
     assert body["pae"]["available"] is False
-    assert "uploaded directly" in body["pae"]["unavailable_reason"]
+    assert "no AlphaFold accession" in body["pae"]["unavailable_reason"]
+
+
+@respx.mock
+def test_a_pdb_id_is_never_sent_to_alphafold_as_an_accession() -> None:
+    """`source_id` only means "AlphaFold accession" for AlphaFold-backed sources.
+
+    The parser's pLDDT heuristic also fires on any file whose header mentions
+    AlphaFold, so an RCSB entry can arrive flagged `has_plddt` while its
+    `source_id` is a PDB ID. Querying AlphaFold DB with "1CRN" is a wrong
+    question, not a slow one. No route is registered here, so `respx` fails the
+    test the moment any request is attempted.
+    """
+    register(source="rcsb", source_id="1CRN", has_plddt=True)
+
+    response = client.get(f"/api/proteins/{UID}/confidence")
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["has_plddt"] is True
+    assert body["accession"] is None
+    assert body["pae"]["available"] is False
+    assert "no AlphaFold accession" in body["pae"]["unavailable_reason"]
 
 
 @respx.mock

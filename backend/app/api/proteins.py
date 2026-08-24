@@ -409,9 +409,10 @@ async def get_protein_confidence(uid: str) -> ConfidenceResponse:
 
     if accession is None:
         pae = confidence.unavailable_pae(
-            "Predicted aligned error is published per AlphaFold DB entry. This "
-            "structure was uploaded directly, so there is no accession to look one "
-            "up by. Import the same model from AlphaFold or UniProt to see its PAE."
+            "Predicted aligned error is published per AlphaFold DB entry, and this "
+            "structure has no AlphaFold accession — it was uploaded directly, or it "
+            "came from a source other than AlphaFold DB. Import the same model from "
+            "AlphaFold or UniProt to see its PAE."
         )
         note = (
             "pLDDT was read from this file's B-factor column. Predicted aligned "
