@@ -9,6 +9,8 @@ All upstream calls are mocked with respx. Nothing reaches the network.
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 import httpx
 import pytest
 import respx
@@ -16,6 +18,7 @@ import respx
 from app.models.blast import BlastResult
 from app.services.blast import BASE_URL, EBIBlastClient
 from app.services.blast_jobs import (
+    MIN_UPSTREAM_POLL_SECONDS,
     BlastJobRegistry,
     _normalise_status,
     parse_result,
@@ -123,6 +126,33 @@ def test_every_hsp_is_kept_even_though_only_the_best_is_summarised() -> None:
     assert hit.hsps[0].query_start is not None and hit.hsps[0].query_end is not None
 
 
+def test_hsp_coordinates_keep_query_and_subject_apart() -> None:
+    """The UI draws coverage against the QUERY, so the two coordinate pairs
+    must not be interchangeable.
+
+    Hit 5 of the recording is the one that can prove it: its first HSP runs
+    41-470 on the query and 25-445 on the subject. Asserting only that the
+    fields are populated would pass just as happily with them swapped, and a
+    coverage bar drawn against the wrong sequence looks entirely plausible.
+    """
+    hsp = parse_result(payload()).hits[4].hsps[0]
+    assert (hsp.query_start, hsp.query_end) == (41, 470)
+    assert (hsp.hit_start, hsp.hit_end) == (25, 445)
+
+
+def test_percent_identity_is_not_percent_positive() -> None:
+    """Identity counts identical residues; positive counts favourably-scoring
+    ones, and it is always the larger, flattering number.
+
+    They are equal for a self-hit — which is exactly why the top hit cannot
+    prove this and hit 5 (33.4 identical, 49.9 positive) has to.
+    """
+    hsp = parse_result(payload()).hits[4].hsps[0]
+    assert hsp.identity_percent == 33.4
+    assert hsp.positive_percent == 49.9
+    assert parse_result(payload()).hits[4].identity_percent == 33.4
+
+
 def test_uniprot_accession_is_set_for_importable_hits() -> None:
     hits = parse_result(payload()).hits
     assert all(h.uniprot_accession == h.accession for h in hits)
@@ -154,6 +184,34 @@ def test_parse_result_survives_junk_where_lists_were_expected() -> None:
     assert result.hit_count == 0
     assert result.databases == []
     assert result.query_length is None
+
+
+def test_parse_result_survives_junk_inside_the_structures_too() -> None:
+    """The outer shapes being right does not make the inner ones right.
+
+    A non-object entry in `hits`, a non-string where a name belongs, and a
+    `hit_hsps` that cannot be iterated at all are each enough to raise on the
+    way through, and a raise here is a 500 on a search that succeeded.
+    """
+    result = parse_result(
+        {
+            "program": 7,
+            "query_id": {"unexpected": "object"},
+            "query_def": ["also", "wrong"],
+            "hits": [
+                "not an object",
+                None,
+                {"hit_acc": "P35858", "hit_uni_de": 12, "hit_hsps": 7},
+            ],
+        }
+    )
+    assert result.program is None
+    assert result.query_id is None
+    assert result.query_definition is None
+    assert result.hit_count == 1
+    assert result.hits[0].accession == "P35858"
+    assert result.hits[0].description is None
+    assert result.hits[0].hsps == []
 
 
 def test_hit_rank_falls_back_to_position_when_upstream_omits_it() -> None:
@@ -260,6 +318,74 @@ async def test_upstream_polls_are_throttled_however_fast_the_client_asks() -> No
 
     assert status_route.call_count == 1
     assert all(r is not None and r.status == "RUNNING" for r in records)
+
+
+def test_the_production_poll_floor_is_a_real_floor() -> None:
+    """The suite runs with the throttle off, so the shipped value needs its own
+    assertion or it could be lowered to zero without a single test noticing.
+
+    EBI's own reference client sleeps 3 s between checks; anything under a
+    second stops being a floor and becomes a hammer at browser polling rates.
+    """
+    assert MIN_UPSTREAM_POLL_SECONDS >= 1.0
+
+
+@respx.mock
+async def test_a_registry_built_without_arguments_throttles_by_default() -> None:
+    """The registry the router actually uses is constructed with no arguments.
+
+    If the default did not carry the floor through, production would poll EBI
+    once per browser tick however carefully the constant was chosen.
+    """
+    registry = BlastJobRegistry(EBIBlastClient())
+    register(registry)
+    status_route = respx.get(STATUS_URL).mock(
+        return_value=httpx.Response(200, text="RUNNING")
+    )
+
+    records = [await registry.poll(JOB_ID) for _ in range(4)]
+
+    assert status_route.call_count == 1
+    assert all(r is not None and r.status == "RUNNING" for r in records)
+
+
+async def test_a_job_id_ebi_could_never_accept_becomes_not_found() -> None:
+    """No `@respx.mock`: the transport refuses the id before building a request.
+
+    `poll` must turn that refusal into a terminal NOT_FOUND. Treating it as a
+    transient blip instead would leave the browser polling an id that can never
+    be checked.
+    """
+    registry = new_registry()
+    registry.register(
+        "not a job id",
+        program="blastp",
+        database="uniprotkb",
+        query_length=10,
+        query_source="pasted sequence",
+    )
+
+    record = await registry.poll("not a job id")
+
+    assert record is not None
+    assert record.status == "NOT_FOUND"
+    assert record.finished is True
+
+
+async def test_elapsed_seconds_measures_from_submission() -> None:
+    """A constant would satisfy "greater than zero" forever.
+
+    The number is what the UI shows instead of a spinner that looks hung, so it
+    has to track the clock rather than merely exist.
+    """
+    registry = new_registry()
+    record = register(registry)
+    record.submitted_at = record.submitted_at - timedelta(seconds=90)
+
+    status = record.to_status()
+
+    assert status.elapsed_seconds >= 90.0
+    assert status.elapsed_seconds < 300.0
 
 
 @respx.mock

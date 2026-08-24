@@ -137,6 +137,43 @@ def test_submit_can_name_a_specific_chain() -> None:
     assert response.json()["query_source"] == "1CRN chain B"
 
 
+@respx.mock
+def test_the_query_sent_upstream_is_the_normalised_one() -> None:
+    """Validating the normalised sequence and then posting the raw text would
+    send EBI a FASTA header as if it were residues, and report a query length
+    that counted the header and the line breaks."""
+    run = respx.post(RUN_URL).mock(return_value=httpx.Response(200, text=JOB_ID))
+
+    response = client.post(
+        "/api/blast",
+        json={"sequence": ">sp|P35858|ALS_HUMAN Description\nmalr kggl\nALALL\n"},
+    )
+
+    assert response.status_code == 202
+    assert submitted_form(run)["sequence"] == "MALRKGGLALALL"
+    assert response.json()["query_length"] == 13
+
+
+# M98 — the uid guard, not the registry miss, is what refuses a traversal id.
+@respx.mock
+def test_submit_refuses_a_malformed_uid_even_when_the_registry_would_answer() -> None:
+    """The registry is a plain dict and will hand back whatever was stored
+    under a traversal string, so a test that only asserts 404 for an *unknown*
+    malformed uid cannot tell the shape guard from the lookup miss.
+
+    The upstream route is mocked so that a regression is caught here rather
+    than by an outbound request.
+    """
+    summary = register()
+    registry.put("../../etc/passwd", summary)
+    run = respx.post(RUN_URL).mock(return_value=httpx.Response(200, text=JOB_ID))
+
+    response = client.post("/api/blast", json={"protein_id": "../../etc/passwd"})
+
+    assert response.status_code == 404
+    assert run.call_count == 0
+
+
 def test_submit_with_an_unknown_chain_lists_the_available_ones() -> None:
     register()
     response = client.post("/api/blast", json={"protein_id": UID, "chain_id": "Z"})
