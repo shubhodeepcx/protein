@@ -180,6 +180,66 @@ def test_mapping_spans_an_internal_gap() -> None:
     assert 5 not in mapped.positions
 
 
+def test_mapping_survives_an_insertion_the_entry_does_not_have() -> None:
+    """A cloning scar in the chain must not shift the UniProt side of the map.
+
+    `GSGS` here is in the structure and in no UniProt entry. The alignment puts
+    a gap in the *reference* row for those four columns, so the UniProt counter
+    must not advance across them — if it did, every position after the scar
+    would land four residues early. The chain-side gap case (an unmodelled
+    stretch) is the mirror of this and has its own test; both have to hold, and
+    only one of the two counters guards each.
+    """
+    reference = "ACDEFGHIKLMNPQRSTVWY"
+    scarred = reference[:8] + "GSGS" + reference[8:]
+    chain = ChainResidues(
+        "A", scarred, tuple(range(1, len(scarred) + 1)), (None,) * len(scarred)
+    )
+    mapped = functional.map_uniprot_positions(reference, [chain])
+
+    assert mapped.chains[0].mapped is True
+    assert [ref.ordinal for ref in mapped.positions[8]] == [8]
+    assert [ref.ordinal for ref in mapped.positions[9]] == [13]
+    assert [ref.ordinal for ref in mapped.positions[20]] == [24]
+    assert 21 not in mapped.positions
+
+
+def test_identity_floor_alone_refuses_a_diverged_chain() -> None:
+    """The two floors guard different things and neither can cover for the other.
+
+    This chain aligns end to end at 55% identity, which clears the coverage
+    floor and fails the identity floor. It is the case that would let a
+    homolog's curated sites be stamped onto a different protein.
+    """
+    reference = "ACDEFGHIKLMNPQRSTVWY"
+    chain = ChainResidues(
+        "A", "AWDWFWHWKWMWPWRWTWWY", tuple(range(1, 21)), (None,) * 20
+    )
+    report = functional.map_uniprot_positions(reference, [chain]).chains[0]
+
+    assert report.coverage_percent >= functional.MIN_MAPPING_COVERAGE
+    assert report.identity_percent < functional.MIN_MAPPING_IDENTITY
+    assert report.mapped is False
+
+
+def test_coverage_floor_alone_refuses_a_chain_that_barely_overlaps() -> None:
+    """The mirror case: a perfect match over a fraction of the sequence.
+
+    Eight residues of overlap between a 20-residue entry and a 20-residue chain
+    align at 100% identity. Identity alone would accept it and place curated
+    sites on a molecule that shares one short terminus with the entry.
+    """
+    reference = "AAAAAAAAAAAA" + "KLMNPQRS"
+    chain = ChainResidues(
+        "A", "KLMNPQRS" + "CCCCCCCCCCCC", tuple(range(1, 21)), (None,) * 20
+    )
+    report = functional.map_uniprot_positions(reference, [chain]).chains[0]
+
+    assert report.identity_percent >= functional.MIN_MAPPING_IDENTITY
+    assert report.coverage_percent < functional.MIN_MAPPING_COVERAGE
+    assert report.mapped is False
+
+
 def test_mapping_marks_every_copy_in_a_homo_oligomer() -> None:
     """One UniProt position, two identical chains, two marked residues."""
     chains = [
@@ -468,21 +528,84 @@ def test_priority_residues_use_the_selection_key_format() -> None:
 
 
 def test_regions_are_not_priority_residues() -> None:
-    """A 48-residue DNA-binding domain would bury the handful that matter."""
-    entry = gagpol_entry()
-    chain = ChainResidues(
-        "A",
-        functional.entry_sequence(entry)[1369:1417],
-        tuple(range(1, 49)),
-        (None,) * 48,
+    """Only active sites, binding sites and ligand contacts feed the list.
+
+    A `Site` or a `DNA binding` feature is a region — the one in P04585 is 48
+    residues, p53's is 191 — and folding regions in would bury the handful of
+    residues the list exists to surface under a whole domain's worth of rows.
+
+    The lysozyme entry is retyped to `Site` here so the three curated positions
+    are located and would show up if the filter were not doing the work.
+    """
+    entry = lysozyme_entry()
+    retyped = {
+        **entry,
+        "features": [{**feature, "type": "Site"} for feature in entry["features"]],
+    }
+    payload = functional.build_functional_regions(
+        "u",
+        parse(LYSOZYME, "u"),
+        parse_structure_for_analytics(LYSOZYME),
+        accession="P00698",
+        resolution_note="test",
+        entry=retyped,
     )
-    mapped = functional.map_uniprot_positions(functional.entry_sequence(entry), [chain])
-    buckets = functional.curated_sites(entry, mapped, "P04585")
-    (dna,) = buckets["dna_binding"]
+    assert len(payload.other_sites) == 3
+    assert all(site.located for site in payload.other_sites)
+    assert payload.active_sites == [] and payload.binding_sites == []
+
+    keys = {residue.key for residue in payload.priority_residues}
+    contacts = {c.key for ligand in payload.ligands for c in ligand.contacts}
+    assert keys == contacts
+    assert "A:35" not in keys, "Glu35 is a located Site here and must not be promoted"
+    assert all(not r.curated_active_site for r in payload.priority_residues)
+    assert all(not r.curated_binding_site for r in payload.priority_residues)
+
+
+def test_dna_binding_region_is_reported_but_kept_out_of_priority() -> None:
+    """The DNA-binding feature still has to be projected — just not promoted."""
+    entry = gagpol_entry()
+    reference = functional.entry_sequence(entry)
+    chain = ChainResidues("A", reference[1369:1417], tuple(range(1, 49)), (None,) * 48)
+    mapped = functional.map_uniprot_positions(reference, [chain])
+    (dna,) = functional.curated_sites(entry, mapped, "P04585")["dna_binding"]
     assert dna.located is True
     assert len(dna.positions) == 48
-    priority = functional.priority_residues([], [], [], [])
-    assert priority == []
+    assert dna.positions[0].key == "A:1"
+    assert dna.positions[-1].key == "A:48"
+
+
+def test_hydrogens_are_excluded_from_ligand_atoms_and_contacts(
+    tmp_path: Path,
+) -> None:
+    """Contact distances are between heavy atoms; a modelled H is not one.
+
+    None of the recorded fixtures carry hydrogens — most X-ray entries do not —
+    so this writes a two-residue file that does, rather than leaving the rule
+    untested against real input.
+    """
+    lines = [
+        "ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 10.00           N",
+        "ATOM      2  CA  ALA A   1       1.500   0.000   0.000  1.00 10.00           C",
+        "ATOM      3  C   ALA A   1       2.500   0.000   0.000  1.00 10.00           C",
+        "ATOM      4  O   ALA A   1       3.500   0.000   0.000  1.00 10.00           O",
+        "ATOM      5  N   GLY A   2      10.000   0.000   0.000  1.00 10.00           N",
+        "ATOM      6  CA  GLY A   2      11.500   0.000   0.000  1.00 10.00           C",
+        "ATOM      7  C   GLY A   2      12.500   0.000   0.000  1.00 10.00           C",
+        "ATOM      8  O   GLY A   2      13.500   0.000   0.000  1.00 10.00           O",
+        "HETATM    9 ZN    ZN A 101       4.000   0.000   0.000  1.00 10.00          ZN",
+        "HETATM   10  H1   ZN A 101       4.500   0.000   0.000  1.00 10.00           H",
+        "END",
+    ]
+    path = tmp_path / "with_hydrogen.pdb"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    payload = regions(path, None, None)
+    (ligand,) = payload.ligands
+    assert ligand.component == "ZN"
+    assert ligand.atom_count == 1, "the modelled hydrogen is not a heavy atom"
+    assert ligand.single_atom is True
+    assert [c.key for c in ligand.contacts] == ["A:1"]
 
 
 # --------------------------------------------- refusing rather than guessing
