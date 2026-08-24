@@ -29,7 +29,9 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in progress. P6-P10 are merged._
+| Task | Owner | Branch | Status | Notes |
+|---|---|---|---|---|
+| **A1 — AlphaFold confidence analysis (PAE heatmap + low-confidence-region warnings).** Closes the `spec.md` A1 gap below. pLDDT colouring and mean-pLDDT are already shipped and are **not** in scope | shubhodeep | `feature/a1-confidence` | wip | New: `services/confidence.py`, `models/confidence.py`, `GET /api/proteins/{uid}/confidence`, PAE fetch on `AlphaFoldClient`. Frontend folds into the **Analytics** tab — no new rail tab, so `RAIL_TABS` in `rail-tab-preview.tsx` is untouched. Does **not** touch `parser.py` / `residue-index.ts` (the residue-ordinal seam) |
 
 ---
 
@@ -59,7 +61,7 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | Export the comparison report (spec A3 asks for it; P7 ships the on-screen comparison only). Overlaps the deferred F9 export slice — decide there rather than adding a one-off | follow-up | P7 | — |
 | Persistence slice — the in-memory registry resets on restart, so `/viewer/{id}` 404s afterwards though the file survives on disk | separate slice | Postgres decision | — |
 | **A5 Binding-pocket / functional-region detection — UNPLANNED GAP.** A spec-compliance audit found this is the only feature promised in `spec.md` that is neither built nor listed in any out-of-scope note. Every other unbuilt feature is a deliberate deferral. Decide explicitly: defer it or build it. | spec gap | — | — |
-| A1: PAE heatmap and low-confidence-region warnings are in `spec.md` but in no deferral list (pLDDT coloring + mean-pLDDT are built) | spec gap | — | — |
+| ~~A1: PAE heatmap and low-confidence-region warnings are in `spec.md` but in no deferral list (pLDDT coloring + mean-pLDDT are built)~~ — **claimed**, see *In progress* (`feature/a1-confidence`) | spec gap | — | — |
 | Slice section 7 specifies `400 { error, suggestion }`; no `suggestion` field is implemented anywhere in the backend | spec drift | — | 45m |
 | Slice section 6.1 specifies a content sniff (first line is `HEADER`/`data_`); only extension/size/empty checks exist | spec drift | — | 30m |
 | Slice section 5.2 promises parser warnings for missing atoms, multiple models, and chain breaks; none are emitted (only non-standard residues / no chains) | spec drift | — | 1h |
