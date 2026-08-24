@@ -61,12 +61,14 @@ export const RAIL_TABS: readonly RailTab[] = [
   {
     value: "annotations",
     title: "Annotations",
-    source: "UniProtKB",
+    source: "UniProtKB + this structure",
     items: [
       "Function, catalytic activity with EC and Rhea IDs",
       "Gene Ontology across all three aspects, and keywords",
-      "Subcellular location and transmembrane spans",
-      "Disease involvement, PTM/processing, and cross-references",
+      "Subcellular location, transmembrane spans, disease and PTM",
+      "Curated active and ligand-binding sites, mapped onto the residues this file really contains — or refused when they cannot be",
+      "Ligands bound in the file, and the residues within 4 Å of them",
+      "Per-chain surface hydrophobicity and charge",
     ],
   },
   {

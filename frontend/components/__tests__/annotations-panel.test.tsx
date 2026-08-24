@@ -215,8 +215,12 @@ describe("AnnotationsPanel", () => {
     render(<AnnotationsPanel proteinId="test-id" />);
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    // A5 appends a second sentence to the same paragraph — the panel is no
+    // longer a dead end when there is no accession, because the ligands and
+    // the surface profile are measured from the file. The note itself still
+    // has to be shown verbatim.
     expect(
-      screen.getByText("Uploaded structures carry no database identifier to map from."),
+      screen.getByText(/Uploaded structures carry no database identifier to map from\./),
     ).toBeInTheDocument();
     expect(screen.queryByText("Names & Origin")).not.toBeInTheDocument();
   });
@@ -233,5 +237,92 @@ describe("AnnotationsPanel", () => {
     render(<AnnotationsPanel proteinId="test-id" />);
 
     expect(screen.getByRole("alert")).toHaveTextContent("Could not reach UniProt.");
+  });
+
+  describe("functional regions (A5)", () => {
+    /**
+     * A5 lives inside this tab rather than a seventh rail tab, so these two
+     * tests are the ones that hold the placement decision in place: the panel
+     * has to mount it in BOTH branches, including the one where no UniProt
+     * accession resolved. That branch used to be a full-height dead end, and
+     * the ligands and surface profile exist there regardless of UniProt.
+     */
+    function setFunctional(): void {
+      act(() => {
+        useStore.setState({
+          loadFunctional: async () => {},
+          functionalLoading: false,
+          functionalError: null,
+          functional: {
+            id: "test-id",
+            accession: null,
+            accession_resolved: false,
+            resolution_note: "note",
+            chain_mappings: [],
+            active_sites: [],
+            binding_sites: [],
+            other_sites: [],
+            dna_binding: [],
+            ligands: [
+              {
+                component: "ZN",
+                provenance: "structure",
+                chain: "B",
+                auth_seq_id: 101,
+                insertion_code: null,
+                label: "ZN 101 (chain B)",
+                atom_count: 1,
+                single_atom: true,
+                contacts: [
+                  {
+                    chain: "B",
+                    ordinal: 10,
+                    key: "B:10",
+                    residue: "H",
+                    auth_seq_id: 10,
+                    insertion_code: null,
+                    min_distance: 2.11,
+                    atom_contacts: 1,
+                  },
+                ],
+              },
+            ],
+            contact_cutoff: 4,
+            surface: [],
+            surface_note: "",
+            priority_residues: [],
+            unlocated_sites: 0,
+            notes: ["ProteoLens does not predict pockets."],
+          },
+        });
+      });
+    }
+
+    it("renders the observed half beside the UniProt sections", () => {
+      setAnnotations();
+      setFunctional();
+      render(<AnnotationsPanel proteinId="test-id" />);
+
+      expect(screen.getByText("Bound ligands")).toBeInTheDocument();
+      expect(screen.getByTestId("functional-residue-B:10")).toBeInTheDocument();
+    });
+
+    it("still renders it when no UniProt accession resolved", () => {
+      // The ligands are in the coordinate file; UniProt knowing nothing about
+      // the protein does not make them go away.
+      setAnnotations({
+        accession: null,
+        accession_resolved: false,
+        resolution_note: "Uploaded structures carry no database identifier to map from.",
+      });
+      setFunctional();
+      render(<AnnotationsPanel proteinId="test-id" />);
+
+      expect(screen.getByText("Bound ligands")).toBeInTheDocument();
+      expect(screen.getByTestId("functional-residue-B:10")).toBeInTheDocument();
+      expect(screen.getByTestId("functional-notes")).toHaveTextContent(
+        /does not predict pockets/,
+      );
+    });
   });
 });

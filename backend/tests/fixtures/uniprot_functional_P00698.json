@@ -1,0 +1,90 @@
+{
+  "entryType": "UniProtKB reviewed (Swiss-Prot)",
+  "extraAttributes": {
+    "uniParcId": "UPI0000000F06"
+  },
+  "features": [
+    {
+      "description": "",
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 53
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 53
+        }
+      },
+      "type": "Active site"
+    },
+    {
+      "description": "",
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 70
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 70
+        }
+      },
+      "type": "Active site"
+    },
+    {
+      "description": "",
+      "ligand": {
+        "name": "substrate"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 119
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 119
+        }
+      },
+      "type": "Binding site"
+    }
+  ],
+  "primaryAccession": "P00698",
+  "proteinDescription": {
+    "allergenName": {
+      "value": "Gal d 4"
+    },
+    "alternativeNames": [
+      {
+        "fullName": {
+          "value": "1,4-beta-N-acetylmuramidase C"
+        }
+      },
+      {
+        "fullName": {
+          "value": "Allergen Gal d IV"
+        }
+      }
+    ],
+    "flag": "Precursor",
+    "recommendedName": {
+      "ecNumbers": [
+        {
+          "value": "3.2.1.17"
+        }
+      ],
+      "fullName": {
+        "value": "Lysozyme C"
+      }
+    }
+  },
+  "sequence": {
+    "crc64": "81E85743FF579468",
+    "length": 147,
+    "md5": "E485279D5BF21CAA3B7967C566C68A5A",
+    "molWeight": 16239,
+    "value": "MRSLLILVLCFLPLAALGKVFGRCELAAAMKRHGLDNYRGYSLGNWVCAAKFESNFNTQATNRNTDGSTDYGILQINSRWWCNDGRTPGSRNLCNIPCSALLSSDITASVNCAKKIVSDGNGMNAWVAWRNRCKGTDVQAWIRGCRL"
+  },
+  "uniProtkbId": "LYSC_CHICK"
+}

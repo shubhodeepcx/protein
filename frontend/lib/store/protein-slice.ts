@@ -2,6 +2,7 @@ import type { StateCreator } from "zustand";
 import type {
   ProteinSummary,
   AnalyticsResponse,
+  FunctionalRegions,
   ConfidenceResponse,
   ProteinAnnotations,
   ProteinComplexes,
@@ -26,6 +27,9 @@ export interface ProteinSlice {
   complexes: ProteinComplexes | null;
   complexesLoading: boolean;
   complexesError: ProteinLoadError | null;
+  functional: FunctionalRegions | null;
+  functionalLoading: boolean;
+  functionalError: ProteinLoadError | null;
   confidence: ConfidenceResponse | null;
   confidenceLoading: boolean;
   confidenceError: ProteinLoadError | null;
@@ -76,11 +80,21 @@ export interface ProteinSlice {
    */
   loadComplexes: (id: string) => Promise<void>;
   /**
+   * Loads functional regions from `GET /api/proteins/{id}/functional-regions`.
    * Loads AlphaFold confidence analysis from
    * `GET /api/proteins/{id}/confidence` (A1).
    *
    * Fifth independent request token, for the same reason the other four have
    * their own: the rail is mounted twice and all five requests race freely.
+   *
+   * This endpoint degrades rather than failing — a UniProt outage still
+   * returns the ligands and surface measured from the structure — so almost
+   * nothing lands in `functionalError` except a transport failure.
+   */
+  loadFunctional: (id: string) => Promise<void>;
+  /**
+   * Loads AlphaFold confidence analysis from
+   * `GET /api/proteins/{id}/confidence` (A1).
    *
    * An experimental structure is a *successful* load carrying
    * `has_plddt: false` and a prose note, not an error — pLDDT and PAE are
@@ -97,6 +111,7 @@ let metaSeq = 0;
 let analyticsSeq = 0;
 let annotationsSeq = 0;
 let complexesSeq = 0;
+let functionalSeq = 0;
 let confidenceSeq = 0;
 
 export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice> = (
@@ -114,6 +129,9 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
   complexes: null,
   complexesLoading: false,
   complexesError: null,
+  functional: null,
+  functionalLoading: false,
+  functionalError: null,
   confidence: null,
   confidenceLoading: false,
   confidenceError: null,
@@ -131,6 +149,8 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       annotationsError: null,
       complexes: null,
       complexesError: null,
+      functional: null,
+      functionalError: null,
       confidence: null,
       confidenceError: null,
     });
@@ -189,6 +209,22 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       set({ complexesError: { status, message }, complexesLoading: false });
     }
   },
+  loadFunctional: async (id: string) => {
+    const myReq = ++functionalSeq;
+    set({ functionalLoading: true, functionalError: null });
+    try {
+      const f = await apiGet<FunctionalRegions>(
+        `/api/proteins/${id}/functional-regions`,
+      );
+      if (myReq !== functionalSeq) return;
+      set({ functional: f, functionalLoading: false });
+    } catch (e) {
+      if (myReq !== functionalSeq) return;
+      const status = e instanceof ApiError ? e.status : null;
+      const message = e instanceof Error ? e.message : String(e);
+      set({ functionalError: { status, message }, functionalLoading: false });
+    }
+  },
   loadConfidence: async (id: string) => {
     const myReq = ++confidenceSeq;
     set({ confidenceLoading: true, confidenceError: null });
@@ -211,6 +247,7 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
     analyticsSeq++;
     annotationsSeq++;
     complexesSeq++;
+    functionalSeq++;
     confidenceSeq++;
     set({
       current: null,
@@ -225,6 +262,9 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       complexes: null,
       complexesError: null,
       complexesLoading: false,
+      functional: null,
+      functionalError: null,
+      functionalLoading: false,
       confidence: null,
       confidenceError: null,
       confidenceLoading: false,

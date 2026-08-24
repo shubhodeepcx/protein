@@ -20,8 +20,15 @@ _AA_THREE_TO_ONE: dict[str, str] = {
 }
 
 
-def _to_one_letter(resname: str) -> tuple[str, bool]:
-    """Return (one_letter, is_standard). Unknown residues -> ('X', False)."""
+def to_one_letter(resname: str) -> tuple[str, bool]:
+    """Return (one_letter, is_standard). Unknown residues -> ('X', False).
+
+    Public because A5 (`services/functional.py`) has to re-derive each chain's
+    sequence from the same structure in order to attach an `auth_seq_id` to
+    every ordinal, and then check that what it derived is byte-for-byte what
+    `parse()` returned. Two copies of this table would make that check
+    tautological against the wrong alphabet.
+    """
     code = _AA_THREE_TO_ONE.get(resname.upper())
     if code is None:
         return "X", False
@@ -237,7 +244,7 @@ def parse(
             # marks waters, ligands, and other non-polymer entries.
             if residue.id[0] != " ":
                 continue
-            one, is_std = _to_one_letter(residue.get_resname())
+            one, is_std = to_one_letter(residue.get_resname())
             if not is_std:
                 nonstandard_seen.add(residue.get_resname().upper())
             seq_chars.append(one)

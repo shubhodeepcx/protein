@@ -11,14 +11,22 @@ import {
   KeywordsSection,
   NamesSection,
 } from "@/components/annotation-function-sections";
+import { FunctionalRegionsPanel } from "@/components/functional-regions-panel";
 
 /**
- * Annotations tab: biological annotation from UniProtKB (P6).
+ * Annotations tab: biological annotation from UniProtKB (P6), and functional
+ * regions and binding pockets (A5).
  *
  * Every section is conditional on its own data. A protein with no resolvable
  * UniProt accession — a plain upload, usually — is a successful, empty
  * response, and gets an explanation rather than an error: nothing is broken,
  * there is simply nothing to show.
+ *
+ * A5 changed one thing about that: an unresolved accession is no longer the
+ * whole story, because the bound ligands and the surface profile are measured
+ * from the coordinate file and exist whether or not UniProt knows this
+ * protein. So the "no annotations" case is now a notice at the top of a panel
+ * that still has content, rather than a full-height dead end.
  */
 export function AnnotationsPanel({ proteinId }: { proteinId: string }) {
   const annotations = useStore((s) => s.annotations);
@@ -62,12 +70,20 @@ export function AnnotationsPanel({ proteinId }: { proteinId: string }) {
 
   if (!annotations.accession_resolved) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-        <Info className="size-5 text-zinc-500" aria-hidden />
-        <p className="text-xs text-zinc-400">No UniProt annotations for this structure.</p>
-        <p className="text-[11px] leading-relaxed text-zinc-500">
-          {annotations.resolution_note}
-        </p>
+      <div className="flex h-full flex-col overflow-y-auto">
+        <div className="flex items-start gap-2 border-b border-zinc-800 px-3 py-3">
+          <Info className="mt-0.5 size-4 shrink-0 text-zinc-500" aria-hidden />
+          <div>
+            <p className="text-xs text-zinc-400">
+              No UniProt annotations for this structure.
+            </p>
+            <p className="text-[11px] leading-relaxed text-zinc-500">
+              {annotations.resolution_note} What follows is measured from the
+              coordinate file itself.
+            </p>
+          </div>
+        </div>
+        <FunctionalRegionsPanel proteinId={proteinId} />
       </div>
     );
   }
@@ -89,6 +105,7 @@ export function AnnotationsPanel({ proteinId }: { proteinId: string }) {
       {annotations.keywords.length > 0 && (
         <KeywordsSection keywords={annotations.keywords} />
       )}
+      <FunctionalRegionsPanel proteinId={proteinId} />
       <FeatureSections a={annotations} />
 
       <p className="px-3 py-3 text-[10px] leading-relaxed text-zinc-600">

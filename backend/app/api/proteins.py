@@ -19,6 +19,7 @@ from app.models.analytics import (
 )
 from app.models.annotations import ProteinAnnotations
 from app.models.complexes import ProteinComplexes
+from app.models.functional import FunctionalRegions
 from app.models.confidence import ConfidenceResponse
 from app.models.protein import ProteinSummary
 from app.models.similarity import DEFAULT_UNIREF_IDENTITY, SimilarProteinsResponse
@@ -26,6 +27,7 @@ from app.services import (
     analytics,
     annotations,
     complexes,
+    functional,
     confidence,
     ingest,
     registry,
@@ -286,6 +288,105 @@ async def get_protein_complexes(uid: str) -> ProteinComplexes:
         ) from exc
 
     return complexes.build_complexes(uid, body, accession=accession, note=note)
+
+
+@router.get("/{uid}/functional-regions", response_model=FunctionalRegions)
+async def get_functional_regions(uid: str) -> FunctionalRegions:
+    """Functional regions and binding pockets for a stored protein (A5).
+
+    Two halves with different failure modes, and they are kept independent on
+    purpose:
+
+    * The **curated** half needs UniProt. The accession is resolved with the
+      same helper P6 and P9 use, so the tabs can never disagree about which
+      entry a structure maps to.
+    * The **observed** half — bound ligands, their contact residues, surface
+      accessibility, hydropathy and charge — is measured from the coordinate
+      file in front of us and needs nothing external.
+
+    So unlike `/annotations` and `/complexes`, an upstream outage here is NOT a
+    502. Throwing away a correct structural analysis because a third party is
+    down would be the wrong trade; the response comes back with the curated
+    lists empty and a note in `notes` saying UniProt could not be reached. See
+    the tracker's decisions log, 2026-08-24.
+    """
+    from app.api.search import get_rcsb_client, get_uniprot_client
+
+    try:
+        storage.validate_uid(uid)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="Protein not found") from exc
+    summary = registry.get(uid)
+    if not summary:
+        raise HTTPException(status_code=404, detail="Protein not found")
+    try:
+        file_path = storage.get_file(uid)
+    except (FileNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail="File not found") from exc
+
+    uniprot = get_uniprot_client()
+    accession, note = await annotations.resolve_accession(
+        summary, uniprot=uniprot, rcsb=get_rcsb_client()
+    )
+
+    entry: dict | None = None
+    curation_note = ""
+    if accession is None:
+        logger.info("No UniProt accession for %s: %s", uid, note)
+        curation_note = (
+            "No UniProt entry could be resolved for this structure, so no curated "
+            "site is shown. Everything below is measured from the file itself."
+        )
+    else:
+        try:
+            entry = await uniprot.fetch_functional(accession)
+        except SourceNotFoundError as exc:
+            logger.info("UniProt has no entry for %s (protein %s): %s", accession, uid, exc)
+            curation_note = f"UniProt has no entry for accession {accession}."
+        except SourceUnavailableError as exc:
+            logger.warning("UniProt functional fetch unavailable for %s: %s", accession, exc)
+            curation_note = (
+                "UniProt could not be reached, so curated active and binding sites are "
+                "missing from this response. The observed data below is unaffected."
+            )
+
+    return await run_in_threadpool(
+        _compute_functional_regions,
+        uid,
+        summary,
+        file_path,
+        accession,
+        note,
+        entry,
+        curation_note,
+    )
+
+
+def _compute_functional_regions(
+    uid: str,
+    summary: ProteinSummary,
+    file_path: Path,
+    accession: str | None,
+    note: str,
+    entry: dict | None,
+    curation_note: str,
+) -> FunctionalRegions:
+    """The blocking half of `/functional-regions`, for the threadpool.
+
+    Parsing, a global alignment per chain, a neighbour search and a
+    Shrake-Rupley pass are all CPU-bound; running them on the event loop would
+    stall every other request for the duration.
+    """
+    structure = parse_structure_for_analytics(file_path)
+    return functional.build_functional_regions(
+        uid,
+        summary,
+        structure,
+        accession=accession,
+        resolution_note=note,
+        entry=entry,
+        curation_note=curation_note,
+    )
 
 
 @router.get("/{uid}/similar", response_model=SimilarProteinsResponse)
