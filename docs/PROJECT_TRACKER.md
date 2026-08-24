@@ -29,7 +29,9 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in progress. P6-P10 are merged._
+| Task | Owner | Branch | Status | Notes |
+|---|---|---|---|---|
+| **A5 — Functional regions and binding pockets.** Closes the tracker's one UNPLANNED GAP. Phase 1 only: annotation-based (UniProt `ft_act_site` / `ft_binding` / `ft_site` / `ft_dna_bind`) and rule-based (HETATM ligand-contact residues, Shrake-Rupley surface accessibility, Kyte-Doolittle hydropathy, formal charge). No ML, and **no geometric pocket predictor** | shubhodeep | `feature/a5-functional-regions` | wip | The load-bearing risk is UniProt sequence position != structure residue number. Positions are mapped through a BLOSUM62 global alignment of the UniProt sequence against each parsed chain, expressed in the parser's residue **ordinals** so the existing `setSelection` seam is untouched, and **refused** with an explanation when the alignment does not support them. "Predicted pocket regions" is deliberately NOT delivered — see the decisions log |
 
 ---
 
@@ -58,7 +60,7 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | **Compare affordance on the search page.** P7 ships one from the viewer header. A "compare these two" selection on `/search` would import both hits and land on `/compare` in one step — the predicted-vs-experimental pair is one query away | follow-up | P7 | 2h |
 | Export the comparison report (spec A3 asks for it; P7 ships the on-screen comparison only). Overlaps the deferred F9 export slice — decide there rather than adding a one-off | follow-up | P7 | — |
 | Persistence slice — the in-memory registry resets on restart, so `/viewer/{id}` 404s afterwards though the file survives on disk | separate slice | Postgres decision | — |
-| **A5 Binding-pocket / functional-region detection — UNPLANNED GAP.** A spec-compliance audit found this is the only feature promised in `spec.md` that is neither built nor listed in any out-of-scope note. Every other unbuilt feature is a deliberate deferral. Decide explicitly: defer it or build it. | spec gap | — | — |
+| ~~**A5 Binding-pocket / functional-region detection — UNPLANNED GAP**~~ — **claimed**, in progress on `feature/a5-functional-regions`. Decided: build Phase 1 (annotation- and rule-based), defer pocket *prediction* | spec gap | — | claimed |
 | A1: PAE heatmap and low-confidence-region warnings are in `spec.md` but in no deferral list (pLDDT coloring + mean-pLDDT are built) | spec gap | — | — |
 | Slice section 7 specifies `400 { error, suggestion }`; no `suggestion` field is implemented anywhere in the backend | spec drift | — | 45m |
 | Slice section 6.1 specifies a content sniff (first line is `HEADER`/`data_`); only extension/size/empty checks exist | spec drift | — | 30m |
