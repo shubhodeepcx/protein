@@ -7,6 +7,7 @@ import { CompositionBarChart } from "@/components/charts/composition-bar-chart";
 import { SecondaryStructureDonut } from "@/components/charts/secondary-structure-donut";
 import { HydrophobicityLineChart } from "@/components/charts/hydrophobicity-line-chart";
 import { ChainLengthBarChart } from "@/components/charts/chain-length-bar-chart";
+import { ConfidencePanel } from "@/components/confidence-panel";
 
 interface MetricProps {
   label: string;
@@ -104,6 +105,13 @@ export function AnalyticsPanel({ proteinId }: { proteinId: string }) {
 
       <Section title="Chain lengths">
         <ChainLengthBarChart data={analytics.chain_lengths} />
+      </Section>
+
+      {/* A1 — model confidence. Folded in here rather than given its own rail
+          tab: it is analytics about the model, and a new tab would also need a
+          matching `RAIL_TABS` entry in `rail-tab-preview.tsx`. */}
+      <Section title="Model confidence">
+        <ConfidencePanel proteinId={proteinId} />
       </Section>
 
       {summary?.warnings && summary.warnings.length > 0 && (

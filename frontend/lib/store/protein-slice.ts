@@ -2,6 +2,7 @@ import type { StateCreator } from "zustand";
 import type {
   ProteinSummary,
   AnalyticsResponse,
+  ConfidenceResponse,
   ProteinAnnotations,
   ProteinComplexes,
 } from "@/lib/types";
@@ -25,6 +26,9 @@ export interface ProteinSlice {
   complexes: ProteinComplexes | null;
   complexesLoading: boolean;
   complexesError: ProteinLoadError | null;
+  confidence: ConfidenceResponse | null;
+  confidenceLoading: boolean;
+  confidenceError: ProteinLoadError | null;
   /**
    * Loads protein metadata by id from `GET /api/proteins/{id}`.
    *
@@ -71,6 +75,20 @@ export interface ProteinSlice {
    * 5xx failure lands in `complexesError`.
    */
   loadComplexes: (id: string) => Promise<void>;
+  /**
+   * Loads AlphaFold confidence analysis from
+   * `GET /api/proteins/{id}/confidence` (A1).
+   *
+   * Fifth independent request token, for the same reason the other four have
+   * their own: the rail is mounted twice and all five requests race freely.
+   *
+   * An experimental structure is a *successful* load carrying
+   * `has_plddt: false` and a prose note, not an error — pLDDT and PAE are
+   * properties of a predicted model, and their absence is a fact about the
+   * structure rather than a failure. Only a transport or 5xx failure lands in
+   * `confidenceError`.
+   */
+  loadConfidence: (id: string) => Promise<void>;
   clearProtein: () => void;
 }
 
@@ -79,6 +97,7 @@ let metaSeq = 0;
 let analyticsSeq = 0;
 let annotationsSeq = 0;
 let complexesSeq = 0;
+let confidenceSeq = 0;
 
 export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice> = (
   set,
@@ -95,6 +114,9 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
   complexes: null,
   complexesLoading: false,
   complexesError: null,
+  confidence: null,
+  confidenceLoading: false,
+  confidenceError: null,
   loadProtein: async (id: string) => {
     const myReq = ++metaSeq;
     // Clear stale data immediately so consumers don't see protein A while loading B.
@@ -109,6 +131,8 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       annotationsError: null,
       complexes: null,
       complexesError: null,
+      confidence: null,
+      confidenceError: null,
     });
     try {
       const summary = await apiGet<ProteinSummary>(`/api/proteins/${id}`);
@@ -165,12 +189,29 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       set({ complexesError: { status, message }, complexesLoading: false });
     }
   },
+  loadConfidence: async (id: string) => {
+    const myReq = ++confidenceSeq;
+    set({ confidenceLoading: true, confidenceError: null });
+    try {
+      const c = await apiGet<ConfidenceResponse>(
+        `/api/proteins/${id}/confidence`,
+      );
+      if (myReq !== confidenceSeq) return;
+      set({ confidence: c, confidenceLoading: false });
+    } catch (e) {
+      if (myReq !== confidenceSeq) return;
+      const status = e instanceof ApiError ? e.status : null;
+      const message = e instanceof Error ? e.message : String(e);
+      set({ confidenceError: { status, message }, confidenceLoading: false });
+    }
+  },
   clearProtein: () => {
     // Bumping the sequences invalidates any in-flight loads.
     metaSeq++;
     analyticsSeq++;
     annotationsSeq++;
     complexesSeq++;
+    confidenceSeq++;
     set({
       current: null,
       error: null,
@@ -184,6 +225,9 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       complexes: null,
       complexesError: null,
       complexesLoading: false,
+      confidence: null,
+      confidenceError: null,
+      confidenceLoading: false,
     });
   },
 });
