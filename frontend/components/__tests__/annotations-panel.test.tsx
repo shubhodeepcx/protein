@@ -215,8 +215,12 @@ describe("AnnotationsPanel", () => {
     render(<AnnotationsPanel proteinId="test-id" />);
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    // A5 appends a second sentence to the same paragraph — the panel is no
+    // longer a dead end when there is no accession, because the ligands and
+    // the surface profile are measured from the file. The note itself still
+    // has to be shown verbatim.
     expect(
-      screen.getByText("Uploaded structures carry no database identifier to map from."),
+      screen.getByText(/Uploaded structures carry no database identifier to map from\./),
     ).toBeInTheDocument();
     expect(screen.queryByText("Names & Origin")).not.toBeInTheDocument();
   });

@@ -2,6 +2,7 @@ import type { StateCreator } from "zustand";
 import type {
   ProteinSummary,
   AnalyticsResponse,
+  FunctionalRegions,
   ProteinAnnotations,
   ProteinComplexes,
 } from "@/lib/types";
@@ -25,6 +26,9 @@ export interface ProteinSlice {
   complexes: ProteinComplexes | null;
   complexesLoading: boolean;
   complexesError: ProteinLoadError | null;
+  functional: FunctionalRegions | null;
+  functionalLoading: boolean;
+  functionalError: ProteinLoadError | null;
   /**
    * Loads protein metadata by id from `GET /api/proteins/{id}`.
    *
@@ -71,6 +75,17 @@ export interface ProteinSlice {
    * 5xx failure lands in `complexesError`.
    */
   loadComplexes: (id: string) => Promise<void>;
+  /**
+   * Loads functional regions from `GET /api/proteins/{id}/functional-regions`.
+   *
+   * Fifth independent request token, for the same reason the other four have
+   * their own: the rail is mounted twice and all five requests race freely.
+   *
+   * This endpoint degrades rather than failing — a UniProt outage still
+   * returns the ligands and surface measured from the structure — so almost
+   * nothing lands in `functionalError` except a transport failure.
+   */
+  loadFunctional: (id: string) => Promise<void>;
   clearProtein: () => void;
 }
 
@@ -79,6 +94,7 @@ let metaSeq = 0;
 let analyticsSeq = 0;
 let annotationsSeq = 0;
 let complexesSeq = 0;
+let functionalSeq = 0;
 
 export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice> = (
   set,
@@ -95,6 +111,9 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
   complexes: null,
   complexesLoading: false,
   complexesError: null,
+  functional: null,
+  functionalLoading: false,
+  functionalError: null,
   loadProtein: async (id: string) => {
     const myReq = ++metaSeq;
     // Clear stale data immediately so consumers don't see protein A while loading B.
@@ -109,6 +128,8 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       annotationsError: null,
       complexes: null,
       complexesError: null,
+      functional: null,
+      functionalError: null,
     });
     try {
       const summary = await apiGet<ProteinSummary>(`/api/proteins/${id}`);
@@ -165,12 +186,29 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       set({ complexesError: { status, message }, complexesLoading: false });
     }
   },
+  loadFunctional: async (id: string) => {
+    const myReq = ++functionalSeq;
+    set({ functionalLoading: true, functionalError: null });
+    try {
+      const f = await apiGet<FunctionalRegions>(
+        `/api/proteins/${id}/functional-regions`,
+      );
+      if (myReq !== functionalSeq) return;
+      set({ functional: f, functionalLoading: false });
+    } catch (e) {
+      if (myReq !== functionalSeq) return;
+      const status = e instanceof ApiError ? e.status : null;
+      const message = e instanceof Error ? e.message : String(e);
+      set({ functionalError: { status, message }, functionalLoading: false });
+    }
+  },
   clearProtein: () => {
     // Bumping the sequences invalidates any in-flight loads.
     metaSeq++;
     analyticsSeq++;
     annotationsSeq++;
     complexesSeq++;
+    functionalSeq++;
     set({
       current: null,
       error: null,
@@ -184,6 +222,9 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       complexes: null,
       complexesError: null,
       complexesLoading: false,
+      functional: null,
+      functionalError: null,
+      functionalLoading: false,
     });
   },
 });

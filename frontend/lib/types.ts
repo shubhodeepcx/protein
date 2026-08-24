@@ -554,3 +554,137 @@ export interface SimilarProteinsResponse {
   members: SimilarProtein[];
   truncated: boolean;
 }
+
+/**
+ * A5 — functional regions and binding pockets.
+ *
+ * Two kinds of claim live in this payload and they are never mixed.
+ * `provenance: "uniprot"` is a curator's statement about the protein;
+ * `provenance: "structure"` is something measured in the coordinate file. The
+ * UI has to be able to tell them apart, so they never share a type.
+ *
+ * Every position is a `ResidueRef.ordinal` — the 1-based index inside the
+ * chain's parsed sequence, the coordinate `lib/residue.ts` documents and
+ * `setSelection` consumes. It is NOT `auth_seq_id`; that is carried alongside
+ * for display, because the two are routinely different.
+ */
+export interface ResidueRef {
+  chain: string;
+  ordinal: number;
+  /** `"<chain>:<ordinal>"` — exactly what `setSelection` takes. */
+  key: string;
+  residue: string;
+  auth_seq_id: number | null;
+  insertion_code: string | null;
+}
+
+/** How one chain was related to the UniProt sequence — or why it was not. */
+export interface ChainMapping {
+  chain: string;
+  mapped: boolean;
+  residue_count: number;
+  aligned_columns: number;
+  identity_percent: number;
+  coverage_percent: number;
+  uniprot_start: number | null;
+  uniprot_end: number | null;
+  offset_note: string;
+  note: string;
+}
+
+export type SiteKind = "active_site" | "binding_site" | "site" | "dna_binding";
+
+/** A UniProt positional feature, placed on this structure or explicitly not. */
+export interface CuratedSite {
+  kind: SiteKind;
+  provenance: "uniprot";
+  label: string;
+  description: string | null;
+  ligand: string | null;
+  ligand_id: string | null;
+  ligand_part: string | null;
+  evidence_codes: string[];
+  experimental: boolean;
+  uniprot_start: number;
+  uniprot_end: number;
+  uniprot_residues: string;
+  positions: ResidueRef[];
+  /** False when the site could not be placed. `positions` is then empty. */
+  located: boolean;
+  location_note: string;
+  substitutions: string[];
+}
+
+export interface LigandContact extends ResidueRef {
+  min_distance: number;
+  atom_contacts: number;
+}
+
+/** A non-polymer group present in the file, and the residues it touches. */
+export interface BoundLigand {
+  component: string;
+  provenance: "structure";
+  chain: string;
+  auth_seq_id: number | null;
+  insertion_code: string | null;
+  label: string;
+  atom_count: number;
+  single_atom: boolean;
+  contacts: LigandContact[];
+}
+
+/**
+ * Per-residue chemistry for one chain, as parallel arrays: index `i` is
+ * ordinal `i + 1`, the same indexing `ChainInfo.sequence` uses.
+ *
+ * `relative_accessibility` and `surface_exposed` are empty when the
+ * Shrake-Rupley pass was skipped; `surface_note` then says why.
+ */
+export interface SurfaceProfile {
+  chain: string;
+  sequence: string;
+  hydropathy: number[];
+  charge: number[];
+  relative_accessibility: number[];
+  surface_exposed: boolean[];
+  net_charge: number;
+  histidine_count: number;
+  mean_hydropathy: number;
+  surface_mean_hydropathy: number | null;
+  surface_net_charge: number | null;
+}
+
+/** A residue with at least one functional claim against it. No score. */
+export interface PriorityResidue extends ResidueRef {
+  reasons: string[];
+  provenance: ("uniprot" | "structure")[];
+  /** How many independent kinds of evidence converged. The sort key. */
+  evidence_kinds: number;
+  curated_active_site: boolean;
+  curated_binding_site: boolean;
+  ligand_contact: boolean;
+  hydropathy: number | null;
+  charge: number | null;
+  relative_accessibility: number | null;
+}
+
+/** `GET /api/proteins/{uid}/functional-regions`. */
+export interface FunctionalRegions {
+  id: string;
+  accession: string | null;
+  accession_resolved: boolean;
+  resolution_note: string;
+  chain_mappings: ChainMapping[];
+  active_sites: CuratedSite[];
+  binding_sites: CuratedSite[];
+  other_sites: CuratedSite[];
+  dna_binding: CuratedSite[];
+  ligands: BoundLigand[];
+  /** Heavy-atom distance, in angstroms, that defines a contact. */
+  contact_cutoff: number;
+  surface: SurfaceProfile[];
+  surface_note: string;
+  priority_residues: PriorityResidue[];
+  unlocated_sites: number;
+  notes: string[];
+}
