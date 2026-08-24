@@ -20,8 +20,12 @@ _AA_AVG_MASS = {
 }
 _WATER_MASS = 18.01528
 
-# Kyte-Doolittle hydropathy scale
-_KD_HYDROPATHY = {
+# Kyte-Doolittle hydropathy scale.
+#
+# Public (no leading underscore) because A5's per-residue surface profile reads
+# the same scale this module's sliding-window profile averages. A second copy
+# would be a second place for the numbers to drift.
+KD_HYDROPATHY = {
     "A":  1.8, "R": -4.5, "N": -3.5, "D": -3.5, "C":  2.5,
     "E": -3.5, "Q": -3.5, "G": -0.4, "H": -3.2, "I":  4.5,
     "L":  3.8, "K": -3.9, "M":  1.9, "F":  2.8, "P": -1.6,
@@ -83,7 +87,7 @@ def hydrophobicity_profile(sequence: str, window: int = 9) -> list[float]:
     """
     if window < 1 or len(sequence) < window:
         return []
-    vals = [_KD_HYDROPATHY.get(a, 0.0) for a in sequence]
+    vals = [KD_HYDROPATHY.get(a, 0.0) for a in sequence]
     out: list[float] = []
     running = sum(vals[:window])
     out.append(round(running / window, 4))

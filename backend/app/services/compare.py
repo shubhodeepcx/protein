@@ -70,8 +70,15 @@ TWILIGHT_ZONE_IDENTITY = 20.0
 THIN_FIT_ATOM_PAIRS = 10
 
 
-def _build_aligner() -> Align.PairwiseAligner:
-    """A global BLOSUM62 aligner with affine gaps and free end gaps."""
+def build_aligner() -> Align.PairwiseAligner:
+    """A global BLOSUM62 aligner with affine gaps and free end gaps.
+
+    Public because A5 (`services/functional.py`) maps UniProt sequence
+    positions onto structure residues through the *same* alignment model this
+    module pairs residues with. Two aligners configured differently would let
+    the comparison view and the functional-region view disagree about which
+    residue of a construct a UniProt position corresponds to.
+    """
     aligner = Align.PairwiseAligner()
     aligner.mode = "global"
     aligner.substitution_matrix = substitution_matrices.load("BLOSUM62")
@@ -121,7 +128,7 @@ def align_chains(chain_a: ChainInfo, chain_b: ChainInfo) -> SequenceAlignment:
             f"{MAX_ALIGNABLE_RESIDUES}-residue alignment limit."
         )
 
-    aligner = _build_aligner()
+    aligner = build_aligner()
     matrix = aligner.substitution_matrix
     # `align` is lazy over every co-optimal path; [0] takes one, deterministically
     # for a given BioPython version. Co-optimal paths differ only in how they

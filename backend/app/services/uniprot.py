@@ -91,6 +91,34 @@ ANNOTATION_FIELD_NAMES: tuple[str, ...] = (
 
 ANNOTATION_FIELDS = ",".join(ANNOTATION_FIELD_NAMES)
 
+# A5: the functional-region field set. Deliberately its own list rather than an
+# extension of `ANNOTATION_FIELD_NAMES` — A5 needs `sequence`, which P6 does not
+# and which is the single largest field in a UniProtKB entry, and P6 needs none
+# of the site features. Sharing one list would make every annotation-panel open
+# pay for a 1.4 kB sequence it never renders.
+#
+# `sequence` is not optional here: it is what the UniProt positions are aligned
+# THROUGH. Without it there is no way to relate position 53 of an entry to a
+# residue of a crystallised construct, and the honest answer would be to place
+# nothing at all.
+#
+# Checked live against rest.uniprot.org on 2026-08-24: `ft_metal`, `ft_np_bind`
+# and `ft_ca_bind` no longer exist — each is a 400 "Invalid fields parameter
+# value" and would fail the whole request. Modern UniProt folds metal and
+# nucleotide binding into `ft_binding`, tagged with a `ligand` object.
+FUNCTIONAL_FIELD_NAMES: tuple[str, ...] = (
+    "accession",
+    "id",
+    "protein_name",
+    "sequence",
+    "ft_act_site",
+    "ft_binding",
+    "ft_site",
+    "ft_dna_bind",
+)
+
+FUNCTIONAL_FIELDS = ",".join(FUNCTIONAL_FIELD_NAMES)
+
 # UniProt's own accession pattern (see https://www.uniprot.org/help/accession_numbers),
 # optionally followed by an isoform suffix such as "-2".
 _ACCESSION_RE = re.compile(
@@ -237,47 +265,77 @@ class UniProtClient:
         Cached (LRU 256 / TTL 1h) — annotations change on UniProt's release
         cadence, not per request, and the panel refetches on every tab open.
         """
+        return await self._fielded_entry(protein_id, ANNOTATION_FIELDS, "annotations")
+
+    async def fetch_functional(self, protein_id: str) -> Metadata:
+        """The raw UniProtKB entry, restricted to `FUNCTIONAL_FIELDS` (A5).
+
+        Same posture as `fetch_annotations` — unflattened, so
+        `services/functional.py` owns a pure projection — but a different field
+        set and a separate cache key, because the two panels ask for disjoint
+        halves of an entry and neither should pay for the other's payload.
+        """
+        return await self._fielded_entry(
+            protein_id, FUNCTIONAL_FIELDS, "functional regions", cache_prefix="functional:"
+        )
+
+    async def _fielded_entry(
+        self,
+        protein_id: str,
+        fields: str,
+        what: str,
+        *,
+        cache_prefix: str = "",
+    ) -> Metadata:
+        """One field-restricted entry fetch, cached under `cache_prefix + accession`.
+
+        The prefix is what keeps two field sets out of each other's way in the
+        one entry cache: a `functional:` payload carries no GO terms and an
+        annotation payload carries no sequence, so serving either from the
+        other's key would silently return a half-empty panel.
+        """
         accession = normalise_accession(protein_id)
-        cached = self._annotation_cache.get(accession)
+        cache_key = f"{cache_prefix}{accession}"
+        cached = self._annotation_cache.get(cache_key)
         if cached is not None:
             return cached
 
-        params = {"fields": ANNOTATION_FIELDS}
         async with new_client() as client:
             try:
                 response = await client.get(
-                    ENTRY_URL.format(accession=accession), params=params
+                    ENTRY_URL.format(accession=accession), params={"fields": fields}
                 )
             except httpx.HTTPError as exc:
                 raise SourceUnavailableError(
-                    f"UniProt annotation request failed: {exc}"
+                    f"UniProt {what} request failed: {exc}"
                 ) from exc
 
         if response.status_code in (400, 404):
             # A 400 here is also how UniProt answers an unknown field name, so
             # log the distinction rather than silently reading it as "no entry".
             logger.info(
-                "UniProt annotations for %s returned HTTP %d",
+                "UniProt %s for %s returned HTTP %d",
+                what,
                 accession,
                 response.status_code,
             )
             raise SourceNotFoundError(f"UniProt has no entry for accession {accession}")
         if response.status_code >= 400:
             raise SourceUnavailableError(
-                f"UniProt annotations for {accession} returned HTTP {response.status_code}"
+                f"UniProt {what} for {accession} returned HTTP {response.status_code}"
             )
         try:
             body = response.json()
         except ValueError as exc:
             raise SourceUnavailableError(
-                "UniProt annotations returned non-JSON body"
+                f"UniProt {what} returned non-JSON body"
             ) from exc
         if not isinstance(body, dict):
             raise SourceUnavailableError(
-                "UniProt annotations returned an unexpected payload"
+                f"UniProt {what} returned an unexpected payload"
             )
 
-        self._annotation_cache.put(accession, body)
+        self._annotation_cache.put(cache_key, body)
         return body
 
     # ---------------------------------------------------------------- uniref

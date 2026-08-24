@@ -1,0 +1,997 @@
+{
+  "entryType": "UniProtKB reviewed (Swiss-Prot)",
+  "extraAttributes": {
+    "uniParcId": "UPI0000167FF1"
+  },
+  "features": [
+    {
+      "description": "Integrase-type",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000255",
+          "id": "PRU00506",
+          "source": "PROSITE-ProRule"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1417
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1370
+        }
+      },
+      "type": "DNA binding"
+    },
+    {
+      "description": "For protease activity; shared with dimeric partner",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000255",
+          "id": "PRU10094",
+          "source": "PROSITE-ProRule"
+        },
+        {
+          "evidenceCode": "ECO:0000305",
+          "id": "33542150",
+          "source": "PubMed"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 513
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 513
+        }
+      },
+      "type": "Active site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:18420"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:18420",
+        "label": "1",
+        "name": "Mg(2+)",
+        "note": "catalytic; for reverse transcriptase activity"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 697
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 697
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:18420"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:18420",
+        "label": "1",
+        "name": "Mg(2+)",
+        "note": "catalytic; for reverse transcriptase activity"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 772
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 772
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:18420"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:18420",
+        "label": "1",
+        "name": "Mg(2+)",
+        "note": "catalytic; for reverse transcriptase activity"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 773
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 773
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:18420"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:18420",
+        "label": "2",
+        "name": "Mg(2+)",
+        "note": "catalytic; for RNase H activity"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1030
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1030
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000269",
+          "id": "12206668",
+          "source": "PubMed"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:18420"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:18420",
+        "label": "2",
+        "name": "Mg(2+)",
+        "note": "catalytic; for RNase H activity"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1065
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1065
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:18420"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:18420",
+        "label": "2",
+        "name": "Mg(2+)",
+        "note": "catalytic; for RNase H activity"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1085
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1085
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000269",
+          "id": "12206668",
+          "source": "PubMed"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:18420"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:18420",
+        "label": "2",
+        "name": "Mg(2+)",
+        "note": "catalytic; for RNase H activity"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1136
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1136
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000255",
+          "id": "PRU00450",
+          "source": "PROSITE-ProRule"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:29105"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:29105",
+        "name": "Zn(2+)"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1159
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1159
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000255",
+          "id": "PRU00450",
+          "source": "PROSITE-ProRule"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:29105"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:29105",
+        "name": "Zn(2+)"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1163
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1163
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000255",
+          "id": "PRU00450",
+          "source": "PROSITE-ProRule"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:29105"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:29105",
+        "name": "Zn(2+)"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1187
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1187
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000255",
+          "id": "PRU00450",
+          "source": "PROSITE-ProRule"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:29105"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:29105",
+        "name": "Zn(2+)"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1190
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1190
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:18420"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:18420",
+        "label": "3",
+        "name": "Mg(2+)",
+        "note": "catalytic; for integrase activity"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1211
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1211
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:18420"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:18420",
+        "label": "3",
+        "name": "Mg(2+)",
+        "note": "catalytic; for integrase activity"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1263
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1263
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000305"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:18420"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:18420",
+        "label": "3",
+        "name": "Mg(2+)",
+        "note": "catalytic; for integrase activity"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1299
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1299
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "Cleavage; by viral protease",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 133
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 132
+        }
+      },
+      "type": "Site"
+    },
+    {
+      "description": "Cis/trans isomerization of proline peptide bond; by human PPIA/CYPA",
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 222
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 221
+        }
+      },
+      "type": "Site"
+    },
+    {
+      "description": "Cleavage; by viral protease",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 364
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 363
+        }
+      },
+      "type": "Site"
+    },
+    {
+      "description": "Cleavage; by viral protease",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 378
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 377
+        }
+      },
+      "type": "Site"
+    },
+    {
+      "description": "Cleavage; by viral protease",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000255"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 394
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 393
+        }
+      },
+      "type": "Site"
+    },
+    {
+      "description": "Cleavage; by viral protease",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000255"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 427
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 426
+        }
+      },
+      "type": "Site"
+    },
+    {
+      "description": "Cleavage; by viral protease",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000255"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 433
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 432
+        }
+      },
+      "type": "Site"
+    },
+    {
+      "description": "Cleavage; by viral protease",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 441
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 440
+        }
+      },
+      "type": "Site"
+    },
+    {
+      "description": "Cleavage; by viral protease",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000305",
+          "id": "15183348",
+          "source": "PubMed"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 489
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 488
+        }
+      },
+      "type": "Site"
+    },
+    {
+      "description": "Cleavage; by viral protease",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 588
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 587
+        }
+      },
+      "type": "Site"
+    },
+    {
+      "description": "Essential for RT p66/p51 heterodimerization",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 988
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 988
+        }
+      },
+      "type": "Site"
+    },
+    {
+      "description": "Essential for RT p66/p51 heterodimerization",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1001
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1001
+        }
+      },
+      "type": "Site"
+    },
+    {
+      "description": "Cleavage; by viral protease; partial",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1028
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1027
+        }
+      },
+      "type": "Site"
+    },
+    {
+      "description": "Cleavage; by viral protease",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000250"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1148
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1147
+        }
+      },
+      "type": "Site"
+    }
+  ],
+  "primaryAccession": "P04585",
+  "proteinDescription": {
+    "alternativeNames": [
+      {
+        "fullName": {
+          "value": "Pr160Gag-Pol"
+        }
+      }
+    ],
+    "contains": [
+      {
+        "recommendedName": {
+          "fullName": {
+            "value": "Matrix protein p17"
+          },
+          "shortNames": [
+            {
+              "value": "MA"
+            }
+          ]
+        }
+      },
+      {
+        "recommendedName": {
+          "fullName": {
+            "value": "Capsid protein p24"
+          },
+          "shortNames": [
+            {
+              "value": "CA"
+            }
+          ]
+        }
+      },
+      {
+        "alternativeNames": [
+          {
+            "fullName": {
+              "value": "p2"
+            }
+          }
+        ],
+        "recommendedName": {
+          "fullName": {
+            "evidences": [
+              {
+                "evidenceCode": "ECO:0000250",
+                "id": "P12497",
+                "source": "UniProtKB"
+              }
+            ],
+            "value": "Spacer peptide 1"
+          },
+          "shortNames": [
+            {
+              "value": "SP1"
+            }
+          ]
+        }
+      },
+      {
+        "recommendedName": {
+          "fullName": {
+            "value": "Nucleocapsid protein p7"
+          },
+          "shortNames": [
+            {
+              "value": "NC"
+            }
+          ]
+        }
+      },
+      {
+        "recommendedName": {
+          "fullName": {
+            "value": "Transframe peptide"
+          },
+          "shortNames": [
+            {
+              "value": "TF"
+            }
+          ]
+        }
+      },
+      {
+        "recommendedName": {
+          "fullName": {
+            "value": "p6-pol"
+          },
+          "shortNames": [
+            {
+              "value": "p6*"
+            }
+          ]
+        }
+      },
+      {
+        "alternativeNames": [
+          {
+            "fullName": {
+              "value": "PR"
+            }
+          },
+          {
+            "fullName": {
+              "value": "Retropepsin"
+            }
+          }
+        ],
+        "recommendedName": {
+          "ecNumbers": [
+            {
+              "evidences": [
+                {
+                  "evidenceCode": "ECO:0000269",
+                  "id": "32053707",
+                  "source": "PubMed"
+                },
+                {
+                  "evidenceCode": "ECO:0000269",
+                  "id": "33542150",
+                  "source": "PubMed"
+                }
+              ],
+              "value": "3.4.23.16"
+            }
+          ],
+          "fullName": {
+            "value": "Protease"
+          }
+        }
+      },
+      {
+        "alternativeNames": [
+          {
+            "ecNumbers": [
+              {
+                "value": "3.1.13.2"
+              }
+            ],
+            "fullName": {
+              "value": "Exoribonuclease H"
+            }
+          },
+          {
+            "fullName": {
+              "value": "p66 RT"
+            }
+          }
+        ],
+        "recommendedName": {
+          "ecNumbers": [
+            {
+              "evidences": [
+                {
+                  "evidenceCode": "ECO:0000250",
+                  "id": "P03366",
+                  "source": "UniProtKB"
+                }
+              ],
+              "value": "2.7.7.49"
+            },
+            {
+              "evidences": [
+                {
+                  "evidenceCode": "ECO:0000250",
+                  "id": "P03366",
+                  "source": "UniProtKB"
+                }
+              ],
+              "value": "2.7.7.7"
+            },
+            {
+              "evidences": [
+                {
+                  "evidenceCode": "ECO:0000250",
+                  "id": "P03366",
+                  "source": "UniProtKB"
+                }
+              ],
+              "value": "3.1.26.13"
+            }
+          ],
+          "fullName": {
+            "value": "Reverse transcriptase/ribonuclease H"
+          }
+        }
+      },
+      {
+        "recommendedName": {
+          "fullName": {
+            "value": "p51 RT"
+          }
+        }
+      },
+      {
+        "recommendedName": {
+          "fullName": {
+            "value": "p15"
+          }
+        }
+      },
+      {
+        "recommendedName": {
+          "ecNumbers": [
+            {
+              "evidences": [
+                {
+                  "evidenceCode": "ECO:0000305",
+                  "id": "2349226",
+                  "source": "PubMed"
+                }
+              ],
+              "value": "2.7.7.-"
+            },
+            {
+              "evidences": [
+                {
+                  "evidenceCode": "ECO:0000305",
+                  "id": "2349226",
+                  "source": "PubMed"
+                }
+              ],
+              "value": "3.1.-.-"
+            }
+          ],
+          "fullName": {
+            "value": "Integrase"
+          },
+          "shortNames": [
+            {
+              "value": "IN"
+            }
+          ]
+        }
+      }
+    ],
+    "recommendedName": {
+      "fullName": {
+        "value": "Gag-Pol polyprotein"
+      }
+    }
+  },
+  "sequence": {
+    "crc64": "8487B36BDEAC5FE4",
+    "length": 1435,
+    "md5": "A510EADB0DF840E958233F484781DDE7",
+    "molWeight": 162042,
+    "value": "MGARASVLSGGELDRWEKIRLRPGGKKKYKLKHIVWASRELERFAVNPGLLETSEGCRQILGQLQPSLQTGSEELRSLYNTVATLYCVHQRIEIKDTKEALDKIEEEQNKSKKKAQQAAADTGHSNQVSQNYPIVQNIQGQMVHQAISPRTLNAWVKVVEEKAFSPEVIPMFSALSEGATPQDLNTMLNTVGGHQAAMQMLKETINEEAAEWDRVHPVHAGPIAPGQMREPRGSDIAGTTSTLQEQIGWMTNNPPIPVGEIYKRWIILGLNKIVRMYSPTSILDIRQGPKEPFRDYVDRFYKTLRAEQASQEVKNWMTETLLVQNANPDCKTILKALGPAATLEEMMTACQGVGGPGHKARVLAEAMSQVTNSATIMMQRGNFRNQRKIVKCFNCGKEGHTARNCRAPRKKGCWKCGKEGHQMKDCTERQANFLREDLAFLQGKAREFSSEQTRANSPTRRELQVWGRDNNSPSEAGADRQGTVSFNFPQVTLWQRPLVTIKIGGQLKEALLDTGADDTVLEEMSLPGRWKPKMIGGIGGFIKVRQYDQILIEICGHKAIGTVLVGPTPVNIIGRNLLTQIGCTLNFPISPIETVPVKLKPGMDGPKVKQWPLTEEKIKALVEICTEMEKEGKISKIGPENPYNTPVFAIKKKDSTKWRKLVDFRELNKRTQDFWEVQLGIPHPAGLKKKKSVTVLDVGDAYFSVPLDEDFRKYTAFTIPSINNETPGIRYQYNVLPQGWKGSPAIFQSSMTKILEPFRKQNPDIVIYQYMDDLYVGSDLEIGQHRTKIEELRQHLLRWGLTTPDKKHQKEPPFLWMGYELHPDKWTVQPIVLPEKDSWTVNDIQKLVGKLNWASQIYPGIKVRQLCKLLRGTKALTEVIPLTEEAELELAENREILKEPVHGVYYDPSKDLIAEIQKQGQGQWTYQIYQEPFKNLKTGKYARMRGAHTNDVKQLTEAVQKITTESIVIWGKTPKFKLPIQKETWETWWTEYWQATWIPEWEFVNTPPLVKLWYQLEKEPIVGAETFYVDGAANRETKLGKAGYVTNRGRQKVVTLTDTTNQKTELQAIYLALQDSGLEVNIVTDSQYALGIIQAQPDQSESELVNQIIEQLIKKEKVYLAWVPAHKGIGGNEQVDKLVSAGIRKVLFLDGIDKAQDEHEKYHSNWRAMASDFNLPPVVAKEIVASCDKCQLKGEAMHGQVDCSPGIWQLDCTHLEGKVILVAVHVASGYIEAEVIPAETGQETAYFLLKLAGRWPVKTIHTDNGSNFTGATVRAACWWAGIKQEFGIPYNPQSQGVVESMNKELKKIIGQVRDQAEHLKTAVQMAVFIHNFKRKGGIGGYSAGERIVDIIATDIQTKELQKQITKIQNFRVYYRDSRNPLWKGPAKLLWKGEGAVVIQDNSDIKVVPRRKAKIIRDYGKQMAGDDCVASRQDED"
+  },
+  "uniProtkbId": "POL_HV1H2"
+}

@@ -1,0 +1,461 @@
+{
+  "entryType": "UniProtKB reviewed (Swiss-Prot)",
+  "extraAttributes": {
+    "uniParcId": "UPI000003E750"
+  },
+  "features": [
+    {
+      "description": "Proton acceptor",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000255",
+          "id": "PRU00159",
+          "source": "PROSITE-ProRule"
+        },
+        {
+          "evidenceCode": "ECO:0000255",
+          "id": "PRU10028",
+          "source": "PROSITE-ProRule"
+        }
+      ],
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 837
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 837
+        }
+      },
+      "type": "Active site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000269",
+          "id": "19563760",
+          "source": "PubMed"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2GS7",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "3GT8",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "4ZSE",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "5CNN",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "5CNO",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "5D41",
+          "source": "PDB"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:30616"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:30616",
+        "name": "ATP"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 726
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 718
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000269",
+          "id": "17349580",
+          "source": "PubMed"
+        },
+        {
+          "evidenceCode": "ECO:0000269",
+          "id": "19563760",
+          "source": "PubMed"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2EB3",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2GS7",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2ITN",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "3GT8",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "3VJN",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "3VJO",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "4RIW",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "4RIY",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "4ZSE",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "5CNN",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "5CNO",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "5D41",
+          "source": "PDB"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:30616"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:30616",
+        "name": "ATP"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 745
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 745
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000269",
+          "id": "17349580",
+          "source": "PubMed"
+        },
+        {
+          "evidenceCode": "ECO:0000269",
+          "id": "19563760",
+          "source": "PubMed"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2EB3",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2GS7",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2ITN",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2ITV",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2ITX",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "3GT8",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "3VJN",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "3VJO",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "4RIW",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "4RIX",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "4RIY",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "4ZSE",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "5CNN",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "5CNO",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "5D41",
+          "source": "PDB"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:30616"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:30616",
+        "name": "ATP"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 791
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 790
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "",
+      "evidences": [
+        {
+          "evidenceCode": "ECO:0000269",
+          "id": "17349580",
+          "source": "PubMed"
+        },
+        {
+          "evidenceCode": "ECO:0000269",
+          "id": "19563760",
+          "source": "PubMed"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2EB3",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2GS7",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2ITN",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2ITV",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "2ITX",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "3GT8",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "3VJN",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "4RIW",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "4RIX",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "4RIY",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "4ZSE",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "5CNN",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "5CNO",
+          "source": "PDB"
+        },
+        {
+          "evidenceCode": "ECO:0007744",
+          "id": "5D41",
+          "source": "PDB"
+        }
+      ],
+      "featureCrossReferences": [
+        {
+          "database": "ChEBI",
+          "id": "CHEBI:30616"
+        }
+      ],
+      "ligand": {
+        "id": "ChEBI:CHEBI:30616",
+        "name": "ATP"
+      },
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 855
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 855
+        }
+      },
+      "type": "Binding site"
+    },
+    {
+      "description": "Important for interaction with PIK3C2B",
+      "location": {
+        "end": {
+          "modifier": "EXACT",
+          "value": 1016
+        },
+        "start": {
+          "modifier": "EXACT",
+          "value": 1016
+        }
+      },
+      "type": "Site"
+    }
+  ],
+  "primaryAccession": "P00533",
+  "proteinDescription": {
+    "alternativeNames": [
+      {
+        "fullName": {
+          "value": "Proto-oncogene c-ErbB-1"
+        }
+      },
+      {
+        "fullName": {
+          "value": "Receptor tyrosine-protein kinase erbB-1"
+        }
+      }
+    ],
+    "flag": "Precursor",
+    "recommendedName": {
+      "ecNumbers": [
+        {
+          "value": "2.7.10.1"
+        }
+      ],
+      "fullName": {
+        "evidences": [
+          {
+            "evidenceCode": "ECO:0000305"
+          }
+        ],
+        "value": "Epidermal growth factor receptor"
+      }
+    }
+  },
+  "sequence": {
+    "crc64": "D8A2A50B4EFB6ED2",
+    "length": 1210,
+    "md5": "99D03B567DBCDD7FB0DD21FB40D5D283",
+    "molWeight": 134277,
+    "value": "MRPSGTAGAALLALLAALCPASRALEEKKVCQGTSNKLTQLGTFEDHFLSLQRMFNNCEVVLGNLEITYVQRNYDLSFLKTIQEVAGYVLIALNTVERIPLENLQIIRGNMYYENSYALAVLSNYDANKTGLKELPMRNLQEILHGAVRFSNNPALCNVESIQWRDIVSSDFLSNMSMDFQNHLGSCQKCDPSCPNGSCWGAGEENCQKLTKIICAQQCSGRCRGKSPSDCCHNQCAAGCTGPRESDCLVCRKFRDEATCKDTCPPLMLYNPTTYQMDVNPEGKYSFGATCVKKCPRNYVVTDHGSCVRACGADSYEMEEDGVRKCKKCEGPCRKVCNGIGIGEFKDSLSINATNIKHFKNCTSISGDLHILPVAFRGDSFTHTPPLDPQELDILKTVKEITGFLLIQAWPENRTDLHAFENLEIIRGRTKQHGQFSLAVVSLNITSLGLRSLKEISDGDVIISGNKNLCYANTINWKKLFGTSGQKTKIISNRGENSCKATGQVCHALCSPEGCWGPEPRDCVSCRNVSRGRECVDKCNLLEGEPREFVENSECIQCHPECLPQAMNITCTGRGPDNCIQCAHYIDGPHCVKTCPAGVMGENNTLVWKYADAGHVCHLCHPNCTYGCTGPGLEGCPTNGPKIPSIATGMVGALLLLLVVALGIGLFMRRRHIVRKRTLRRLLQERELVEPLTPSGEAPNQALLRILKETEFKKIKVLGSGAFGTVYKGLWIPEGEKVKIPVAIKELREATSPKANKEILDEAYVMASVDNPHVCRLLGICLTSTVQLITQLMPFGCLLDYVREHKDNIGSQYLLNWCVQIAKGMNYLEDRRLVHRDLAARNVLVKTPQHVKITDFGLAKLLGAEEKEYHAEGGKVPIKWMALESILHRIYTHQSDVWSYGVTVWELMTFGSKPYDGIPASEISSILEKGERLPQPPICTIDVYMIMVKCWMIDADSRPKFRELIIEFSKMARDPQRYLVIQGDERMHLPSPTDSNFYRALMDEEDMDDVVDADEYLIPQQGFFSSPSTSRTPLLSSLSATSNNSTVACIDRNGLQSCPIKEDSFLQRYSSDPTGALTEDSIDDTFLPVPEYINQSVPKRPAGSVQNPVYHNQPLNPAPSRDPHYQDPHSTAVGNPEYLNTVQPTCVNSTFDSPAHWAQKGSHQISLDNPDYQQDFFPKEAKPNGIFKGSTAENAEYLRVAPQSSEFIGA"
+  },
+  "uniProtkbId": "EGFR_HUMAN"
+}
