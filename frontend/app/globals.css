@@ -128,3 +128,40 @@
     @apply font-sans;
   }
 }
+
+/**
+ * A very faint molecular lattice for the landing page's centre column — the
+ * one large expanse of flat colour left in the app. Two dot grids offset from
+ * each other read as atoms on a hexagonal packing; a third, wider gradient
+ * keeps it from tiling too obviously.
+ *
+ * Deliberately CSS-only and deliberately scoped to a single opt-in class: it
+ * is never applied on the viewer routes, so it cannot sit behind, tint, or
+ * cost a frame of the Mol* canvas. Contrast is unaffected — the dots are
+ * `currentColor` at 3.5%, well under the threshold where text on top of them
+ * loses legibility, and they sit behind content via a `::before` layer that
+ * takes no pointer events.
+ */
+.molecular-field {
+  position: relative;
+  isolation: isolate;
+}
+
+.molecular-field::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at center, color-mix(in oklab, var(--foreground) 3.5%, transparent) 1.2px, transparent 1.3px),
+    radial-gradient(circle at center, color-mix(in oklab, var(--foreground) 3.5%, transparent) 1.2px, transparent 1.3px),
+    radial-gradient(circle at 30% 20%, color-mix(in oklab, var(--primary) 4%, transparent), transparent 60%);
+  background-size: 34px 34px, 34px 34px, 100% 100%;
+  background-position: 0 0, 17px 17px, 0 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Nothing animates — noted so a later change does not quietly add motion
+     to a decorative layer the user cannot turn off. */
+}
