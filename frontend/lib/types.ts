@@ -54,6 +54,15 @@ export interface SecondaryStructurePercentages {
   helix: number;
   sheet: number;
   coil: number;
+  /**
+   * False when the structure file declared no secondary structure at all — an
+   * AlphaFold model is the usual case. The helix/sheet/coil split is then an
+   * all-coil placeholder, not a measurement, and any surface that draws it
+   * must say so. Required on purpose: the backend has always sent the field
+   * (it defaults to `true`), and making it optional here is exactly how the
+   * donut came to render "100% coil" as if it were a finding.
+   */
+  available: boolean;
 }
 
 export interface HydrophobicityProfile {
