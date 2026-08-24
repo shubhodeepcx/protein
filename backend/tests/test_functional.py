@@ -32,7 +32,7 @@ from pathlib import Path
 import pytest
 
 from app.api.proteins import parse_structure_for_analytics
-from app.models.protein import ChainInfo, ProteinSummary
+from app.models.protein import ChainInfo
 from app.services import functional
 from app.services.functional import ChainReadError, ChainResidues
 from app.services.parser import parse
