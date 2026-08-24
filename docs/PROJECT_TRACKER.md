@@ -3,17 +3,25 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-23 by Shubhodeep Chatterjee (P9 complex viewer claimed on `feature/p9-complexes`: Complex Portal client, `GET /api/proteins/{id}/complexes`, Complexes tab. P7 merged.)
-**Last updated:** 2026-08-23 by Shubhodeep Chatterjee (P8 similarity + BLAST built on `feature/p8-blast`: EBI NCBI BLAST submit/poll/retrieve — the project's first asynchronous feature — UniRef homologs, and a Similarity tab. PR open.)
-**Last updated:** 2026-08-24 by Shubhodeep Chatterjee (P10 interface density shipped on `feature/p10-interface`: viewer left-rail chain tree, `secondary_structure.available` surfaced in the analytics donut, honest landing page. 241 backend / 285 frontend green, 57/57 mutations caught, verified in Chrome.)
+**Last updated:** 2026-08-24 by Shubhodeep Chatterjee (P6-P10 all merged. `main` at `e06be37`: 402 backend / 358 frontend tests, tsc clean, webpack build clean.)
 
 ---
 
 ## Current phase
 
-**P6 and P7 in review, P8–P10 scheduled** — new client scope (annotations, comparison, BLAST, complexes) designed at [2026-08-22-annotation-comparison-slice-design.md](superpowers/specs/2026-08-22-annotation-comparison-slice-design.md) and dispatched to cloud agents.
+**P6-P10 complete and merged.** The annotation/comparison slice designed at
+[2026-08-22-annotation-comparison-slice-design.md](superpowers/specs/2026-08-22-annotation-comparison-slice-design.md)
+is fully shipped: annotations (P6), comparison (P7), BLAST + UniRef similarity (P8),
+Complex Portal (P9) and interface density (P10). `main` is at `e06be37` with
+**402 backend / 358 frontend** tests green, tsc clean and the webpack build clean.
 
-_Previously:_ **Slice complete and verified (P0–P5).** All six phases merged, and the manual smoke tests have now been executed end-to-end in a real Chromium against live servers and live public APIs. Every acceptance criterion in spec section 12 that needs a browser has been demonstrated. Remaining items are enhancements, not gaps.
+BLAST was verified against the live EBI service on 2026-08-24 -- all four programs
+(blastp, blastn, tblastn, blastx) ran real jobs end to end and returned biologically
+correct results. See the decisions log.
+
+_Previously:_ **Slice complete and verified (P0-P5).** All six phases merged, and the
+manual smoke tests executed end-to-end in a real Chromium against live servers and live
+public APIs.
 
 Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](superpowers/specs/2026-05-23-protein-mvp-slice-design.md)
 
@@ -21,15 +29,7 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-| Task | Owner | Branch | Status | Notes |
-|---|---|---|---|---|
-| **P6 — Annotation panel.** Enriched UniProt field set, `GET /api/proteins/{id}/annotations`, Annotations tab | shubhodeep | `feature/p6-annotations` | merged | Backend + tab both shipped. 166 backend / 155 frontend tests green, lint + webpack build clean. 43 mutations applied, all caught. Manual smoke test (docs/smoke-tests.md P6) still needs a human with a browser |
-| **P7 — Comparison view (spec A3).** `/compare?a=&b=`, two Mol\* viewers, metric/composition/SS diff table, `POST /api/compare` pairwise alignment, superposition RMSD | shubhodeep | `feature/p7-comparison` | PR open | All four deliverables shipped, RMSD included. 200 backend / 213 frontend tests green, lint + webpack build clean. 53 mutations applied, all caught. Branched from `main` at `d4d58c7`; touches no P6 file and does NOT touch the residue-ordinal seam. Manual smoke test (docs/smoke-tests.md P7) still needs a human with a browser |
-| **P9 — Complex viewer.** EBI Complex Portal client, `GET /api/proteins/{id}/complexes`, Complexes tab with participant + stoichiometry table | shubhodeep | `feature/p9-complexes` | PR open | Data tier shipped: 241 backend / 236 frontend green (baseline after P7 merged was 200/213, so P9 adds 41 + 23), lint + webpack build clean, 65 mutations applied and all 65 caught. **Topology graph deliberately NOT shipped** — see the follow-up row and the decisions log. Fixtures are real recorded responses. Manual smoke test (docs/smoke-tests.md P9) still needs a human with a browser |
-| **P8 — Similarity & BLAST.** EBI NCBI BLAST REST (submit / poll / retrieve — the project's first async flow), UniRef similar proteins, Similarity tab | shubhodeep | `feature/p8-blast` | wip | Branched from `origin/main` at `d4d58c7` (P6 merged, P7/PR #17 not yet). Baseline to hold: 166 backend / 155 frontend. Also closes the "Similar proteins / homologs via UniRef" follow-up P6 deferred |
-| **P6 — Annotation panel.** Enriched UniProt field set, `GET /api/proteins/{id}/annotations`, Annotations tab | shubhodeep | `feature/p6-annotations` | PR open | Backend + tab both shipped. 166 backend / 155 frontend tests green, lint + webpack build clean. 43 mutations applied, all caught. Manual smoke test (docs/smoke-tests.md P6) still needs a human with a browser |
-| **P8 — Similarity & BLAST.** EBI NCBI BLAST REST (submit / poll / retrieve — the project's first async flow), UniRef similar proteins, Similarity tab | shubhodeep | `feature/p8-blast` | PR open | Branched from `origin/main` at `d4d58c7` (P6 merged, P7/PR #17 not yet). 285 backend / 228 frontend tests green, lint + webpack build clean. `/similar` verified against LIVE UniProt (P01308 → UniRef50_P01308, 19 homologs; PDB 4INS → P01315, 24 of 123). **A live BLAST submission was NOT made** — a POST that creates a job at a third party needs explicit approval under the destructive-action gate. Also closes the "Similar proteins / homologs via UniRef" follow-up P6 deferred |
-| **P10 — Interface density and the left rail.** Chain tree in the viewer's left rail wired to the existing selection, `secondary_structure.available === false` surfaced in the analytics donut, denser workspace layout, landing page made honest | shubhodeep | `feature/p10-interface` | PR open | Branched from `origin/main` at `15605f4` (baseline 241 backend / 236 frontend). Now 241 backend / 285 frontend green — frontend +49, backend untouched. Lint + webpack build clean. 57 mutations applied, all 57 caught (first pass was 50/57; the four survivors were real test weaknesses and were strengthened, and one equivalent mutant's dead branch was deleted). Verified in real Chrome against the production build: 27/27 checks, screenshots taken. Does NOT touch `components/molstar-viewer.tsx`, `components/viewer-rail.tsx`, or the residue-ordinal seam; the only edit to `app/viewer/[id]/page.tsx` is the grid column plus the new aside, to keep the P8 conflict small |
+_Nothing in progress. P6-P10 are merged._
 
 ---
 
@@ -41,7 +41,6 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 |---|---|---|---|
 | **The chain tree is `xl`-only.** Below 1280px the viewer drops the left rail entirely and only the stacked tab rail remains, so there is no chain navigation on a laptop in a split window. Needs a collapsible drawer or a sixth tab | follow-up | P10 | 2h |
 | **Mol\*'s canvas renders on a near-white background inside an otherwise dark workspace.** Pre-existing and unrelated to P10, but it is the most visible remaining inconsistency in the viewer. The fix is a Mol\* renderer background parameter in `components/molstar-viewer.tsx` — deliberately not touched here because P8 owns that file | follow-up | P8 merged | 30m |
-| **`landing-rail-preview.test.tsx` fails the moment a phase adds a rail tab** — by design, so the landing page cannot go stale again. P8's Similarity tab will trip it; the fix is one entry in `RAIL_TABS` | follow-up | P8 merged | 10m |
 | Batch RCSB search enrichment via the GraphQL Data API (currently up to 50 REST calls per search) | follow-up | — | 2h |
 | Virtualise the sequence panel (one `<button>` per residue gets heavy above ~2,000 residues) | follow-up | — | 2h |
 | Make HETATM amino acids (e.g. MSE) selectable — currently skipped consistently by both parser and panel | follow-up | — | 1h |
@@ -84,6 +83,11 @@ _No blocked tasks._
 
 | Task | Phase | Date | PR / commit |
 |---|---|---|---|
+| **P6 merged** -- UniProt annotation panel (28 fields, `/annotations`, Annotations tab) | P6 | 2026-08-22 | PR #16, `d4d58c7` |
+| **P7 merged** -- comparison view: `/compare`, two Mol* viewers, BLOSUM62 alignment, CA superposition RMSD | P7 | 2026-08-23 | PR #17, `b7e2a4e` |
+| **P9 merged** -- Complex Portal viewer: participants + stoichiometry, over-match filtering surfaced | P9 | 2026-08-23 | PR #18, `15605f4` |
+| **P10 merged** -- chain tree, honest landing page, and the `secondary_structure.available` donut fix | P10 | 2026-08-24 | PR #20, `a59fc5e` |
+| **P8 merged** -- BLAST (blastp/blastn/tblastn/blastx) + UniRef homologs, Similarity tab. All four programs verified against the LIVE EBI service | P8 | 2026-08-24 | PR #19, `e06be37` |
 | **P10: chain tree in the viewer's left rail** — per-chain label, residue count, share of the structure, residue-class composition bar, expandable per-class counts and ordinal-range chips. Drives the existing `setSelection`, so a chain or range click highlights in Mol\* and scrolls the sequence panel through the P4 path | P10 | 2026-08-24 | `bc36bd8` |
 | **P10 BUGFIX: the analytics donut no longer reports "100% coil" for a structure that declares no secondary structure.** `SecondaryStructurePercentages.available` is now a required frontend field; an unannotated split renders as a single neutral "Not annotated" ring with an amber note, matching P7's comparison-table treatment | P10 | 2026-08-24 | `fef9cd7` |
 | **P10: landing page made honest** — the `empty` badge and the never-built chain-tree promise are gone, the rail carries three real entry points, and the tab preview lists all five viewer panels. A test renders HomePage and ViewerRail together and fails if the two tab lists diverge | P10 | 2026-08-24 | `80e61ae` |
