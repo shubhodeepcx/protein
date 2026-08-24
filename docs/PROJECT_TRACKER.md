@@ -3,8 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-24 by Shubhodeep Chatterjee (A5 in review on `feature/a5-functional-regions`: 475 backend / 387 frontend tests, ruff / tsc / webpack build clean. Baseline on `main` at `8cac87f` was 402 / 358.)
-**Last updated:** 2026-08-24 by Shubhodeep Chatterjee (A1 built on `feature/a1-confidence`: 460 backend / 404 frontend tests, tsc clean, webpack build clean. Previously P6-P10 merged, `main` at `e06be37` with 402 / 358.)
+**Last updated:** 2026-08-24 by Shubhodeep Chatterjee (P6-P10 plus spec gaps A1 and A5 all merged. `main` at `5d1b271`: 533 backend / 433 frontend tests, tsc clean, webpack build clean. No known spec gaps remain.)
 
 ---
 
@@ -30,10 +29,7 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-| Task | Owner | Branch | Status | Notes |
-|---|---|---|---|---|
-| **A5 — Functional regions and binding pockets.** Closes the tracker's one UNPLANNED GAP. Phase 1 only: annotation-based (UniProt `ft_act_site` / `ft_binding` / `ft_site` / `ft_dna_bind`) and rule-based (HETATM ligand-contact residues, Shrake-Rupley surface accessibility, Kyte-Doolittle hydropathy, formal charge). No ML, and **no geometric pocket predictor** | shubhodeep | `feature/a5-functional-regions` | PR [#22](https://github.com/shubhodeepcx/protein/pull/22) | The load-bearing risk is UniProt sequence position != structure residue number. Positions are mapped through a BLOSUM62 global alignment of the UniProt sequence against each parsed chain, expressed in the parser's residue **ordinals** so the existing `setSelection` seam is untouched, and **refused** with an explanation when the alignment does not support them. "Predicted pocket regions" is deliberately NOT delivered — see the decisions log |
-_Nothing in progress. A1 is on `feature/a1-confidence`, awaiting review._
+_Nothing in progress._
 
 ---
 
@@ -67,11 +63,10 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | **Compare affordance on the search page.** P7 ships one from the viewer header. A "compare these two" selection on `/search` would import both hits and land on `/compare` in one step — the predicted-vs-experimental pair is one query away | follow-up | P7 | 2h |
 | Export the comparison report (spec A3 asks for it; P7 ships the on-screen comparison only). Overlaps the deferred F9 export slice — decide there rather than adding a one-off | follow-up | P7 | — |
 | Persistence slice — the in-memory registry resets on restart, so `/viewer/{id}` 404s afterwards though the file survives on disk | separate slice | Postgres decision | — |
-| A1: PAE heatmap and low-confidence-region warnings are in `spec.md` but in no deferral list (pLDDT coloring + mean-pLDDT are built) | spec gap | — | — |
 | **A1 follow-up — warn when a *selected* region is low confidence.** Spec A1 asks for this explicitly and it is the one A1 requirement not shipped: the panel lists every low-confidence range, but nothing cross-references the current `selection-slice` selection against them. Needs a selector over `confidence.low_confidence_regions` and a line in the selection UI | A1 | A1 merged | 2h |
 | **A1 follow-up — finer pLDDT histogram.** A1 ships the four-band distribution (which is what the low-confidence warnings are built on); spec A1 also says "pLDDT histogram", which usually means 10-point bins. The per-residue values are already extracted in `services/confidence.extract_plddt`, so this is a second projection, not new I/O | A1 | A1 merged | 1h |
 | **A1 follow-up — no automated coverage of the PAE canvas painting loop.** jsdom returns `null` from `getContext("2d")`, so `pae-heatmap.tsx`'s `putImageData` loop is only covered by its own fallback branch. The colour function under it is fully tested; the loop was verified by screenshotting headless Chrome. Same gap, same cause, as the `extractResidueRecords` row above — one browser test runner would close both | A1 | a browser test runner | 2h |
-| **A5 Binding-pocket / functional-region detection — UNPLANNED GAP.** A spec-compliance audit found this is the only feature promised in `spec.md` that is neither built nor listed in any out-of-scope note. Every other unbuilt feature is a deliberate deferral. Decide explicitly: defer it or build it. | spec gap | — | — |
+| ~~A5 Binding-pocket / functional-region detection — UNPLANNED GAP~~ — **built**, see *Done* (`feature/a5-functional-regions`). Phase 1 only; pocket *prediction* remains deliberately unbuilt with a stated reason | spec gap | — | done |
 | ~~A1: PAE heatmap and low-confidence-region warnings are in `spec.md` but in no deferral list~~ — **built**, see *Done* (`feature/a1-confidence`) | spec gap | — | done |
 | Slice section 7 specifies `400 { error, suggestion }`; no `suggestion` field is implemented anywhere in the backend | spec drift | — | 45m |
 | Slice section 6.1 specifies a content sniff (first line is `HEADER`/`data_`); only extension/size/empty checks exist | spec drift | — | 30m |
@@ -96,6 +91,8 @@ _No blocked tasks._
 
 | Task | Phase | Date | PR / commit |
 |---|---|---|---|
+| **A1 merged** -- PAE heatmap + low-confidence region warnings. Bands reproduce AlphaFold's published fractionPlddt* exactly | spec gap | 2026-08-24 | PR #21, `8077803` |
+| **A5 merged** -- functional regions: curated sites mapped through a BLOSUM62 alignment, observed ligand pockets, surface profile | spec gap | 2026-08-24 | PR #22, `5d1b271` |
 | **P6 merged** -- UniProt annotation panel (28 fields, `/annotations`, Annotations tab) | P6 | 2026-08-22 | PR #16, `d4d58c7` |
 | **P7 merged** -- comparison view: `/compare`, two Mol* viewers, BLOSUM62 alignment, CA superposition RMSD | P7 | 2026-08-23 | PR #17, `b7e2a4e` |
 | **P9 merged** -- Complex Portal viewer: participants + stoichiometry, over-match filtering surfaced | P9 | 2026-08-23 | PR #18, `15605f4` |
