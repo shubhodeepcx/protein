@@ -105,17 +105,42 @@ describe("ChainTree", () => {
     expect(screen.queryByRole("button", { name: /clear/i })).toBeNull();
   });
 
-  it("keeps the segment chips hidden until the chain is expanded", () => {
+  it("opens the rows by default on a structure with few chains", () => {
+    // A monomer left every row collapsed, which is the empty rail this phase
+    // exists to fix. Nothing is hidden at any chain count — this is only which
+    // rows start open.
+    render(<ChainTree />);
+    expect(screen.getByTestId("chain-segment-A-1")).toBeInTheDocument();
+    expect(screen.getByTestId("chain-segment-B-1")).toBeInTheDocument();
+  });
+
+  it("starts collapsed once there are more chains than the rail can show open", () => {
+    resetStore({
+      ...SUMMARY,
+      chains: Array.from({ length: 5 }, (_, i) => ({
+        id: `test-id:${i}`,
+        label: String.fromCharCode(65 + i),
+        sequence: "KRDE",
+        residue_count: 4,
+      })),
+    });
     render(<ChainTree />);
     expect(screen.queryByTestId("chain-segment-A-1")).toBeNull();
+    // ...and every chain is still listed; collapsing is not filtering.
+    expect(screen.getAllByTestId(/^chain-select-/)).toHaveLength(5);
 
     fireEvent.click(screen.getByRole("button", { name: /expand chain A/i }));
     expect(screen.getByTestId("chain-segment-A-1")).toBeInTheDocument();
   });
 
+  it("lets a row be collapsed again", () => {
+    render(<ChainTree />);
+    fireEvent.click(screen.getByRole("button", { name: /collapse chain A/i }));
+    expect(screen.queryByTestId("chain-segment-A-1")).toBeNull();
+  });
+
   it("selects exactly the residues of the segment that was clicked", () => {
     render(<ChainTree />);
-    fireEvent.click(screen.getByRole("button", { name: /expand chain B/i }));
     fireEvent.click(screen.getByTestId("chain-segment-B-1"));
 
     // Chain B is 4 residues, so its single segment is B:1–B:4.
@@ -127,19 +152,24 @@ describe("ChainTree", () => {
     ]);
   });
 
-  it("expands one chain without expanding the other", () => {
+  it("collapses one chain without collapsing the other", () => {
     render(<ChainTree />);
-    fireEvent.click(screen.getByRole("button", { name: /expand chain A/i }));
-    expect(screen.getByTestId("chain-segment-A-1")).toBeInTheDocument();
-    expect(screen.queryByTestId("chain-segment-B-1")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /collapse chain A/i }));
+    expect(screen.queryByTestId("chain-segment-A-1")).toBeNull();
+    expect(screen.getByTestId("chain-segment-B-1")).toBeInTheDocument();
   });
 
-  it("shows the per-class residue counts once expanded", () => {
+  it("shows the per-class residue counts on an expanded row", () => {
     render(<ChainTree />);
-    fireEvent.click(screen.getByRole("button", { name: /expand chain B/i }));
     // KRDE — two positive (K, R), two negative (D, E), no hydrophobic.
-    const positive = screen.getByText("Positive").closest("li");
-    expect(positive).toHaveTextContent("2");
+    const positives = screen
+      .getAllByText("Positive")
+      .map((el) => el.closest("li"));
+    // Chain A (TTCCPSIVARSN) has one positive residue, chain B (KRDE) two.
+    expect(positives.map((li) => li?.textContent)).toEqual([
+      "Positive1",
+      "Positive2",
+    ]);
   });
 
   it("says so plainly when a structure parsed with no chains", () => {

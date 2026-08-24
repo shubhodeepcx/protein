@@ -20,7 +20,12 @@ import {
 } from "@/components/ui/tabs";
 import { HealthPill } from "@/components/health-pill";
 import { DropZone } from "@/components/drop-zone";
-import { RAIL_TABS, RailTabPreview } from "@/components/rail-tab-preview";
+import {
+  DATA_SOURCES,
+  DataSourceCard,
+  RAIL_TABS,
+  RailTabPreview,
+} from "@/components/rail-tab-preview";
 
 /** Left-rail entry points. Every one of these is a route that exists today. */
 const QUICK_ACTIONS = [
@@ -152,11 +157,30 @@ export default function HomePage() {
               Open the demo instead
             </Link>
           </div>
-          <div
-            id="upload"
-            className="flex flex-1 items-center justify-center p-6"
-          >
-            <DropZone />
+          {/* `molecular-field` is a CSS-only backdrop defined in globals.css.
+              It lives here and nowhere near the viewer route, so it cannot
+              interfere with the Mol* canvas. */}
+          <div className="molecular-field flex-1 overflow-y-auto">
+            <div
+              id="upload"
+              className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-6 py-8"
+            >
+              <DropZone />
+
+              <section aria-labelledby="sources-heading">
+                <h2
+                  id="sources-heading"
+                  className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                >
+                  Wired to
+                </h2>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {DATA_SOURCES.map((source) => (
+                    <DataSourceCard key={source.name} source={source} />
+                  ))}
+                </div>
+              </section>
+            </div>
           </div>
         </section>
 

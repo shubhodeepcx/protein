@@ -15,6 +15,13 @@ import { RESIDUE_CLASS_LABEL, RESIDUE_CLASS_SWATCH } from "@/lib/residue";
 import type { ChainInfo } from "@/lib/types";
 
 /**
+ * Above this many chains the rows start collapsed. Purely a presentation
+ * default for a rail that is otherwise mostly empty on a monomer — it is not
+ * a limit: nothing is dropped, filtered or truncated at any chain count.
+ */
+const COLLAPSE_ABOVE_CHAINS = 4;
+
+/**
  * The workspace's left rail: the chain tree the landing page has promised
  * since P0 and that nothing ever built.
  *
@@ -33,6 +40,13 @@ export function ChainTree() {
 
   const chains = summary?.chains ?? [];
   const total = chains.reduce((sum, c) => sum + c.residue_count, 0);
+
+  // A structure with a handful of chains leaves the rail mostly empty when
+  // every row is collapsed — the exact complaint this phase exists to answer —
+  // so open them by default while the expanded content plausibly fits. This
+  // hides nothing either way: every chain is listed at every count, and the
+  // chevron overrides the default in one click.
+  const openByDefault = chains.length <= COLLAPSE_ABOVE_CHAINS;
 
   if (chains.length === 0) {
     return (
@@ -80,6 +94,7 @@ export function ChainTree() {
             share={total === 0 ? 0 : chain.residue_count / total}
             selected={selected}
             onSelect={setSelection}
+            defaultOpen={openByDefault}
           />
         ))}
       </div>
@@ -93,10 +108,17 @@ interface ChainRowProps {
   share: number;
   selected: ReadonlySet<string>;
   onSelect: (keys: Iterable<string>) => void;
+  defaultOpen: boolean;
 }
 
-function ChainRow({ chain, share, selected, onSelect }: ChainRowProps) {
-  const [open, setOpen] = useState(false);
+function ChainRow({
+  chain,
+  share,
+  selected,
+  onSelect,
+  defaultOpen,
+}: ChainRowProps) {
+  const [open, setOpen] = useState(defaultOpen);
   const hits = selectedInChain(chain.label, chain.residue_count, selected);
   const shares = classShares(chain.sequence);
   const segments = chainSegments(chain.residue_count);

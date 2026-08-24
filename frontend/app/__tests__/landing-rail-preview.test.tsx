@@ -6,9 +6,12 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+
 import HomePage from "@/app/page";
 import { ViewerRail } from "@/components/viewer-rail";
-import { RAIL_TABS } from "@/components/rail-tab-preview";
+import { DATA_SOURCES, RAIL_TABS } from "@/components/rail-tab-preview";
 import { useStore } from "@/lib/store";
 
 /**
@@ -94,6 +97,30 @@ describe("landing page rail preview", () => {
         document.querySelector(`a[href="${href}"]`),
         `no link to ${href}`,
       ).not.toBeNull();
+    }
+  });
+
+  it("lists a database the backend really talks to, for each source card", () => {
+    // The landing page's other failure mode is claiming an integration that
+    // does not exist. Every host advertised here has to appear in a client
+    // under `backend/app/services/`, so the claim is falsifiable from the
+    // repository rather than taken on trust.
+    const servicesDir = join(process.cwd(), "..", "backend", "app", "services");
+    const sources = readdirSync(servicesDir)
+      .filter((f) => f.endsWith(".py"))
+      .map((f) => readFileSync(join(servicesDir, f), "utf8"))
+      .join("\n");
+
+    expect(DATA_SOURCES.length).toBeGreaterThan(0);
+    for (const source of DATA_SOURCES) {
+      expect(sources, `${source.name} (${source.host})`).toContain(source.host);
+    }
+  });
+
+  it("renders every source card on the page", () => {
+    render(<HomePage />);
+    for (const source of DATA_SOURCES) {
+      expect(screen.getByText(source.name)).toBeInTheDocument();
     }
   });
 

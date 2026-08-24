@@ -106,3 +106,55 @@ export function RailTabPreview({ tab }: { tab: RailTab }) {
     </Card>
   );
 }
+
+export interface DataSource {
+  name: string;
+  /** The host the backend actually talks to. Checkable against `backend/app/services/`. */
+  host: string;
+  body: string;
+}
+
+/**
+ * The four public services this app is wired to. Each host below appears in a
+ * client under `backend/app/services/`, so this list is falsifiable rather
+ * than aspirational — which is the standard the landing page failed before.
+ */
+export const DATA_SOURCES: readonly DataSource[] = [
+  {
+    name: "RCSB PDB",
+    host: "data.rcsb.org",
+    body: "Experimental structures — search, import, and the mmCIF or PDB coordinates themselves.",
+  },
+  {
+    name: "AlphaFold DB",
+    host: "alphafold.ebi.ac.uk",
+    body: "Predicted models, imported with pLDDT confidence in the B-factor column and coloured for it.",
+  },
+  {
+    name: "UniProtKB",
+    host: "rest.uniprot.org",
+    body: "Function, catalytic activity, GO, keywords, location, disease and PTM for the Annotations tab.",
+  },
+  {
+    name: "Complex Portal",
+    host: "ebi.ac.uk/intact",
+    body: "Curated macromolecular complexes containing the protein, with their participants and stoichiometry.",
+  },
+];
+
+/** A compact card per integrated database. */
+export function DataSourceCard({ source }: { source: DataSource }) {
+  return (
+    <div className="rounded-md border border-border/60 bg-card/40 px-3 py-2.5">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-xs font-semibold">{source.name}</span>
+        <span className="truncate font-mono text-[10px] text-muted-foreground">
+          {source.host}
+        </span>
+      </div>
+      <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+        {source.body}
+      </p>
+    </div>
+  );
+}
