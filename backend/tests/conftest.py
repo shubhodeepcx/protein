@@ -72,6 +72,23 @@ def fresh_complex_portal_client(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def fresh_pae_cache():
+    """Per-test: an empty binned-PAE cache.
+
+    A1's cache lives in `services/confidence` rather than on a client, because
+    what it stores is the *binned* matrix (see the module docstring). It is
+    module-level in production for the same reason the client caches are, so a
+    test that fetches P01308 twice would otherwise see the second call served
+    from the first test's entry and never reach the mocked transport.
+    """
+    from app.services import confidence
+
+    confidence.clear_pae_cache()
+    yield
+    confidence.clear_pae_cache()
+
+
+@pytest.fixture(autouse=True)
 def fresh_blast_registry(monkeypatch):
     """Per-test: a clean BLAST job registry with the upstream poll throttle off.
 

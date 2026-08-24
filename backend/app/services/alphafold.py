@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import logging
+from dataclasses import dataclass
 
 import httpx
 
@@ -28,6 +30,39 @@ PREDICTION_URL = "https://alphafold.ebi.ac.uk/api/prediction/{accession}"
 FALLBACK_PDB_URL_TEMPLATE = "https://alphafold.ebi.ac.uk/files/AF-{accession}-F1-model_v{version}.pdb"
 # Used only when the prediction payload omits `latestVersion` entirely.
 DEFAULT_FALLBACK_VERSION = 4
+
+# Ceiling on the *decoded* size of a PAE document, in bytes.
+#
+# This is a memory bound, not a residue count. PAE is quadratic — a real
+# measurement: AF-P01308-F1 (110 residues) is 35 KB, AF-…-365840314 (1,273
+# residues, SARS-CoV-2 spike) is 9.4 MB, both served uncompressed. AlphaFold DB
+# caps a fragment at 2,700 residues, which extrapolates to roughly 42 MB, so 48
+# MB admits every entry the database can publish while refusing a body that
+# could only come from a bug or a hostile mirror. Parsing is what costs: 2,700
+# residues is 7.3M Python floats, a few hundred MB resident, and that peak is
+# the symptom this guards.
+#
+# The budget is checked against decoded bytes as they stream in rather than
+# against `Content-Length`, so a gzipped body cannot slip past it.
+MAX_PAE_DOC_BYTES = 48 * 1024 * 1024
+
+
+@dataclass(frozen=True)
+class PaeDocument:
+    """One AlphaFold Predicted Aligned Error document, as published.
+
+    `values` is the full N x N matrix in Angstroms, row-major, straight from
+    upstream — binning for display is the caller's job (`services/confidence`),
+    so this stays a faithful record of what AlphaFold said.
+    """
+
+    values: list[list[float]]
+    max_error: float
+    source_url: str
+
+    @property
+    def size(self) -> int:
+        return len(self.values)
 
 
 class AlphaFoldClient:
@@ -123,6 +158,87 @@ class AlphaFoldClient:
         self._cache.put(accession, meta)
         return meta
 
+    # -------------------------------------------------------------------- PAE
+
+    async def fetch_pae(self, protein_id: str) -> PaeDocument:
+        """The Predicted Aligned Error matrix for one accession (spec A1).
+
+        The URL is read off the prediction payload's `paeDocUrl` — never guessed
+        — so it tracks both the model version and AlphaFold's 2025 change of
+        entry-id scheme. The prediction lookup goes through the metadata cache;
+        the document itself is not cached here, because a full matrix is
+        quadratic in residue count and caching raw matrices would be an
+        unbounded memory cost. `services/confidence` caches the *binned* result
+        instead, where every entry has a fixed ceiling.
+
+        Raises `SourceNotFoundError` when this entry publishes no PAE, and
+        `SourceUnavailableError` when one exists but could not be read. Callers
+        are expected to degrade to "PAE unavailable, here is why" rather than
+        failing the whole request: pLDDT analysis does not depend on this.
+        """
+        accession = normalise_accession(protein_id)
+        meta = await self._prediction(accession, use_cache=True)
+
+        url = meta.get("pae_doc_url")
+        if not isinstance(url, str) or not url:
+            raise SourceNotFoundError(
+                f"AlphaFold publishes no PAE document for {accession}"
+            )
+
+        # Streamed so the size budget is enforced against decoded bytes as they
+        # arrive, instead of trusting a `Content-Length` that a compressed
+        # response would understate.
+        chunks: list[bytes] = []
+        received = 0
+        async with new_client() as client:
+            try:
+                async with client.stream("GET", url) as response:
+                    if response.status_code == 404:
+                        raise SourceNotFoundError(
+                            f"AlphaFold has no PAE document at {url}"
+                        )
+                    if response.status_code >= 400:
+                        raise SourceUnavailableError(
+                            f"AlphaFold PAE for {accession} returned HTTP "
+                            f"{response.status_code}"
+                        )
+                    async for chunk in response.aiter_bytes():
+                        received += len(chunk)
+                        if received > MAX_PAE_DOC_BYTES:
+                            raise SourceUnavailableError(
+                                f"AlphaFold PAE document for {accession} exceeds the "
+                                f"{MAX_PAE_DOC_BYTES // (1024 * 1024)} MB budget "
+                                "and was not downloaded"
+                            )
+                        chunks.append(chunk)
+            except httpx.HTTPError as exc:
+                raise SourceUnavailableError(
+                    f"AlphaFold PAE request failed: {exc}"
+                ) from exc
+
+        try:
+            payload = json.loads(b"".join(chunks))
+        except ValueError as exc:
+            raise SourceUnavailableError(
+                f"AlphaFold PAE document for {accession} is not valid JSON"
+            ) from exc
+
+        parsed = _pae_rows(payload)
+        if parsed is None:
+            raise SourceUnavailableError(
+                f"AlphaFold PAE document for {accession} is not a square matrix "
+                "in the expected format"
+            )
+        rows, max_error = parsed
+        logger.info(
+            "Fetched %dx%d PAE matrix for %s (%d bytes)",
+            len(rows),
+            len(rows),
+            accession,
+            received,
+        )
+        return PaeDocument(values=rows, max_error=max_error, source_url=url)
+
     # ------------------------------------------------------------- structure
 
     async def download_structure(self, protein_id: str) -> tuple[bytes, str]:
@@ -206,6 +322,50 @@ class AlphaFoldClient:
         )
 
 
+def _pae_rows(payload: object) -> tuple[list[list[float]], float] | None:
+    """Project an AlphaFold PAE document onto (matrix, max_error), or None.
+
+    Returning None rather than raising lets the caller say *which* URL produced
+    an unreadable document. The current AFDB format is a one-element list whose
+    entry carries `predicted_aligned_error` (a square nested list) and
+    `max_predicted_aligned_error`. The long-retired sparse format
+    (`residue1` / `residue2` / `distance` triples) is deliberately **not**
+    accepted: silently reading a shape we have never verified is how a matrix
+    ends up transposed, and a transposed PAE still looks entirely plausible.
+    """
+    entry = payload[0] if isinstance(payload, list) and payload else payload
+    if not isinstance(entry, dict):
+        return None
+    raw = entry.get("predicted_aligned_error")
+    if not isinstance(raw, list) or not raw:
+        return None
+
+    rows: list[list[float]] = []
+    for row in raw:
+        if not isinstance(row, list):
+            return None
+        values: list[float] = []
+        for cell in row:
+            if isinstance(cell, bool) or not isinstance(cell, (int, float)):
+                return None
+            values.append(float(cell))
+        rows.append(values)
+
+    # PAE is square by definition: one row and one column per residue. A
+    # ragged document means we have misread the format, and guessing would
+    # produce a heatmap whose axes do not mean what the legend says.
+    side = len(rows)
+    if any(len(row) != side for row in rows):
+        return None
+
+    max_error = as_float(entry.get("max_predicted_aligned_error"))
+    if max_error is None or max_error <= 0:
+        # Fall back to the matrix's own maximum. Never to a constant: the
+        # colour scale is anchored to this number.
+        max_error = max((max(row) for row in rows), default=0.0)
+    return rows, float(max_error)
+
+
 def _normalise(accession: str, prediction: Metadata) -> Metadata:
     """Flatten one AlphaFold prediction entry into our common shape."""
     sequence = prediction.get("sequence")
@@ -236,6 +396,11 @@ def _normalise(accession: str, prediction: Metadata) -> Metadata:
         "confidence": as_float(prediction.get("globalMetricValue")),
         "pdb_url": prediction.get("pdbUrl"),
         "cif_url": prediction.get("cifUrl"),
+        # A1: the PAE document URL comes from the payload rather than a guessed
+        # filename pattern. The version segment and, since 2025, the entry id
+        # itself both move (AF-P0DTC2 now answers as AF-0000000365840314), so a
+        # hardcoded template would 404 on exactly the entries that matter most.
+        "pae_doc_url": prediction.get("paeDocUrl"),
         "entry_id": entry_id,
         "latest_version": as_int(prediction.get("latestVersion")),
     }

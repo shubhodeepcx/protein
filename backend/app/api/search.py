@@ -66,6 +66,19 @@ def get_rcsb_client() -> RCSBClient:
     return client
 
 
+def get_alphafold_client() -> AlphaFoldClient:
+    """The AlphaFold singleton, concretely typed.
+
+    A1's confidence route needs `fetch_pae`, which — like UniProt's annotation
+    methods — is outside the uniform three-coroutine `SourceClient` contract.
+    Read out of `_CLIENTS` for the same reason: the tests swap that dict.
+    """
+    client = _CLIENTS["alphafold"]
+    if not isinstance(client, AlphaFoldClient):  # pragma: no cover — defensive
+        raise TypeError("The 'alphafold' client slot does not hold an AlphaFoldClient")
+    return client
+
+
 @router.get("", response_model=SearchResponse)
 async def search_databases(
     q: str = Query(..., description="Free-text query."),

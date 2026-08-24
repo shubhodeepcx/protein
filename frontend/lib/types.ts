@@ -687,4 +687,88 @@ export interface FunctionalRegions {
   priority_residues: PriorityResidue[];
   unlocated_sites: number;
   notes: string[];
+/* ------------------------------------------------------------------------ */
+/* A1 — AlphaFold confidence analysis                                         */
+/* Mirrors `backend/app/models/confidence.py`. See spec section 7.2 A1.        */
+/* ------------------------------------------------------------------------ */
+
+export type PlddtBandKey = "very_high" | "confident" | "low" | "very_low";
+
+export interface PlddtBand {
+  key: PlddtBandKey;
+  label: string;
+  /** Inclusive lower edge. Carried on the wire so the UI never re-hardcodes 70. */
+  min_plddt: number;
+  /** Exclusive upper edge (100 is inclusive). */
+  max_plddt: number;
+  residue_count: number;
+  /** Share of scored residues, 0-1. */
+  fraction: number;
+  description: string;
+}
+
+export interface LowConfidenceRegion {
+  chain_id: string;
+  /** 1-based ordinal within the chain — the sequence panel's numbering. */
+  start: number;
+  end: number;
+  length: number;
+  mean_plddt: number;
+  min_plddt: number;
+  band: PlddtBandKey;
+  /** True when the run dips below 50 — a different claim from "low confidence". */
+  likely_disordered: boolean;
+  /** Ready-to-read warning, so the message never depends on decoding a colour. */
+  label: string;
+}
+
+/**
+ * Predicted Aligned Error, binned for display.
+ *
+ * `available` is required on purpose, exactly like
+ * `SecondaryStructurePercentages.available`: an experimental structure has no
+ * PAE at all, and a consumer that ignores the flag would paint an empty grid
+ * that reads as a perfect prediction. `unavailable_reason` is the message in
+ * that case.
+ *
+ * **Low is good.** PAE is an error in Angstroms, the opposite direction from
+ * pLDDT. `bin_size`, `size` and `resolution_label` describe what was done to
+ * the matrix, because an undeclared downsample is a lie about the data.
+ */
+export interface PaeMatrix {
+  available: boolean;
+  unavailable_reason: string;
+  /** N — the side of the *full* matrix, before binning. */
+  residue_count: number;
+  /** Side of the returned matrix, in cells. */
+  size: number;
+  /** Residues per returned cell. 1 means full resolution. */
+  bin_size: number;
+  downsampled: boolean;
+  max_cells: number;
+  aggregation: "mean" | "none";
+  /** Angstroms — the top of the colour scale, from AlphaFold's own ceiling. */
+  max_error: number;
+  resolution_label: string;
+  /** Row-major binned PAE in Angstroms. Empty when `available` is false. */
+  values: number[][];
+  source_url: string;
+}
+
+/** `GET /api/proteins/{uid}/confidence` — spec A1. */
+export interface ConfidenceResponse {
+  id: string;
+  /** False for an experimental structure; then everything below is empty. */
+  has_plddt: boolean;
+  note: string;
+  accession: string | null;
+  residue_count: number;
+  mean_plddt: number | null;
+  bands: PlddtBand[];
+  low_confidence_regions: LowConfidenceRegion[];
+  low_confidence_residue_count: number;
+  low_confidence_fraction: number;
+  low_confidence_threshold: number;
+  pae: PaeMatrix;
+  warnings: string[];
 }
