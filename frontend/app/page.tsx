@@ -189,9 +189,9 @@ export default function HomePage() {
 
         {/* Right tabbed panel — desktop only (xl+). Mirrors the five tabs the
             viewer's rail actually renders. */}
-        <aside className="hidden w-96 flex-col border-l border-border/60 bg-card/30 xl:flex">
+        <aside className="hidden flex-col overflow-hidden border-l border-border/60 bg-card/30 xl:flex">
           <Tabs defaultValue="overview" className="flex h-full flex-col gap-0">
-            <TabsList className="m-2 w-[calc(100%-1rem)] shrink-0 gap-0.5">
+            <TabsList className="m-2 h-auto shrink-0 flex-wrap gap-1 p-1">
               {RAIL_TABS.map((tab) => (
                 <TabsTrigger
                   key={tab.value}
