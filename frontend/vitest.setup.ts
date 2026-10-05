@@ -18,3 +18,36 @@ if (typeof globalThis.ResizeObserver === "undefined") {
     disconnect(): void {}
   } as unknown as typeof ResizeObserver;
 }
+
+if (typeof window !== "undefined") {
+  let store: Record<string, string> = {};
+  const mockStorage = {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = String(value);
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    key: (i: number) => Object.keys(store)[i] ?? null,
+    get length() {
+      return Object.keys(store).length;
+    },
+  };
+
+  try {
+    if (!window.localStorage || typeof window.localStorage.clear !== "function") {
+      Object.defineProperty(window, "localStorage", {
+        value: mockStorage,
+        configurable: true,
+        writable: true,
+      });
+    }
+  } catch {
+    // ignore if cannot redefine
+  }
+}
+

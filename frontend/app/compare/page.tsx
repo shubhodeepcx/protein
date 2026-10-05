@@ -5,7 +5,7 @@ import { ProteoLensLogo } from "@/components/logo";
 import { CompareView } from "./compare-view";
 
 export const metadata = {
-  title: "Compare structures — ProteoLens",
+  title: "Compare structures | ProteoLens",
   description:
     "Compare two protein structures side by side: metrics, composition, secondary structure, sequence alignment, and RMSD.",
 };

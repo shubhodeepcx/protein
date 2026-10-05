@@ -98,7 +98,7 @@ export function AnalyticsPanel({ proteinId }: { proteinId: string }) {
       </Section>
 
       <Section
-        title={`Hydrophobicity — chain ${analytics.hydrophobicity.chain_id} (Kyte-Doolittle, window ${analytics.hydrophobicity.window})`}
+        title={`Hydrophobicity: Chain ${analytics.hydrophobicity.chain_id} (Kyte-Doolittle, window ${analytics.hydrophobicity.window})`}
       >
         <HydrophobicityLineChart data={analytics.hydrophobicity} />
       </Section>

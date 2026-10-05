@@ -43,7 +43,7 @@ export const RAIL_TABS: readonly RailTab[] = [
     items: [
       "One-letter sequence per chain on a clickable grid",
       "Coloured by residue class, with a position ruler",
-      "Click a residue to highlight it in 3D — and the reverse",
+      "Click any residue to highlight it in 3D, and vice versa",
       "Find a residue by chain and position, e.g. A:12",
     ],
   },
@@ -53,7 +53,7 @@ export const RAIL_TABS: readonly RailTab[] = [
     source: "Computed server-side",
     items: [
       "Amino-acid composition across all 20 residues",
-      "Secondary-structure split — or a plain warning when the file assigns none",
+      "Secondary-structure breakdown across helices, sheets, and coils",
       "Kyte-Doolittle hydrophobicity along the longest chain",
       "Chain lengths side by side",
     ],
@@ -66,7 +66,7 @@ export const RAIL_TABS: readonly RailTab[] = [
       "Function, catalytic activity with EC and Rhea IDs",
       "Gene Ontology across all three aspects, and keywords",
       "Subcellular location, transmembrane spans, disease and PTM",
-      "Curated active and ligand-binding sites, mapped onto the residues this file really contains — or refused when they cannot be",
+      "Curated active and ligand-binding sites mapped onto residues in the structure",
       "Ligands bound in the file, and the residues within 4 Å of them",
       "Per-chain surface hydrophobicity and charge",
     ],
@@ -147,22 +147,22 @@ export const DATA_SOURCES: readonly DataSource[] = [
   {
     name: "RCSB PDB",
     host: "data.rcsb.org",
-    body: "Experimental structures — search, import, and the mmCIF or PDB coordinates themselves.",
+    body: "Search, import, and download experimental coordinates in mmCIF or PDB format.",
   },
   {
     name: "AlphaFold DB",
     host: "alphafold.ebi.ac.uk",
-    body: "Predicted models, imported with pLDDT confidence in the B-factor column and coloured for it.",
+    body: "Predicted models with per-residue pLDDT confidence scores and coloring.",
   },
   {
     name: "UniProtKB",
     host: "rest.uniprot.org",
-    body: "Function, catalytic activity, GO, keywords, location, disease and PTM for the Annotations tab.",
+    body: "Functional annotations, catalytic activity, Gene Ontology, subcellular location, and PTMs.",
   },
   {
     name: "Complex Portal",
     host: "ebi.ac.uk/intact",
-    body: "Curated macromolecular complexes containing the protein, with their participants and stoichiometry.",
+    body: "Curated macromolecular complexes with participant lists and stoichiometry.",
   },
 ];
 

@@ -23,7 +23,7 @@ function refTitle(ref: ResidueRef): string {
     ref.auth_seq_id === null
       ? "no number in the file"
       : `numbered ${ref.auth_seq_id}${ref.insertion_code ?? ""} in the file`;
-  return `Select ${ref.key} — residue ${ref.ordinal} of chain ${ref.chain}, ${authored}`;
+  return `Select ${ref.key}: residue ${ref.ordinal} of chain ${ref.chain}, ${authored}`;
 }
 
 export function ResidueChip({ residue }: { residue: ResidueRef }) {

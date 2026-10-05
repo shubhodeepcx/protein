@@ -4,7 +4,7 @@ import { ProteoLensLogo } from "@/components/logo";
 import { SearchView } from "./search-view";
 
 export const metadata = {
-  title: "Search databases — ProteoLens",
+  title: "Search databases | ProteoLens",
   description: "Search RCSB PDB, AlphaFold DB, and UniProt, and import a structure.",
 };
 

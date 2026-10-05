@@ -106,15 +106,15 @@ export function PaeHeatmap({ pae }: { pae: PaeMatrix }) {
           ))}
         </div>
         <div className="flex justify-between text-[10px] text-zinc-400">
-          <span>0 Å — confidently placed</span>
-          <span>{pae.max_error.toFixed(1)} Å — uncertain</span>
+          <span>0 Å: confidently placed</span>
+          <span>{pae.max_error.toFixed(1)} Å: uncertain</span>
         </div>
       </div>
 
       <p className="px-1 text-[11px] leading-relaxed text-zinc-400">
         Expected error in one residue&apos;s position when the model is aligned on
-        another. <strong className="text-zinc-300">Lower is better</strong> — the
-        opposite direction from pLDDT. Median{" "}
+        another. <strong className="text-zinc-300">Lower is better</strong> (opposite
+        direction from pLDDT). Median{" "}
         <span className="tabular-nums text-zinc-200">{`${summary.median.toFixed(1)} Å`}</span>
         , worst{" "}
         <span className="tabular-nums text-zinc-200">{`${summary.worst.toFixed(1)} Å`}</span>

@@ -110,7 +110,7 @@ export function SearchView() {
         >
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           <span>
-            Showing partial results — no response from{" "}
+            Showing partial results: no response from{" "}
             {data.failed_sources.map(sourceLabel).join(", ")}.
           </span>
         </div>

@@ -33,19 +33,19 @@ const QUICK_ACTIONS = [
     href: "/viewer/demo",
     icon: Boxes,
     title: "Open the demo structure",
-    body: "Crambin (1CRN) — 46 residues, one chain, bundled with the server.",
+    body: "Crambin (1CRN): 46 residues in a single chain, bundled locally.",
   },
   {
     href: "/search",
     icon: Database,
     title: "Search the databases",
-    body: "RCSB PDB, AlphaFold DB and UniProt in one query, then import a hit.",
+    body: "Search RCSB PDB, AlphaFold DB, and UniProt in one place, then import directly.",
   },
   {
     href: "#upload",
     icon: FileDown,
     title: "Drop a PDB or mmCIF file",
-    body: "Parsed server-side into chains, residues, atoms and molecular weight.",
+    body: "Extract chains, residues, atoms, and molecular weight directly from your file.",
   },
 ] as const;
 
@@ -59,9 +59,6 @@ export default function HomePage() {
           <span className="font-heading text-lg font-semibold tracking-tight">
             ProteoLens
           </span>
-          <Badge variant="outline" className="ml-1 text-[10px] uppercase">
-            MVP
-          </Badge>
         </div>
 
         <Separator orientation="vertical" className="h-6" />
@@ -139,10 +136,9 @@ export default function HomePage() {
             </nav>
             <Separator />
             <p className="p-3 text-[11px] leading-relaxed text-muted-foreground">
-              With a structure open this rail becomes its chain tree: one row
-              per chain with residue count, share of the structure and
-              composition, expanding to residue-range chips that highlight
-              straight into the 3D view.
+              When a structure is loaded, this sidebar becomes its chain tree:
+              inspect chains, residue counts, and click to highlight directly
+              in the 3D viewer.
             </p>
           </ScrollArea>
         </aside>
@@ -152,12 +148,12 @@ export default function HomePage() {
           <div className="flex h-10 items-center gap-2 border-b border-border/60 px-4 text-xs text-muted-foreground">
             <span className="font-medium text-foreground">Viewer</span>
             <Separator orientation="vertical" className="h-4" />
-            <span>No protein loaded &mdash; drop a file to start</span>
+            <span>No protein loaded. Drop a file to get started</span>
             <Link
               href="/viewer/demo"
               className="ml-auto text-xs text-primary hover:underline"
             >
-              Open the demo instead
+              Open demo structure
             </Link>
           </div>
           {/* `molecular-field` is a CSS-only backdrop defined in globals.css.

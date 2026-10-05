@@ -43,7 +43,7 @@ export function CompositionTable({ rows }: { rows: CompositionDelta[] }) {
         <table className="w-full min-w-96 border-collapse">
           <caption className="px-2 pt-2 pb-1 text-left text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
             Amino-acid composition
-            {showAll ? "" : " — largest differences"}
+            {showAll ? "" : " (largest differences)"}
           </caption>
           <thead>
             <tr className="border-b border-zinc-800">

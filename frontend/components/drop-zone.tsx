@@ -165,7 +165,7 @@ export function DropZone({ className }: { className?: string }) {
               <code className="font-mono">.cif</code> file here
             </p>
             <p className="text-xs text-muted-foreground">
-              or click to browse &mdash; max 50 MB
+              or click to browse (up to 50 MB)
             </p>
             <Button
               size="sm"

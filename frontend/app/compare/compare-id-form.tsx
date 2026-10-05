@@ -39,10 +39,10 @@ export function CompareIdForm({
           Choose two structures to compare
         </h2>
         <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-          Paste the ids of two proteins already loaded into ProteoLens — the id
-          is the last part of a viewer URL, <code>/viewer/&lt;id&gt;</code>. Or
-          search a protein name and import both an experimental entry and its
-          AlphaFold prediction.
+          Paste the IDs of two proteins already loaded in ProteoLens (the ID
+          at the end of a viewer URL, <code>/viewer/&lt;id&gt;</code>). Or search
+          for a protein and import both its experimental structure and AlphaFold
+          model.
         </p>
       </div>
 

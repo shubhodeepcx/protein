@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ProteoLens",
-  description: "AI-powered protein structure visualization platform.",
+  description: "Interactive protein 3D structure viewer, sequence analysis, and structural annotation workspace.",
 };
 
 export default function RootLayout({

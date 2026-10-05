@@ -70,7 +70,7 @@ export default function DemoViewerPage() {
             /
           </span>
           <span className="text-sm font-medium">
-            1CRN &mdash; Crambin (demo)
+            1CRN: Crambin (demo)
           </span>
           <Badge
             variant="outline"

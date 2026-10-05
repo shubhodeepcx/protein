@@ -299,8 +299,8 @@ describe("PAE heatmap", () => {
     // "Lower is better" must be stated: PAE and pLDDT run opposite ways and a
     // reader arriving from the pLDDT colouring will assume the wrong one.
     expect(screen.getByText("Lower is better")).toBeInTheDocument();
-    expect(screen.getByText(/0 Å — confidently placed/)).toBeInTheDocument();
-    expect(screen.getByText(/31\.8 Å — uncertain/)).toBeInTheDocument();
+    expect(screen.getByText(/0 Å: confidently placed/)).toBeInTheDocument();
+    expect(screen.getByText(/31\.8 Å: uncertain/)).toBeInTheDocument();
   });
 
   it("carries the figures as text, so colour is never the only message", () => {

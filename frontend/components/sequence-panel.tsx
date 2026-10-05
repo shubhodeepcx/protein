@@ -87,7 +87,7 @@ export function SequencePanel() {
     return (
       <div className="flex h-full items-center justify-center px-4 text-center">
         <p className="text-xs text-zinc-500">
-          No sequence available — load a protein with at least one chain.
+          No sequence available. Load a protein with at least one chain.
         </p>
       </div>
     );
