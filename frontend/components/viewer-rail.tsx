@@ -22,7 +22,7 @@ export function ViewerRail({ proteinId }: { proteinId: string }) {
     <Tabs defaultValue="overview" className="flex h-full min-h-0 flex-col gap-0">
       <TabsList
         variant="line"
-        className="h-9 w-full shrink-0 justify-start gap-1 overflow-x-auto border-b border-zinc-800 px-2"
+        className="h-auto w-full shrink-0 flex-wrap justify-start gap-1 border-b border-zinc-800 px-2 py-1"
       >
         <TabsTrigger value="overview" className="text-xs">
           Overview
