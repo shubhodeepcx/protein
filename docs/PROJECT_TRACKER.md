@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-10-05 by Shubhodeep Chatterjee (Compounds tab merged to `main`: non-protein components bound to the protein. 578 backend / 447 frontend tests, tsc clean, webpack build clean.)
+**Last updated:** 2026-10-05 by Shubhodeep Chatterjee (Run-and-fix pass: Geist font restored, viewer rail tabs wrap, restart script repaired, vitest timeout raised. 578 backend / 447 frontend tests, tsc clean, webpack build clean.)
 
 ---
 
@@ -95,6 +95,7 @@ _No blocked tasks._
 
 | Task | Phase | Date | PR / commit |
 |---|---|---|---|
+| **Run-and-fix pass** -- `--font-sans` token pointed at itself so every page fell back to serif (now Geist); viewer right-rail tabs clipped Overview/Sequence (now wrap); `restart_servers.ps1` failed to parse and ignored `-Rebuild` (rewritten); launcher stray `True` output removed; vitest `testTimeout` 20s for full parallel runs on Windows | maintenance | 2026-10-05 | `e861cdf`, `777d730` |
 | **Compounds** -- `GET /api/proteins/{uid}/compounds` + a Compounds rail tab. DNA/RNA strands (sequence, GC, protein contacts), and hetero groups classified as ligand / cofactor / ion / carbohydrate / free amino acid / modified residue / additive, named from HETNAM or `_chem_comp`, each contact a selectable residue chip. **Bug fixed on the way:** nucleotide-only chains were parsed as protein chains of `X` (1TSR's two DNA strands showed up as protein and fed composition, MW and the SS denominator); they now live in `ProteinSummary.nucleic_acid_chains`. A DNA-only upload is rejected with a reason. Verified on live RCSB 1TSR / 4HHB / 1HSG and in Chromium. **Merged to `main`** (fast-forward) | compounds | 2026-10-05 | `9f02699`, `6fdd8ae` |
 | **A1 merged** -- PAE heatmap + low-confidence region warnings. Bands reproduce AlphaFold's published fractionPlddt* exactly | spec gap | 2026-08-24 | PR #21, `8077803` |
 | **A5 merged** -- functional regions: curated sites mapped through a BLOSUM62 alignment, observed ligand pockets, surface profile | spec gap | 2026-08-24 | PR #22, `5d1b271` |
