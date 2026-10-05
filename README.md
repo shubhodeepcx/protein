@@ -21,7 +21,7 @@ A web-based workspace for protein 3D visualization, structural analysis, annotat
 │   ├── PROJECT_TRACKER.md                       # Living tracker — claim-before-code
 │   ├── smoke-tests.md                           # Per-phase manual verification scripts
 │   └── superpowers/specs/                       # Slice designs
-└── AGENTS.md   # Rules for AI contributors (Codex, etc.)
+└── AGENTS.md   # Rules for AI contributors
 ```
 
 The full 6-month roadmap is in [docs/spec.md](docs/spec.md). The **active slice** (P0–P5: viewer + upload + parse + dashboard + sequence panel + DB import; no auth, no DB, no AI) is in [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md).

@@ -1,6 +1,6 @@
 # AGENTS.md — Rules for AI contributors working on this repo
 
-This file is picked up automatically by Codex, Cursor, Gemini CLI, and other AI agents. Every agent — and every parallel sub-agent — must read this **before** making any change.
+This file is picked up automatically by AI coding agents. Every agent — and every parallel sub-agent — must read this **before** making any change.
 
 If you are a human, the same rules apply; the tracker discipline is the load-bearing piece.
 
@@ -28,7 +28,7 @@ If you start work without reading the tracker, you will collide with another age
 1. Open `docs/PROJECT_TRACKER.md`.
 2. Pick a task from **Ready to claim** that has no unresolved dependencies.
 3. Move that task into **In progress** with:
-   - **Owner** — your agent name (`codex`) or the owner's handle (`shubhodeep`).
+   - **Owner** — the owner's handle (`shubhodeep`).
    - **Branch** — `feature/<phase>-<short-slug>` (e.g. `feature/p2-upload-parser`).
    - **Status** — `wip`.
    - **Notes** — anything the next agent needs to know.
@@ -44,11 +44,7 @@ If two agents claim the same task in the same window, the one with the earlier c
 - **Base branch:** `main`. Rebase, do not merge `main` into your feature branch.
 - **Commits:** small, focused, present-tense subject under 70 chars. Reference the tracker task in the body when useful.
 - **Author:** all commits are authored by Shubhodeep Chatterjee.
-- **Co-author footers** (only when an AI agent contributed code):
-
-  ```
-  Co-Authored-By: Codex <noreply@openai.com>
-  ```
+- **No co-author footers.** Do not add `Co-Authored-By` lines for any AI agent or tool.
 
 - **Never** pass `--no-verify`, `--no-gpg-sign`, or `-c commit.gpgsign=false`. If a hook fails, fix the underlying issue and create a new commit. Do not amend through a hook failure.
 - **Never** force-push to `main`. Force-push to your own feature branch only when you have a real reason (e.g. squashing pre-merge).
@@ -96,14 +92,14 @@ If you discover a follow-up task while working, add it to **Ready to claim** wit
 
 ## 5. Parallel work etiquette
 
-The user's #1 behavioural rule is **parallel reasoning sub-agents + Codex for write-out/audit** — use it.
+The owner's #1 behavioural rule is **parallel sub-agents for independent work** — use it.
 
-- **Independent tasks** — different phases, or same phase but non-overlapping files — are safe to run in parallel. Dispatch via the `Agent` tool with `isolation: "worktree"`, or via `mcp__codex__codex` with its own `cwd`. Each parallel agent gets its own tracker claim and its own branch.
+- **Independent tasks** — different phases, or same phase but non-overlapping files — are safe to run in parallel, each in its own git worktree. Each parallel agent gets its own tracker claim and its own branch.
 - **Cross-phase or shared-file work** — serialize. Finish one, merge, then start the next.
-- **Task split** (per global rule):
+- **Task split:**
   - **Reasoning-heavy work** — planning, deep codebase scanning, reasoning-heavy refactors, coding decisions, anything where judgment matters — goes to the strongest reasoning sub-agent available.
-  - **Codex** — mechanical write-out, audits, applying explicit review feedback verbatim, dedup / extraction passes. Always default model — never pass `model: "gpt-5.2-codex"`.
-- **After reasoning-model fixes** — prefer Codex for the audit pass. Cheaper, independent perspective.
+  - **Mechanical work** — write-out, audits, applying explicit review feedback verbatim, dedup / extraction passes.
+- **After fixes** — run an independent audit pass before merging.
 - A parallel sub-agent **does not** update the tracker on its own — the orchestrating agent records the result. This prevents merge conflicts on the tracker file.
 
 ---
