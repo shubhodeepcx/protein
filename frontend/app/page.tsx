@@ -2,12 +2,12 @@ import Link from "next/link";
 import {
   Upload,
   Search,
-  Atom,
   Database,
   FileDown,
   Boxes,
   ArrowRight,
 } from "lucide-react";
+import { ProteoLensLogo } from "@/components/logo";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -55,7 +55,7 @@ export default function HomePage() {
       {/* Top header */}
       <header className="flex h-14 shrink-0 items-center gap-4 border-b border-border/60 bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center gap-2">
-          <Atom className="size-5 text-primary" aria-hidden />
+          <ProteoLensLogo className="size-6 drop-shadow-[0_0_6px_rgba(129,140,248,0.5)]" />
           <span className="font-heading text-lg font-semibold tracking-tight">
             ProteoLens
           </span>

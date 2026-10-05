@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Atom, Columns2, RotateCcw } from "lucide-react";
+import { Columns2, RotateCcw } from "lucide-react";
+import { ProteoLensLogo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ViewerControls } from "@/components/viewer-controls";
@@ -35,7 +36,7 @@ export function ViewerHeader({
         href="/"
         className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-100"
       >
-        <Atom className="size-4" aria-hidden />
+        <ProteoLensLogo className="size-4" />
         <span className="font-semibold">ProteoLens</span>
       </Link>
       <span aria-hidden className="text-zinc-700">

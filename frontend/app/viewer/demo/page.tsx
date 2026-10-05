@@ -3,8 +3,9 @@
 import React, { useRef, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Atom, RotateCcw, Loader2 } from "lucide-react";
+import { RotateCcw, Loader2 } from "lucide-react";
 import type { MolstarViewerRef } from "@/components/molstar-viewer";
+import { ProteoLensLogo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { API_BASE_URL } from "@/lib/api";
@@ -62,7 +63,7 @@ export default function DemoViewerPage() {
             href="/"
             className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-100"
           >
-            <Atom className="size-4" aria-hidden />
+            <ProteoLensLogo className="size-4" />
             <span className="font-semibold">ProteoLens</span>
           </Link>
           <span aria-hidden className="text-zinc-700">

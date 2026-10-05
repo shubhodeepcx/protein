@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, Atom } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { ProteoLensLogo } from "@/components/logo";
 import { SearchView } from "./search-view";
 
 export const metadata = {
@@ -19,7 +20,7 @@ export default function SearchPage() {
           Back
         </Link>
         <span className="h-5 w-px bg-zinc-800" aria-hidden />
-        <Atom className="size-4 text-zinc-400" aria-hidden />
+        <ProteoLensLogo className="size-4" />
         <h1 className="text-sm font-semibold tracking-tight">Database search</h1>
         <span className="ml-auto text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
           RCSB · AlphaFold · UniProt
