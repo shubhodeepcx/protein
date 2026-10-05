@@ -19,6 +19,7 @@ from app.models.analytics import (
 )
 from app.models.annotations import ProteinAnnotations
 from app.models.complexes import ProteinComplexes
+from app.models.compounds import CompoundsResponse
 from app.models.functional import FunctionalRegions
 from app.models.confidence import ConfidenceResponse
 from app.models.protein import ProteinSummary
@@ -27,6 +28,7 @@ from app.services import (
     analytics,
     annotations,
     complexes,
+    compounds,
     functional,
     confidence,
     ingest,
@@ -92,6 +94,9 @@ async def upload_protein(file: UploadFile = File(...)) -> ProteinSummary:
             status_code=400,
             detail="Failed to parse structure file. Check the file is a valid PDB or mmCIF.",
         ) from exc
+    except ingest.NucleicAcidOnlyError as exc:
+        # The exception text is built from chain labels only, never a path.
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ingest.EmptyStructureError as exc:
         # Parser returned empty structure (likely non-PDB content).
         raise HTTPException(
@@ -386,6 +391,37 @@ def _compute_functional_regions(
         resolution_note=note,
         entry=entry,
         curation_note=curation_note,
+    )
+
+
+@router.get("/{uid}/compounds", response_model=CompoundsResponse)
+async def get_compounds(uid: str) -> CompoundsResponse:
+    """Every non-protein component of a stored structure, with its contacts.
+
+    DNA/RNA chains, ions, glycans, cofactors, free amino acids, modified
+    residues, crystallisation additives and other ligands. Measured from the
+    coordinate file alone, so it needs nothing external and cannot 502.
+    """
+    try:
+        storage.validate_uid(uid)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="Protein not found") from exc
+    summary = registry.get(uid)
+    if not summary:
+        raise HTTPException(status_code=404, detail="Protein not found")
+    try:
+        file_path = storage.get_file(uid)
+    except (FileNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail="File not found") from exc
+
+    return await run_in_threadpool(_compute_compounds, uid, summary, file_path)
+
+
+def _compute_compounds(uid: str, summary: ProteinSummary, file_path: Path) -> CompoundsResponse:
+    """The blocking half of `/compounds`: one parse and a neighbour search."""
+    structure = parse_structure_for_analytics(file_path)
+    return compounds.build_compounds(
+        uid, summary, structure, compounds.read_component_info(file_path)
     )
 
 

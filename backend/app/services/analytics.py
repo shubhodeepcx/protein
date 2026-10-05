@@ -7,6 +7,8 @@ from pathlib import Path
 
 from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 
+from app.services.parser import is_nucleic_acid_chain
+
 logger = logging.getLogger(__name__)
 
 # Average residue masses (monoisotopic would be different; use average for MW
@@ -404,9 +406,13 @@ def _count_polymer_residues(structure) -> int:
         return 0
     total = 0
     for chain in model.get_chains():
-        for residue in chain.get_residues():
-            if residue.id[0] == " ":  # standard polymer residue
-                total += 1
+        polymer = [r for r in chain.get_residues() if r.id[0] == " "]
+        # A DNA/RNA strand is not part of the protein the percentages describe;
+        # counting it would dilute every helix/sheet fraction of a
+        # protein-DNA complex.
+        if is_nucleic_acid_chain([r.get_resname() for r in polymer]):
+            continue
+        total += len(polymer)
     return total
 
 

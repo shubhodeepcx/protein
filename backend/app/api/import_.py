@@ -91,6 +91,9 @@ async def import_protein(payload: ImportRequest) -> ProteinSummary:
             status_code=400,
             detail="Failed to parse the downloaded structure file.",
         ) from exc
+    except ingest.NucleicAcidOnlyError as exc:
+        # The exception text is built from chain labels only, never a path.
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ingest.EmptyStructureError as exc:
         raise HTTPException(
             status_code=400,

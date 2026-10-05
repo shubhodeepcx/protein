@@ -35,6 +35,31 @@ def to_one_letter(resname: str) -> tuple[str, bool]:
     return code, True
 
 
+# Nucleotide residue names as the PDB writes them inside a polymer chain:
+# deoxyribonucleotides (DA..DU, DI) and ribonucleotides (A, C, G, U, I), plus
+# the unknown-nucleotide placeholder N. Public for the same reason as
+# `to_one_letter`: `services/functional.py` and `services/compounds.py` have to
+# drop exactly the chains `parse()` drops.
+NUCLEOTIDE_ONE_LETTER: dict[str, str] = {
+    "DA": "A", "DC": "C", "DG": "G", "DT": "T", "DU": "U", "DI": "I", "DN": "N",
+    "A": "A", "C": "C", "G": "G", "U": "U", "I": "I", "N": "N",
+}
+
+
+def is_nucleic_acid_chain(resnames: Sequence[str]) -> bool:
+    """True when every polymer residue in a chain is a nucleotide.
+
+    The rule is deliberately "every", not "most": a chain carrying even one
+    amino acid stays a protein chain exactly as before, so ordinals in mixed or
+    unusual chains (poly-UNK cryo-EM models, a peptide-nucleic-acid hybrid) do
+    not move. Only a pure DNA/RNA strand is taken out of the protein chains,
+    where it used to arrive as a run of `X` and be analysed as protein.
+    """
+    return bool(resnames) and all(
+        name.strip().upper() in NUCLEOTIDE_ONE_LETTER for name in resnames
+    )
+
+
 def _detect_format(path: Path) -> Literal["pdb", "mmcif"]:
     ext = path.suffix.lower().lstrip(".")
     if ext in {"cif", "mmcif"}:
@@ -237,13 +262,21 @@ def parse(
             warnings=["Structure contains no models"],
         )
 
+    nucleic_acid_chains: list[str] = []
+
     for chain in model.get_chains():
+        polymer = [r for r in chain.get_residues() if r.id[0] == " "]
+        if is_nucleic_acid_chain([r.get_resname() for r in polymer]):
+            # A DNA/RNA strand is a compound bound to the protein, not protein:
+            # it is reported by `/compounds`, never fed to protein analytics.
+            nucleic_acid_chains.append(chain.id)
+            continue
+
         seq_chars: list[str] = []
-        for residue in chain.get_residues():
+        for residue in polymer:
             # residue.id is (hetero_flag, seq_id, icode). Hetero flag != " "
-            # marks waters, ligands, and other non-polymer entries.
-            if residue.id[0] != " ":
-                continue
+            # marks waters, ligands, and other non-polymer entries, which the
+            # `polymer` filter above has already dropped.
             one, is_std = to_one_letter(residue.get_resname())
             if not is_std:
                 nonstandard_seen.add(residue.get_resname().upper())
@@ -253,7 +286,7 @@ def parse(
 
         seq = "".join(seq_chars)
         if not seq:
-            # Skip chains with no standard residues (e.g., DNA-only or ligand-only chains).
+            # Skip chains with no polymer residues at all (ligand- or water-only).
             continue
         chains.append(
             ChainInfo(
@@ -266,6 +299,11 @@ def parse(
 
     if not chains:
         warnings.append("No standard amino-acid chains found in structure")
+    if nucleic_acid_chains:
+        warnings.append(
+            "Nucleic-acid chains reported as compounds, not protein: "
+            + ", ".join(nucleic_acid_chains)
+        )
 
     if nonstandard_seen:
         warnings.append(
@@ -316,4 +354,5 @@ def parse(
         molecular_weight=mw,
         has_plddt=has_plddt,
         warnings=warnings,
+        nucleic_acid_chains=nucleic_acid_chains,
     )

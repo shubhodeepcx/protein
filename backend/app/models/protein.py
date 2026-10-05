@@ -32,3 +32,10 @@ class ProteinSummary(BaseModel):
     molecular_weight: float = Field(..., description="Molecular weight in daltons.")
     has_plddt: bool = Field(..., description="Whether pLDDT values are present.")
     warnings: list[str] = Field(..., description="Non-fatal parser warnings.")
+    nucleic_acid_chains: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Labels of DNA/RNA chains. Kept out of `chains` (which is protein-only) "
+            "and described in full by `/compounds`."
+        ),
+    )

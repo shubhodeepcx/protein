@@ -24,11 +24,27 @@ class EmptyStructureError(StructureParseError):
     """The file parsed but yielded no protein chains."""
 
 
+class NucleicAcidOnlyError(EmptyStructureError):
+    """The file holds DNA/RNA chains but no protein for them to be bound to.
+
+    A subclass, so a caller that only knows `EmptyStructureError` still rejects
+    it; callers that catch this first can say *why* instead of implying the
+    file was unreadable.
+    """
+
+
+NUCLEIC_ACID_ONLY_DETAIL = (
+    "The structure contains nucleic-acid chains ({chains}) but no protein chain. "
+    "ProteoLens analyses proteins together with the DNA, RNA, ligands and ions "
+    "bound to them, so a protein must be present."
+)
+
+
 async def parse_and_register(
     stored_path: Path,
     uid: str,
     *,
-    source: Literal["uploaded", "rcsb", "alphafold"],
+    source: Literal["uploaded", "rcsb", "alphafold", "uniprot"],
     source_id: str | None = None,
 ) -> ProteinSummary:
     """Parse an already-stored structure file and register it, or clean up and raise.
@@ -50,6 +66,10 @@ async def parse_and_register(
 
     if not summary.chains:
         _unlink(stored_path)
+        if summary.nucleic_acid_chains:
+            raise NucleicAcidOnlyError(
+                NUCLEIC_ACID_ONLY_DETAIL.format(chains=", ".join(summary.nucleic_acid_chains))
+            )
         raise EmptyStructureError("Parsed structure has no protein chains")
 
     registry.put(uid, summary)

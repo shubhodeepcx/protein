@@ -68,7 +68,7 @@ from app.models.protein import ProteinSummary
 from app.services.analytics import KD_HYDROPATHY
 from app.services.compare import GAP, UNKNOWN_RESIDUE, build_aligner
 from app.services.external import Metadata, as_int
-from app.services.parser import to_one_letter
+from app.services.parser import is_nucleic_acid_chain, to_one_letter
 
 logger = logging.getLogger(__name__)
 
@@ -218,11 +218,13 @@ def read_chain_residues(structure, summary: ProteinSummary) -> list[ChainResidue
         letters: list[str] = []
         numbers: list[int | None] = []
         codes: list[str | None] = []
-        for residue in chain.get_residues():
-            # Mirrors `parser.parse`: hetero flag set means water, ligand, or a
-            # modified residue, and none of those are in the ordinal numbering.
-            if residue.id[0] != " ":
-                continue
+        # Mirrors `parser.parse`: hetero flag set means water, ligand, or a
+        # modified residue, and none of those are in the ordinal numbering.
+        polymer = [r for r in chain.get_residues() if r.id[0] == " "]
+        if is_nucleic_acid_chain([r.get_resname() for r in polymer]):
+            # The parser reports DNA/RNA strands as compounds, not chains.
+            continue
+        for residue in polymer:
             one, _ = to_one_letter(residue.get_resname())
             letters.append(one)
             numbers.append(as_int(residue.id[1]))
