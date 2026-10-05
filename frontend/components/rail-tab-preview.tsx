@@ -72,6 +72,17 @@ export const RAIL_TABS: readonly RailTab[] = [
     ],
   },
   {
+    value: "compounds",
+    title: "Compounds",
+    source: "Structure file",
+    items: [
+      "DNA and RNA strands, with GC content and the protein residues that touch them",
+      "Ligands, cofactors, ions and glycans, named from the file's own records",
+      "Free amino acids told apart from modified residues inside the chain",
+      "Click any contact residue to highlight it in 3D",
+    ],
+  },
+  {
     value: "similarity",
     title: "Similarity",
     source: "EBI NCBI BLAST, UniRef",

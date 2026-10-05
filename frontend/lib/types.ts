@@ -36,6 +36,12 @@ export interface ProteinSummary {
   /** True when B-factor field contains pLDDT (AlphaFold). */
   has_plddt: boolean;
   warnings: string[];
+  /**
+   * DNA/RNA chain labels. Kept out of `chains`, which is protein-only, and
+   * described in full by `GET /api/proteins/{uid}/compounds`. Optional so a
+   * summary from before the field existed still type-checks.
+   */
+  nucleic_acid_chains?: string[];
 }
 
 export interface HealthResponse {
@@ -773,4 +779,61 @@ export interface ConfidenceResponse {
   low_confidence_threshold: number;
   pae: PaeMatrix;
   warnings: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Compounds — the non-protein components of a structure.
+// Mirrors backend/app/models/compounds.py.
+// ---------------------------------------------------------------------------
+
+export type CompoundCategory =
+  | "ion"
+  | "carbohydrate"
+  | "cofactor"
+  | "ligand"
+  | "free_amino_acid"
+  | "modified_residue"
+  | "additive";
+
+export interface CompoundInstance {
+  chain: string;
+  auth_seq_id: number | null;
+  insertion_code: string | null;
+  /** Heavy atoms present in the file. */
+  atom_count: number;
+  /** Protein residues within the contact cutoff, nearest first. */
+  contacts: LigandContact[];
+}
+
+/** Every copy of one chemical component (one three-letter code). */
+export interface CompoundGroup {
+  code: string;
+  name: string | null;
+  category: CompoundCategory;
+  formula: string | null;
+  formula_weight: number | null;
+  /** For a modified or free amino acid: the standard residue it derives from. */
+  parent_residue: string | null;
+  instances: CompoundInstance[];
+}
+
+export interface NucleicAcidChain {
+  label: string;
+  kind: "DNA" | "RNA" | "DNA/RNA hybrid";
+  sequence: string;
+  length: number;
+  gc_fraction: number | null;
+  composition: Record<string, number>;
+  contacts: LigandContact[];
+}
+
+/** `GET /api/proteins/{uid}/compounds`. */
+export interface CompoundsResponse {
+  protein_id: string;
+  /** Heavy-atom contact cutoff in Ångström. */
+  contact_cutoff: number;
+  nucleic_acids: NucleicAcidChain[];
+  groups: CompoundGroup[];
+  water_count: number;
+  notes: string[];
 }

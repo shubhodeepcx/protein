@@ -6,6 +6,7 @@ import type {
   ConfidenceResponse,
   ProteinAnnotations,
   ProteinComplexes,
+  CompoundsResponse,
 } from "@/lib/types";
 import { apiGet, ApiError } from "@/lib/api";
 
@@ -27,6 +28,9 @@ export interface ProteinSlice {
   complexes: ProteinComplexes | null;
   complexesLoading: boolean;
   complexesError: ProteinLoadError | null;
+  compounds: CompoundsResponse | null;
+  compoundsLoading: boolean;
+  compoundsError: ProteinLoadError | null;
   functional: FunctionalRegions | null;
   functionalLoading: boolean;
   functionalError: ProteinLoadError | null;
@@ -80,6 +84,12 @@ export interface ProteinSlice {
    */
   loadComplexes: (id: string) => Promise<void>;
   /**
+   * Loads the structure's non-protein components from
+   * `GET /api/proteins/{id}/compounds`. Measured from the file alone, so an
+   * empty list is a fact about the structure, not a failure.
+   */
+  loadCompounds: (id: string) => Promise<void>;
+  /**
    * Loads functional regions from `GET /api/proteins/{id}/functional-regions`.
    * Loads AlphaFold confidence analysis from
    * `GET /api/proteins/{id}/confidence` (A1).
@@ -111,6 +121,7 @@ let metaSeq = 0;
 let analyticsSeq = 0;
 let annotationsSeq = 0;
 let complexesSeq = 0;
+let compoundsSeq = 0;
 let functionalSeq = 0;
 let confidenceSeq = 0;
 
@@ -129,6 +140,9 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
   complexes: null,
   complexesLoading: false,
   complexesError: null,
+  compounds: null,
+  compoundsLoading: false,
+  compoundsError: null,
   functional: null,
   functionalLoading: false,
   functionalError: null,
@@ -149,6 +163,8 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       annotationsError: null,
       complexes: null,
       complexesError: null,
+      compounds: null,
+      compoundsError: null,
       functional: null,
       functionalError: null,
       confidence: null,
@@ -209,6 +225,20 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       set({ complexesError: { status, message }, complexesLoading: false });
     }
   },
+  loadCompounds: async (id: string) => {
+    const myReq = ++compoundsSeq;
+    set({ compoundsLoading: true, compoundsError: null });
+    try {
+      const c = await apiGet<CompoundsResponse>(`/api/proteins/${id}/compounds`);
+      if (myReq !== compoundsSeq) return;
+      set({ compounds: c, compoundsLoading: false });
+    } catch (e) {
+      if (myReq !== compoundsSeq) return;
+      const status = e instanceof ApiError ? e.status : null;
+      const message = e instanceof Error ? e.message : String(e);
+      set({ compoundsError: { status, message }, compoundsLoading: false });
+    }
+  },
   loadFunctional: async (id: string) => {
     const myReq = ++functionalSeq;
     set({ functionalLoading: true, functionalError: null });
@@ -247,6 +277,7 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
     analyticsSeq++;
     annotationsSeq++;
     complexesSeq++;
+    compoundsSeq++;
     functionalSeq++;
     confidenceSeq++;
     set({
@@ -262,6 +293,9 @@ export const createProteinSlice: StateCreator<ProteinSlice, [], [], ProteinSlice
       complexes: null,
       complexesError: null,
       complexesLoading: false,
+      compounds: null,
+      compoundsError: null,
+      compoundsLoading: false,
       functional: null,
       functionalError: null,
       functionalLoading: false,

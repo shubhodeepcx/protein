@@ -63,6 +63,13 @@ export function OverviewPanel() {
             }
           />
           <Field label="Format" value={summary.file_format.toUpperCase()} />
+          {/* DNA/RNA is not counted as protein below; the Compounds tab has it. */}
+          {(summary.nucleic_acid_chains?.length ?? 0) > 0 && (
+            <Field
+              label="Nucleic acids"
+              value={`Chain ${summary.nucleic_acid_chains?.join(", ")} · see Compounds`}
+            />
+          )}
           {/* What the B-factor column actually holds. This is the same flag
               that gates the pLDDT coloring option and flips its scale, so
               showing it here explains why that option is or isn't offered. */}
@@ -78,7 +85,7 @@ export function OverviewPanel() {
       </div>
 
       <div className="grid grid-cols-2 gap-2 px-3 pb-3">
-        <Metric label="Chains" value={summary.chains.length} />
+        <Metric label="Protein chains" value={summary.chains.length} />
         <Metric label="Residues" value={summary.residue_count.toLocaleString()} />
         <Metric label="Atoms" value={summary.atom_count.toLocaleString()} />
         <Metric
