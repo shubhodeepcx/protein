@@ -29,7 +29,9 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-_Nothing in progress._
+| Task | Owner | Branch | Status | Notes |
+|---|---|---|---|---|
+| **Compounds: protein-related non-protein components.** Stop treating nucleic-acid-only chains as all-`X` protein chains; add `GET /api/proteins/{uid}/compounds` (nucleic-acid chains, ions, carbohydrates, cofactors/nucleotides, free amino acids, modified residues, crystallisation additives, ligands, each with its protein contact residues) and a Compounds tab in the viewer rail. User-requested scope expansion (2026-10-05) | shubhodeep | `feature/compounds` | wip | Protein `chains` stay protein-only so ordinals, analytics and selection are untouched |
 
 ---
 
