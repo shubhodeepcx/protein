@@ -3,7 +3,7 @@
 **Project:** AI-Powered Protein Structure Visualization Platform
 **Living document.** Read before claiming work. Update on claim, on PR open, on merge.
 
-**Last updated:** 2026-08-24 by Shubhodeep Chatterjee (P6-P10 plus spec gaps A1 and A5 all merged. `main` at `5d1b271`: 533 backend / 433 frontend tests, tsc clean, webpack build clean. No known spec gaps remain.)
+**Last updated:** 2026-10-05 by Shubhodeep Chatterjee (Compounds tab: non-protein components bound to the protein, on `feature/compounds`. 578 backend / 447 frontend tests, tsc clean, webpack build clean.)
 
 ---
 
@@ -29,9 +29,7 @@ Active design: [docs/superpowers/specs/2026-05-23-protein-mvp-slice-design.md](s
 
 ## In progress
 
-| Task | Owner | Branch | Status | Notes |
-|---|---|---|---|---|
-| **Compounds: protein-related non-protein components.** Stop treating nucleic-acid-only chains as all-`X` protein chains; add `GET /api/proteins/{uid}/compounds` (nucleic-acid chains, ions, carbohydrates, cofactors/nucleotides, free amino acids, modified residues, crystallisation additives, ligands, each with its protein contact residues) and a Compounds tab in the viewer rail. User-requested scope expansion (2026-10-05) | shubhodeep | `feature/compounds` | wip | Protein `chains` stay protein-only so ordinals, analytics and selection are untouched |
+_Nothing in progress._
 
 ---
 
@@ -45,9 +43,13 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | **A5 follow-up — cross-check the alignment against RCSB SIFTS.** Positions are mapped by aligning the UniProt sequence to each parsed chain, which is self-contained and testable offline. RCSB publishes a residue-level SIFTS mapping for every PDB entry; fetching it as a *second opinion* would turn a silent disagreement into a visible one. Only useful for `rcsb` imports — an upload and an AlphaFold model have no SIFTS record | A5 | A5 merged | 4h |
 | **A5 follow-up — colour the 3D surface by hydrophobicity and charge.** `GET /functional-regions` already returns per-residue Kyte-Doolittle, formal charge and relative accessibility as per-chain arrays; the viewer renders none of them. Needs a Mol* colour theme driven from the store, beside the existing pLDDT/B-factor schemes | A5 | A5 merged | 4h |
 | **A5 follow-up — a branched ligand is reported as its components.** `bound_ligands` emits one entry per HETATM residue, so 1HEW's tri-N-acetylchitotriose is three NAG rows sharing contact residues rather than one ligand. Grouping needs covalent connectivity (or the mmCIF branched-entity records, which the PDB format does not carry) | A5 | A5 merged | 3h |
-| **A5 follow-up — a free amino acid bound as a substrate is skipped.** Ligand detection excludes any HETATM group carrying a complete N/CA/C backbone, which is what keeps selenomethionine inside a helix from being reported as a bound ligand. It also skips a genuine free-amino-acid ligand. Under-reporting rather than mis-marking is the right direction, but an entity-type check on mmCIF would fix it properly for RCSB imports | A5 | A5 merged | 2h |
+| **A5 follow-up — a free amino acid bound as a substrate is skipped** (*partly addressed:* the Compounds tab now tells in-chain from free amino acids by the peptide bond and reports free ones with contacts; A5's `bound_ligands` still uses the backbone rule and could switch to `compounds._peptide_linked`). Ligand detection excludes any HETATM group carrying a complete N/CA/C backbone, which is what keeps selenomethionine inside a helix from being reported as a bound ligand. It also skips a genuine free-amino-acid ligand. Under-reporting rather than mis-marking is the right direction, but an entity-type check on mmCIF would fix it properly for RCSB imports | A5 | A5 merged | 2h |
 | **The chain tree is `xl`-only.** Below 1280px the viewer drops the left rail entirely and only the stacked tab rail remains, so there is no chain navigation on a laptop in a split window. Needs a collapsible drawer or a sixth tab | follow-up | P10 | 2h |
 | **Mol\*'s canvas renders on a near-white background inside an otherwise dark workspace.** Pre-existing and unrelated to P10, but it is the most visible remaining inconsistency in the viewer. The fix is a Mol\* renderer background parameter in `components/molstar-viewer.tsx` — deliberately not touched here because P8 owns that file | follow-up | P8 merged | 30m |
+| **Compounds follow-up — group branched glycans and multi-residue ligands.** Same root cause as the A5 row above: one `CompoundInstance` per HETATM residue, so an N-glycan is several NAG/MAN rows. Needs covalent connectivity or mmCIF `pdbx_branch_scheme` | compounds | compounds merged | 3h |
+| **Compounds follow-up — focus a compound in 3D.** Contacts select through the existing seam, but the compound itself is not highlighted or zoomed to. Needs a Mol\* selection by `auth_seq_id` + chain for non-polymer residues in `lib/molstar/actions.ts` | compounds | compounds merged | 2h |
+| **Compounds follow-up — cross-reference UniProt cofactors.** UniProt `COFACTOR` comments (ChEBI IDs) could be matched against bound cofactors/ions to say "the zinc UniProt expects is present here". Needs the comment added to `uniprot.fetch_functional` fields | compounds | compounds merged | 3h |
+| **Compounds follow-up — the rail now has seven tabs and scrolls horizontally** below ~1700px (`overflow-x-auto` on the `TabsList`). Fine, but a "More" overflow menu or icon tabs would read better | compounds | — | 1h |
 | Batch RCSB search enrichment via the GraphQL Data API (currently up to 50 REST calls per search) | follow-up | — | 2h |
 | Virtualise the sequence panel (one `<button>` per residue gets heavy above ~2,000 residues) | follow-up | — | 2h |
 | Make HETATM amino acids (e.g. MSE) selectable — currently skipped consistently by both parser and panel | follow-up | — | 1h |
@@ -75,7 +77,7 @@ Follow-ups discovered during P4/P5. None block the slice; each was deliberately 
 | Slice section 5.2 promises parser warnings for missing atoms, multiple models, and chain breaks; none are emitted (only non-standard residues / no chains) | spec drift | — | 1h |
 | F3: `SelectionMode` / `setMode` exist in `selection-slice.ts` but no UI calls them — select-by-type / chain / range / property, and the left-sidebar filter panel from slice section 4.1, were never built | spec drift | — | 3h |
 | Three files exceed AGENTS.md's 200-LOC cap: `app/viewer/[id]/page.tsx` (207), `components/molstar-viewer.tsx` (203), `lib/residue.ts` (202) | cleanup | — | 45m |
-| Type drift: `ingest.parse_and_register`'s `source` Literal omits `"uniprot"`, which `import_.py` passes. Runtime-fine leftover from PR #11 | cleanup | — | 15m |
+| ~~Type drift: `ingest.parse_and_register`'s `source` Literal omits `"uniprot"`~~ — **fixed** with the compounds work | cleanup | — | done |
 | Per-phase test counts in `docs/smoke-tests.md` (P2 "14 passed", P3 "31 passed", P5.5 "90/103") are stale against the current 127/133 | docs | — | 20m |
 
 ---
@@ -93,6 +95,7 @@ _No blocked tasks._
 
 | Task | Phase | Date | PR / commit |
 |---|---|---|---|
+| **Compounds** -- `GET /api/proteins/{uid}/compounds` + a Compounds rail tab. DNA/RNA strands (sequence, GC, protein contacts), and hetero groups classified as ligand / cofactor / ion / carbohydrate / free amino acid / modified residue / additive, named from HETNAM or `_chem_comp`, each contact a selectable residue chip. **Bug fixed on the way:** nucleotide-only chains were parsed as protein chains of `X` (1TSR's two DNA strands showed up as protein and fed composition, MW and the SS denominator); they now live in `ProteinSummary.nucleic_acid_chains`. A DNA-only upload is rejected with a reason. Verified on live RCSB 1TSR / 4HHB / 1HSG and in Chromium | compounds | 2026-10-05 | `feature/compounds` |
 | **A1 merged** -- PAE heatmap + low-confidence region warnings. Bands reproduce AlphaFold's published fractionPlddt* exactly | spec gap | 2026-08-24 | PR #21, `8077803` |
 | **A5 merged** -- functional regions: curated sites mapped through a BLOSUM62 alignment, observed ligand pockets, surface profile | spec gap | 2026-08-24 | PR #22, `5d1b271` |
 | **P6 merged** -- UniProt annotation panel (28 fields, `/annotations`, Annotations tab) | P6 | 2026-08-22 | PR #16, `d4d58c7` |
@@ -183,6 +186,8 @@ Append-only. Never edit past entries — supersede with a new entry referencing 
 
 | Date | Decision | Rationale | Reversible? |
 |---|---|---|---|
+| 2026-10-05 | A chain is taken out of `ProteinSummary.chains` only when **every** polymer residue is a nucleotide; such chains go to `nucleic_acid_chains` and the Compounds payload. Mixed chains (any amino acid, or poly-UNK) are untouched | `chains` feeds composition, MW, the SS denominator, A5 numbering and the frontend's ordinal mapping. "Every" rather than "most" means no protein ordinal can move: Mol\* still counts the DNA chain's residues under its own label, which no protein key ever references. Scope note: the slice spec puts non-protein analysis out of scope; the user asked for it explicitly on 2026-10-05 | yes |
+| 2026-10-05 | In-chain vs free hetero amino acids are distinguished by a **peptide bond** (N or C within 1.75 Å of a neighbour's C or N, residue must carry N/CA/C), not by backbone presence | A5's backbone rule cannot tell MSE-in-a-helix from a free glutamate substrate and hides the latter. The peptide bond is the actual definition of "in the chain". Restricting to residues with a full backbone keeps a covalently attached inhibitor from being read as protein | yes |
 | 2026-08-24 | A5 maps UniProt sequence positions onto structure residues by **globally aligning the UniProt sequence against each parsed chain** and reading the correspondence out of the alignment, expressed in the parser's residue ordinals | A UniProt position is not a residue number and the difference is invisible in 3D. UniProt P00698 numbers hen lysozyme's 18-residue signal peptide, so its curated active sites at 53 and 70 are Glu35 and Asp52 in every crystal structure; P04585 is a 1435-residue polyprotein whose protease active site at 513 is Asp25 of the mature enzyme. Reading the position as an index, or as an `auth_seq_id`, marks a plausible-looking wrong residue in both cases. Ordinals rather than `auth_seq_id` because that is the coordinate `parser.py` and `residue-index.ts` already share — the seam is untouched | yes, but the refusals must not be loosened |
 | 2026-08-24 | A chain the alignment does not support is **refused**, with the reason published in `ChainMapping`: under 90% identity over comparable columns, under 50% identity coverage of the shorter sequence, fewer than 4 comparable columns, or an alignment over 16M cells | Same posture as P7's RMSD refusal. Both floors are load-bearing and neither covers for the other: a 55%-identity chain clears coverage and fails identity, a chain sharing one short terminus clears identity at 100% and fails coverage. Coverage is measured over the *shorter* sequence so a 99-residue mature protease still scores 100% against a 1435-residue polyprotein | yes |
 | 2026-08-24 | **"Predicted pocket regions" (A5 bullet 3) is NOT delivered.** The only pockets reported are the residues observed within 4 A of a ligand present in the file; an apo structure is told plainly that there is nothing to show | Phase 2 is where an ML scorer belongs. A geometric cavity search shipped under the label "predicted pocket" in Phase 1 would be a heuristic wearing a prediction's clothes — the same failure as an RMSD from an unverified pairing. Cost: an apo structure gets curated sites, surface and charge but no pocket | yes — it is an addition, not a change |

@@ -696,6 +696,45 @@ predicted pocket.
 
 ---
 
+## Compounds — non-protein components bound to the protein
+
+Goal: DNA/RNA, ligands, cofactors, ions, glycans, free amino acids, modified residues and
+crystallisation additives are each reported in the **Compounds** tab with the protein residues they
+touch, and a nucleic-acid strand is never analysed as protein.
+
+1. Start the backend with `CORS_ORIGINS=http://localhost:3000` and the frontend.
+2. Import **RCSB 1TSR** (p53 core domain bound to DNA), or upload its mmCIF.
+   - Overview: expect *Protein chains 3*, a *Nucleic acids: Chain E, F · see Compounds* row, and the
+     parser warning *"Nucleic-acid chains reported as compounds, not protein: E, F"*.
+   - Negative case: there must be **no** *"Non-standard residues replaced with 'X': DA, DC, DG, DT"*
+     warning, and the chain tree must list A, B and C only (585 aa in total).
+3. Open **Compounds**.
+   - Under **Nucleic acids**, expect two `DNA` strands, `E` = `TTTCCTAGACTTGCCCAATTA` and
+     `F` = `ATAATTGGGCAAGTCTAGGAA`, each *21 nt · GC 38%*, with 13 and 9 protein contacts.
+   - Under **Ions**, expect `ZN ZINC ION ×3`, each with 4 contacts: H179, C176, C238 and C242 (the p53
+     zinc site; chips read `HA:86`, `CA:83`, `CA:145`, `CA:149` for chain A in ordinals).
+   - Click chip `RB:178`: it turns blue (selected) and the selection count in the header reads 1.
+4. Import **RCSB 4HHB** (haemoglobin): expect **Cofactors & nucleotides** with
+   `HEM PROTOPORPHYRIN IX CONTAINING FE ×4`, 616.5 Da, each with 14-16 contacts, and **Additives**
+   (collapsed by default) with `PO4`.
+5. Import **RCSB 1HSG** (HIV protease + indinavir): expect **Ligands** with `MK1` and 26 contacts.
+6. Upload `backend/app/static/1CRN.pdb`: expect the note *"This structure contains no non-protein
+   components other than water…"* and no sections.
+7. Upload a PDB file containing only a DNA strand: expect HTTP 400 with *"The structure contains
+   nucleic-acid chains (B) but no protein chain…"*, not the generic parse error.
+8. Tests:
+   ```
+   cd backend && pytest
+   cd frontend && npm ci && npm run lint && npm test && npm run build
+   ```
+   - Expect: 578 backend, 447 frontend, lint and build clean.
+
+**Pass criteria:** every non-water hetero group and every nucleic-acid strand appears exactly once in
+the right category; every contact is a measured distance in this file and selects in 3D; protein
+analytics no longer see DNA.
+
+---
+
 ## How to add a smoke test
 
 When you start a phase, replace the placeholder for that phase with the concrete steps. The steps should be the minimum sequence a fresh agent or human needs to verify the phase works end-to-end, including:
