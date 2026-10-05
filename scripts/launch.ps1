@@ -139,14 +139,14 @@ try {
     $script:Started += Start-Process -FilePath $VenvPy `
         -ArgumentList '-m', 'uvicorn', 'app.main:app', '--port', "$BackendPort" `
         -WorkingDirectory $Backend -PassThru -WindowStyle Hidden
-    Wait-ForHttp -Url "http://localhost:$BackendPort/health" -Label 'API'
+    Wait-ForHttp -Url "http://localhost:$BackendPort/health" -Label 'API' | Out-Null
     Write-Ok "API ready at http://localhost:$BackendPort (docs at /docs)"
 
     Write-Step "Starting the web app on port $FrontendPort"
     $script:Started += Start-Process -FilePath 'cmd.exe' `
         -ArgumentList '/c', 'npm', 'run', 'start' `
         -WorkingDirectory $Frontend -PassThru -WindowStyle Hidden
-    Wait-ForHttp -Url $FrontendUrl -Label 'Web app'
+    Wait-ForHttp -Url $FrontendUrl -Label 'Web app' | Out-Null
     Write-Ok "Web app ready at $FrontendUrl"
 
     if (-not $NoBrowser) { Start-Process $FrontendUrl }

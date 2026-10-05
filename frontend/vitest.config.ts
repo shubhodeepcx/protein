@@ -18,5 +18,8 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     include: ["**/__tests__/**/*.test.{ts,tsx}", "**/*.test.{ts,tsx}"],
     exclude: ["node_modules", ".next", "dist"],
+    // jsdom + Mol* imports are slow to boot on Windows under a full parallel
+    // run; the 5s default flakes there even though each file passes alone.
+    testTimeout: 20000,
   },
 });
