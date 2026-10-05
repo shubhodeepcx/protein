@@ -362,7 +362,7 @@ Living document at `AGENTS.md` (repo root). Picked up automatically by Codex, Ge
 3. **Branch + commit conventions** — `feature/<phase>-<slug>`, commits authored by the repo owner, with `Co-Authored-By` footers for any AI agent that contributed (e.g. Codex). No `--no-verify`. No force-push to `main`.
 4. **Coding standards** — TypeScript strict on frontend, full type hints on backend, components ≤ 200 LOC, Pydantic at API boundary, pure analytics functions.
 5. **Definition of done** — code merged + phase smoke test passes + tracker Done with PR link + decisions log appended if architectural choice made.
-6. **Parallel work etiquette** — independent tasks (separate phases / non-overlapping files) can be parallelized via worktrees and Opus + Codex split per the user's global preferences; cross-phase or shared-file work serializes.
+6. **Parallel work etiquette** — independent tasks (separate phases / non-overlapping files) can be parallelized via worktrees and a reasoning-model + Codex split per the user's global preferences; cross-phase or shared-file work serializes.
 7. **Destructive-action gate** — mirrors the user's #1 hard global rule. No `git reset --hard`, no `rm -rf` outside the agent's own worktree, no bulk-mutating scripts, no force-push without explicit in-turn user approval.
 8. **Update protocol** — after non-trivial work, update tracker (status + Done column) and append to decisions log if a new architectural choice was made. This is the handoff for the next agent.
 

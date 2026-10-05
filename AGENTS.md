@@ -96,14 +96,14 @@ If you discover a follow-up task while working, add it to **Ready to claim** wit
 
 ## 5. Parallel work etiquette
 
-The user's #1 behavioural rule is **parallel Opus sub-agents + Codex for write-out/audit** — use it.
+The user's #1 behavioural rule is **parallel reasoning sub-agents + Codex for write-out/audit** — use it.
 
 - **Independent tasks** — different phases, or same phase but non-overlapping files — are safe to run in parallel. Dispatch via the `Agent` tool with `isolation: "worktree"`, or via `mcp__codex__codex` with its own `cwd`. Each parallel agent gets its own tracker claim and its own branch.
 - **Cross-phase or shared-file work** — serialize. Finish one, merge, then start the next.
-- **Model split** (per global rule):
-  - **Opus** — planning, deep codebase scanning, reasoning-heavy refactors, coding decisions, anything where judgment matters.
+- **Task split** (per global rule):
+  - **Reasoning-heavy work** — planning, deep codebase scanning, reasoning-heavy refactors, coding decisions, anything where judgment matters — goes to the strongest reasoning sub-agent available.
   - **Codex** — mechanical write-out, audits, applying explicit review feedback verbatim, dedup / extraction passes. Always default model — never pass `model: "gpt-5.2-codex"`.
-- **After Opus fixes** — prefer Codex for the audit pass. Cheaper, independent perspective.
+- **After reasoning-model fixes** — prefer Codex for the audit pass. Cheaper, independent perspective.
 - A parallel sub-agent **does not** update the tracker on its own — the orchestrating agent records the result. This prevents merge conflicts on the tracker file.
 
 ---
